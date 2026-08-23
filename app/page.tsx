@@ -6,7 +6,6 @@ import {
   OBJECTIVE,
   STRATEGIES,
   StrategyKey,
-  benchmark,
   datasetFromPayload,
   demoDataset,
   freshness,
@@ -15,7 +14,6 @@ import {
   oosComparison,
   parseMarketCsv,
   robustness,
-  runBacktest,
   walkForward,
 } from "../lib/engine";
 import {simulatePaper,type LiveSnapshot,type PaperConfig} from "../lib/paper";
@@ -176,8 +174,10 @@ export default function Home() {
     [query, setQuery] = useState(""),
     [runtimeStatus,setRuntimeStatus]=useState<RuntimeStatus|null>(null),
     [dailySignal,setDailySignal]=useState<DailySignalFile|null>(null),
+    [analysis,setAnalysis]=useState<AnalysisBundle|null>(null),
+    [analysisLoading,setAnalysisLoading]=useState(false),
     [liveHistory,setLiveHistory]=useState<LiveSnapshot[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false);
+  const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false),analysisWorker=useRef<Worker|null>(null),analysisRequest=useRef(0);
   useEffect(() => {
     queueMicrotask(() => {
       try {
@@ -207,15 +207,16 @@ export default function Home() {
     setHoldings(next);
     localStorage.setItem("tqqq-holdings-v2", JSON.stringify(next));
   };
-  const analysis = useMemo<AnalysisBundle|null>(() => {
-    if (!dataset || dataset.issues.some((x) => x.severity === "error"))return null;
-    const config=STRATEGIES[key];
-    if(tab==="compare"){const bt=runBacktest(dataset,config);return{bt,comparison:oosComparison(dataset),holdout:holdoutForConfig(dataset,config),tqqq:benchmark(dataset,"tqqq"),qqq:benchmark(dataset,"qqq")}}
-    if(tab==="walk")return{wf:walkForward(dataset)};
-    if(tab==="robust")return{rob:robustness(dataset,config)};
-    if(tab==="year"||tab==="trades")return{bt:runBacktest(dataset,config)};
-    return null;
-  }, [dataset, key, tab]);
+  useEffect(()=>{
+    if(!dataset||dataset.issues.some((x)=>x.severity==="error")||!["compare","walk","year","trades","robust"].includes(tab))return;
+    const id=++analysisRequest.current;
+    queueMicrotask(()=>{if(analysisRequest.current===id){setAnalysis(null);setAnalysisLoading(true);setMessage("検証計算をバックグラウンドで実行しています。画面操作は継続できます。")}});
+    const worker=analysisWorker.current||(analysisWorker.current=new Worker(new URL("../lib/analysis.worker.ts",import.meta.url),{type:"module"}));
+    const receive=(event:MessageEvent<{id:number;result?:AnalysisBundle;error?:string}>)=>{if(event.data.id!==id)return;setAnalysisLoading(false);if(event.data.error){setMessage(`検証計算エラー: ${event.data.error}`);setAnalysis(null)}else{setAnalysis(event.data.result||null);setMessage("検証計算が完了しました")}};
+    worker.addEventListener("message",receive);worker.postMessage({id,tab,dataset,key});
+    return()=>worker.removeEventListener("message",receive);
+  },[dataset,key,tab]);
+  useEffect(()=>()=>analysisWorker.current?.terminate(),[]);
   const loadFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setLoading(true);
@@ -447,6 +448,9 @@ export default function Home() {
             <p>今日のSignalは取得済みです。全期間バックテストは日常画面と分離し、このタブを開いた時だけ読み込みます。</p>
             {!loading&&<div><button onClick={()=>fileRef.current?.click()}>CSVを読み込む</button><button className="ghost" onClick={useDemo}>デモモードを開く</button></div>}
           </section>
+        )}
+        {dataset&&analysisLoading&&["compare","walk","year","trades","robust"].includes(tab)&&(
+          <section className="emptyState"><span>BACKGROUND CALCULATION</span><h2>検証計算を実行中</h2><p>Signalロジックは変更していません。計算中も「今日のシグナル」「System Status」「Paper Trading」へ移動できます。</p></section>
         )}
         {dataset?.issues.some((x) => x.severity === "error") && (
           <section className="issueBlock">
