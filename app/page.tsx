@@ -21,6 +21,10 @@ import {
 import {simulatePaper,type LiveSnapshot,type PaperConfig} from "../lib/paper";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"not_updated"|"failed";message?:string;errors?:string[]};
+type SignalShape=Backtest["daily"][number]["signal"];
+type DailySignalFile={generatedAt:string;dataDate:string;source:string;tqqqClose:number;strategy:string;state:RuntimeStatus["state"];signal:SignalShape&{executionDate?:string};suggestion:string;validation?:{holdout?:Backtest["metrics"]|null};warnings?:string[]};
+type AnalysisBundle={bt?:Backtest;wf?:ReturnType<typeof walkForward>;rob?:ReturnType<typeof robustness>;comparison?:ReturnType<typeof oosComparison>;holdout?:ReturnType<typeof holdoutForConfig>;tqqq?:Backtest["metrics"];qqq?:Backtest["metrics"]};
+const EXECUTION_ASSUMPTION="t日終値判定 → t+1営業日始値約定 / 手数料3bps + スリッページ5bps";
 
 const pct = (v: number, d = 1) =>
     Number.isFinite(v) ? `${v >= 0 ? "+" : ""}${(v * 100).toFixed(d)}%` : "—",
@@ -40,6 +44,7 @@ const TABS = [
   ["spec", "計算・戦略仕様"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
+const RESEARCH_TABS=new Set<Tab>(["compare","walk","year","trades","robust","data"]);
 type Holdings = {
   ratio: string;
   shares: string;
@@ -170,8 +175,9 @@ export default function Home() {
     [holdings, setHoldings] = useState<Holdings>(EMPTY),
     [query, setQuery] = useState(""),
     [runtimeStatus,setRuntimeStatus]=useState<RuntimeStatus|null>(null),
+    [dailySignal,setDailySignal]=useState<DailySignalFile|null>(null),
     [liveHistory,setLiveHistory]=useState<LiveSnapshot[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false);
   useEffect(() => {
     queueMicrotask(() => {
       try {
@@ -181,39 +187,35 @@ export default function Home() {
         );
       } catch {}
     });
-    const staticData=new URL("./data/",document.baseURI),fetchJson=async(url:string|URL)=>{const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error(`${r.status}`);return r.json()},loadMarket=async()=>{let json;try{json=await fetchJson(new URL("market-data.json",staticData))}catch{json=await fetchJson("/api/market-data")}const ds=datasetFromPayload(json);if(ds.issues.some((x)=>x.severity==="error"))throw Error("取得データの検査でエラーが発生しました");setDataset(ds);setMessage("実データを読み込みました")};
-    Promise.allSettled([fetchJson(new URL("status.json",staticData)).then(setRuntimeStatus),fetchJson(new URL("live-history.json",staticData)).then(setLiveHistory)]);
-    loadMarket()
-      .catch((e) =>
-        setMessage(
-          `${e instanceof Error ? e.message : "自動取得に失敗"}。CSVを読み込んでください。`,
-        ),
-      )
-      .finally(() => setLoading(false));
+    const staticData=new URL("./data/",document.baseURI),fetchJson=async(url:string|URL)=>{const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error(`${r.status}`);return r.json()};
+    Promise.allSettled([
+      fetchJson(new URL("signal.json",staticData)).then((value)=>{setDailySignal(value);setMessage("事前計算済みの最新Signalを読み込みました")}),
+      fetchJson(new URL("status.json",staticData)).then(setRuntimeStatus),
+      fetchJson(new URL("live-history.json",staticData)).then(setLiveHistory),
+    ]).then((results)=>{
+      if(results[0].status==="rejected")setMessage("最新Signalを取得できません。System Statusを確認してください。");
+      setLoading(false);
+    });
   }, []);
+  useEffect(()=>{
+    if(!RESEARCH_TABS.has(tab)||dataset||marketRequested.current)return;
+    marketRequested.current=true;setLoading(true);setMessage("検証用の全期間データを読み込んでいます…");
+    const staticData=new URL("./data/",document.baseURI),fetchJson=async(url:string|URL)=>{const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error(`${r.status}`);return r.json()};
+    (async()=>{let json;try{json=await fetchJson(new URL("market-data.json",staticData))}catch{json=await fetchJson("/api/market-data")}const ds=datasetFromPayload(json);if(ds.issues.some((x)=>x.severity==="error"))throw Error("取得データの検査でエラーが発生しました");setDataset(ds);setMessage("実データを読み込みました")})().catch((e)=>{marketRequested.current=false;setMessage(`${e instanceof Error?e.message:"自動取得に失敗"}。CSVを読み込んでください。`)}).finally(()=>setLoading(false));
+  },[tab,dataset]);
   const saveHoldings = (next: Holdings) => {
     setHoldings(next);
     localStorage.setItem("tqqq-holdings-v2", JSON.stringify(next));
   };
-  const analysis = useMemo(() => {
-    if (!dataset || dataset.issues.some((x) => x.severity === "error"))
-      return null;
-    const config = STRATEGIES[key],
-      bt = runBacktest(dataset, config),
-      wf = walkForward(dataset),
-      rob = robustness(dataset, config),
-      comparison = oosComparison(dataset),
-      holdout = holdoutForConfig(dataset, config);
-    return {
-      bt,
-      wf,
-      rob,
-      comparison,
-      holdout,
-      tqqq: benchmark(dataset, "tqqq"),
-      qqq: benchmark(dataset, "qqq"),
-    };
-  }, [dataset, key]);
+  const analysis = useMemo<AnalysisBundle|null>(() => {
+    if (!dataset || dataset.issues.some((x) => x.severity === "error"))return null;
+    const config=STRATEGIES[key];
+    if(tab==="compare"){const bt=runBacktest(dataset,config);return{bt,comparison:oosComparison(dataset),holdout:holdoutForConfig(dataset,config),tqqq:benchmark(dataset,"tqqq"),qqq:benchmark(dataset,"qqq")}}
+    if(tab==="walk")return{wf:walkForward(dataset)};
+    if(tab==="robust")return{rob:robustness(dataset,config)};
+    if(tab==="year"||tab==="trades")return{bt:runBacktest(dataset,config)};
+    return null;
+  }, [dataset, key, tab]);
   const loadFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setLoading(true);
@@ -248,7 +250,7 @@ export default function Home() {
     URL.revokeObjectURL(a.href);
   };
   const exportOrders = () => {
-    if (!analysis) return;
+    if (!analysis?.bt) return;
     const h =
         "SignalDate,ExecutionDate,ExecutionPrice,Before,After,Turnover,Cost,Reason,Regime,TrendScore,MomentumScore,VolatilityScore,MarketScore,TotalScore,SubsequentPnL,MFE,MAE,HoldingDays\n",
       body = analysis.bt.orders
@@ -317,10 +319,11 @@ export default function Home() {
       timeStyle: "short",
     }).format(now);
   const latest = dataset?.days.at(-1),
-    fresh = latest ? freshness(latest.date) : null,
+    latestDate=latest?.date||dailySignal?.dataDate,
+    fresh = latestDate ? freshness(latestDate) : null,
     bt = analysis?.bt,
-    last = bt?.daily.at(-1),
-    signal = last?.signal,
+    signal = dailySignal?.signal||bt?.daily.at(-1)?.signal,
+    latestClose=dailySignal?.tqqqClose||latest?.tqqq.close,
     target = signal?.target ?? 0,
     actual = holdings.ratio === "" ? null : Number(holdings.ratio) / 100,
     action =
@@ -337,9 +340,11 @@ export default function Home() {
       : dataset?.source === "csv"
         ? "実データ・CSV"
         : dataset?.source === "demo"
-          ? "合成データ・DEMO"
-          : "未検証";
-  const operationalCandidate=Boolean(dataset?.source!=="demo"&&analysis?.holdout&&analysis.holdout.metrics.cagr>0&&analysis.holdout.metrics.maxDd>-.45&&analysis.holdout.metrics.sharpe>.5);
+        ? "合成データ・DEMO"
+          : dailySignal?"実データ・自動取得":"未検証";
+  const holdoutMetrics=dailySignal?.validation?.holdout||analysis?.holdout?.metrics;
+  const operationalCandidate=Boolean(dataset?.source!=="demo"&&holdoutMetrics&&holdoutMetrics.cagr>0&&holdoutMetrics.maxDd>-.45&&holdoutMetrics.sharpe>.5);
+  const compareAnalysis=analysis?.bt&&analysis.comparison&&analysis.holdout&&analysis.tqqq&&analysis.qqq?{bt:analysis.bt,comparison:analysis.comparison,holdout:analysis.holdout,tqqq:analysis.tqqq,qqq:analysis.qqq}:null;
   const statusKind=runtimeStatus?.state==="failed"?"bad":runtimeStatus?.state==="not_updated"?"warn":runtimeStatus?"ok":"neutral";
   const generatedLabel=runtimeStatus?.generatedAt?new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",dateStyle:"medium",timeStyle:"short"}).format(new Date(runtimeStatus.generatedAt)):"未確認";
   return (
@@ -384,25 +389,25 @@ export default function Home() {
       </header>
       <section className="workspace">
         <section className={`freshnessBar ${statusKind}`} aria-label="データ鮮度">
-          <div><span>最終データ日</span><strong>{runtimeStatus?.marketDataDate||latest?.date||"未取得"}</strong></div>
+          <div><span>最終データ日</span><strong>{runtimeStatus?.marketDataDate||latestDate||"未取得"}</strong></div>
           <div><span>最終計算日時（日本時間）</span><strong>{generatedLabel}</strong></div>
           <div><span>データ取得状態</span><strong>{runtimeStatus?.message||fresh?.message||"確認中"}</strong></div>
         </section>
         <div className="context">
           <div>
             <em>
-              {tab.toUpperCase()} · {latest?.date || "NO DATA"}
+              {tab.toUpperCase()} · {latestDate || "NO DATA"}
             </em>
             <h1>{TABS.find((x) => x[0] === tab)?.[1]}</h1>
             <p>{message}</p>
           </div>
-          {dataset && (
+          {(dataset||dailySignal) && (
             <div className="contextBadges">
-              <Status kind={dataset.source === "demo" ? "warn" : "ok"}>
+              <Status kind={dataset?.source === "demo" ? "warn" : "ok"}>
                 {sourceLabel}
               </Status>
-              <Status kind={dataset.precision === "next-open" ? "ok" : "warn"}>
-                {dataset.precision === "next-open"
+              <Status kind={!dataset||dataset.precision === "next-open" ? "ok" : "warn"}>
+                {!dataset||dataset.precision === "next-open"
                   ? "T+1始値約定"
                   : "T+1終値・低精度"}
               </Status>
@@ -415,7 +420,7 @@ export default function Home() {
             </div>
           )}
         </div>
-        {!dataset && (
+        {!dailySignal&&!dataset && (
           <section className="emptyState">
             <span>REAL DATA REQUIRED</span>
             <h2>
@@ -435,6 +440,14 @@ export default function Home() {
             </div>
           </section>
         )}
+        {dailySignal&&!dataset&&RESEARCH_TABS.has(tab)&&(
+          <section className="emptyState">
+            <span>HISTORICAL RESEARCH</span>
+            <h2>{loading?"検証用データを読み込み中":"検証用データを読み込めませんでした"}</h2>
+            <p>今日のSignalは取得済みです。全期間バックテストは日常画面と分離し、このタブを開いた時だけ読み込みます。</p>
+            {!loading&&<div><button onClick={()=>fileRef.current?.click()}>CSVを読み込む</button><button className="ghost" onClick={useDemo}>デモモードを開く</button></div>}
+          </section>
+        )}
         {dataset?.issues.some((x) => x.severity === "error") && (
           <section className="issueBlock">
             <h2>計算を停止しました</h2>
@@ -448,11 +461,11 @@ export default function Home() {
             </button>
           </section>
         )}
-        {analysis && signal && tab === "signal" && (
+        {signal&&latestClose!==undefined&&fresh&&tab === "signal" && (
           <SignalView
-            bt={bt!}
+            bt={bt}
             signal={signal}
-            latest={latest!}
+            latestClose={latestClose}
             sourceLabel={sourceLabel}
             fresh={fresh!}
             action={action}
@@ -464,19 +477,19 @@ export default function Home() {
             operationalCandidate={operationalCandidate}
           />
         )}
-        {analysis && tab === "compare" && (
+        {compareAnalysis && tab === "compare" && (
           <CompareView
-            analysis={analysis}
+            analysis={compareAnalysis}
             keyName={key}
             setKeyName={setKey}
             sourceLabel={sourceLabel}
           />
         )}
-        {analysis && tab === "walk" && (
+        {analysis?.wf && tab === "walk" && (
           <WalkView wf={analysis.wf} sourceLabel={sourceLabel} />
         )}
-        {analysis && tab === "year" && <YearView bt={analysis.bt} />}
-        {analysis && tab === "trades" && (
+        {analysis?.bt && tab === "year" && <YearView bt={analysis.bt} />}
+        {analysis?.bt && tab === "trades" && (
           <TradesView
             bt={analysis.bt}
             query={query}
@@ -484,7 +497,7 @@ export default function Home() {
             exportOrders={exportOrders}
           />
         )}
-        {analysis && tab === "robust" && <RobustView data={analysis.rob} />}
+        {analysis?.rob && tab === "robust" && <RobustView data={analysis.rob} />}
         {dataset && tab === "data" && (
           <DataView
             dataset={dataset}
@@ -493,8 +506,8 @@ export default function Home() {
             openFiles={() => fileRef.current?.click()}
           />
         )}
-        {tab === "paper" && <PaperView history={liveHistory} latestDate={latest?.date} source={dataset?.source}/>} 
-        {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latest?.date} history={liveHistory}/>} 
+        {tab === "paper" && <PaperView history={liveHistory} latestDate={latestDate} source={dataset?.source||(dailySignal?"auto":undefined)}/>} 
+        {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory}/>} 
         {tab === "guide" && <GuideView/>}
         {tab === "spec" && <SpecView />}
       </section>
@@ -514,7 +527,7 @@ export default function Home() {
 function SignalView({
   bt,
   signal,
-  latest,
+  latestClose,
   sourceLabel,
   fresh,
   action,
@@ -525,9 +538,9 @@ function SignalView({
   jst,
   operationalCandidate,
 }: {
-  bt: Backtest;
-  signal: Backtest["daily"][number]["signal"];
-  latest: Dataset["days"][number];
+  bt?: Backtest;
+  signal: SignalShape;
+  latestClose: number;
   sourceLabel: string;
   fresh: ReturnType<typeof freshness>;
   action: string;
@@ -539,6 +552,7 @@ function SignalView({
   operationalCandidate:boolean;
 }) {
   const execute = nextExecutionDate(signal.date);
+  const assumption=bt?.assumption||EXECUTION_ASSUMPTION;
   const changed=Math.abs(signal.target-signal.previousTarget)>.001,
     direction=signal.target>signal.previousTarget?"増加":"縮小";
   return (
@@ -585,13 +599,13 @@ function SignalView({
         <article className="regime">
           <em>MARKET REGIME</em>
           <h2>{signal.regime}</h2>
-          <p className="price">TQQQ {usd(latest.tqqq.close)}</p>
+          <p className="price">TQQQ {usd(latestClose)}</p>
           <div className="next">
             <span>次に変わる主要条件</span>
             <b>{signal.nextChange}</b>
           </div>
           <p>
-            {fresh.stale ? fresh.message : `${sourceLabel}・${bt.assumption}`}
+            {fresh.stale ? fresh.message : `${sourceLabel}・${assumption}`}
           </p>
         </article>
       </section>
@@ -633,16 +647,16 @@ function SignalView({
           title="現在時刻。シグナル判定は米国市場の完了済み日足のみ"
         />
       </section>
-      <article className="panel">
+      {bt&&<article className="panel">
         <div className="panelHead">
           <div>
             <em>BACKTEST PATH · {sourceLabel}</em>
             <h2>選択戦略の資産曲線</h2>
           </div>
-          <span>{bt.assumption}</span>
+          <span>{assumption}</span>
         </div>
         <Curve points={bt.daily} label="選択戦略の資産曲線" />
-      </article>
+      </article>}
       <article className="panel holdings">
         <div>
           <em>DEVICE-LOCAL POSITION</em>
