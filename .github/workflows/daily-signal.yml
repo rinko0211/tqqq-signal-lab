@@ -3,6 +3,19 @@ on:
   schedule:
     - cron: "30 22 * * 1-5"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "lib/**"
+      - "github-pages/main.tsx"
+      - "github-pages/index.html"
+      - "github-pages/public/sw.js"
+      - "github-pages/public/manifest.webmanifest"
+      - "vite.pages.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - "tests/**"
 permissions:
   contents: write
   pages: write
