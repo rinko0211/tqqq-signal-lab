@@ -12,12 +12,12 @@ TQQQ / QQQ / SPY / VIXの日次実データを使い、Volatility Shieldの理�
 
 ## 最初にすること
 
-1. リポジトリ上部の **Actions** を押します。
-2. **Daily TQQQ Signal** を押します。
-3. **Run workflow** → 緑色の **Run workflow** を押します。
-4. 数分後、実行に緑のチェックが付くことを確認します。
-5. **Settings** → 左メニューの **Pages** を開きます。
-6. **Source** が **GitHub Actions** になっていることを確認します。
+1. **Settings** → 左メニューの **Pages** を開きます。
+2. **Source** で **GitHub Actions** を選びます。
+3. リポジトリ上部の **Actions** を押します。
+4. **Daily TQQQ Signal** を押します。
+5. **Run workflow** → 緑色の **Run workflow** を押します。
+6. 数分後、実行に緑のチェックが付くことを確認します。
 7. Pages欄に表示されたURLをSafariで開きます。
 
 サイト内の **初めて使う方へ** に、GitHubアカウント作成からiPhoneのホーム画面追加、Paper Trading開始までの15ステップがあります。

@@ -1,5 +1,7 @@
 name: Daily TQQQ Signal
 on:
+  push:
+    branches: ["main"]
   schedule:
     - cron: "30 22 * * 1-5"
   workflow_dispatch:
