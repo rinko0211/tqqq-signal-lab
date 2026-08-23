@@ -1,0 +1,15 @@
+[
+  {
+    "date": "2026-08-21",
+    "tqqqOpen": 71.7,
+    "tqqqClose": 71.17,
+    "qqqOpen": 715.23,
+    "qqqClose": 713.44,
+    "target": 0.75,
+    "previousTarget": 0.75,
+    "score": 81,
+    "regime": "弱い上昇",
+    "reason": "弱い上昇・総合81点のため75%を維持",
+    "crisis": false
+  }
+]

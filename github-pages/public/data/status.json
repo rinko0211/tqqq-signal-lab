@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-08-23T15:07:49.262Z",
+  "actionRunId": "32647411313",
+  "actionStatus": "success",
+  "marketDataDate": "2026-08-21",
+  "signalDate": "2026-08-21",
+  "jsonValid": true,
+  "pwaExpected": true,
+  "paperHistoryValid": true,
+  "state": "latest",
+  "message": "最新データでSignal生成済み",
+  "errors": []
+}
