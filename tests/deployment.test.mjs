@@ -1,0 +1,5 @@
+import test from"node:test";import assert from"node:assert/strict";import{readFile}from"node:fs/promises";
+const read=(path)=>readFile(new URL(`../${path}`,import.meta.url),"utf8");
+test("GitHub Actionsは米国営業日終了後に日次生成する",async()=>{const y=await read(".github/workflows/daily-signal.yml");assert.match(y,/30 22 \* \* 1-5/);assert.match(y,/npm run generate:daily/);assert.match(y,/actions\/deploy-pages/)});
+test("PWA manifestとservice workerは古いdata JSONをキャッシュしない",async()=>{const[m,sw]=await Promise.all([read("github-pages/public/manifest.webmanifest"),read("github-pages/public/sw.js")]);assert.equal(JSON.parse(m).display,"standalone");assert.match(sw,/includes\("\/data\/"\)/);assert.match(sw,/cache:"no-store"/)});
+test("生成JSONの日付とSignalは整合する",async()=>{const[s,d,h]=await Promise.all([read("github-pages/public/data/signal.json"),read("github-pages/public/data/market-data.json"),read("github-pages/public/data/live-history.json")]).then(x=>x.map(JSON.parse));assert.equal(s.dataDate,d.series.TQQQ.at(-1).date);assert.equal(h.at(-1).date,s.dataDate);assert.ok(Number.isFinite(s.signal.score))});
