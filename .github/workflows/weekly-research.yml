@@ -1,3 +1,4 @@
+# Track B remains isolated from the daily TQQQ signal path.
 name: Weekly Quant Research
 on:
   schedule:
