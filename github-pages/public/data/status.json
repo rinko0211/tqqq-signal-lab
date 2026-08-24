@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-08-24T02:36:38.432Z",
-  "actionRunId": "32683456527",
+  "generatedAt": "2026-08-24T03:23:58.244Z",
+  "actionRunId": "32686279474",
   "actionStatus": "success",
   "marketDataDate": "2026-08-21",
   "signalDate": "2026-08-21",
+  "lastForwardRecord": "2026-08-21",
+  "forwardRecords": 5,
+  "forwardPersistent": true,
+  "buildVersion": "9b19ae098524",
+  "dataSource": "Nasdaq Historical + Cboe VIX History",
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
   "state": "market_closed",
   "message": "米国市場休場・新規判定なし",
-  "errors": [],
-  "lastForwardRecord": "2026-08-21",
-  "forwardRecords": 5,
-  "forwardPersistent": true,
-  "buildVersion": "forward-1.0.0",
-  "dataSource": "Nasdaq Historical + Cboe VIX History"
+  "errors": []
 }
