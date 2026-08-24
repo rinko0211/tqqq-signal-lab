@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-24T03:23:58.244Z",
+  "generatedAt": "2026-08-24T09:23:36.000Z",
   "dataDate": "2026-08-21",
   "source": "Nasdaq Historical + Cboe VIX History",
   "tqqqClose": 71.17,
   "strategy": "Volatility Shield",
-  "state": "market_closed",
+  "state": "not_updated",
   "signal": {
     "date": "2026-08-21",
     "score": 81,
