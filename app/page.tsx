@@ -22,7 +22,7 @@ import type {DeepResearchBundle} from "../lib/research";
 import {summarizeForward,type ForwardLedger} from "../lib/forward";
 import type {CrossBundle} from "../lib/cross-ticker";
 
-type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"not_updated"|"failed";message?:string;errors?:string[]};
+type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
 type DailySignalFile={generatedAt:string;dataDate:string;source:string;tqqqClose:number;strategy:string;state:RuntimeStatus["state"];signal:SignalShape&{executionDate?:string};suggestion:string;validation?:{holdout?:Backtest["metrics"]|null};warnings?:string[]};
 type AnalysisBundle={bt?:Backtest;wf?:ReturnType<typeof walkForward>;rob?:ReturnType<typeof robustness>;research?:ReturnType<typeof researchBundle>;comparison?:ReturnType<typeof oosComparison>;holdout?:ReturnType<typeof holdoutForConfig>;tqqq?:Backtest["metrics"];qqq?:Backtest["metrics"]};
@@ -383,7 +383,7 @@ export default function Home() {
   const holdoutMetrics=dailySignal?.validation?.holdout||analysis?.holdout?.metrics;
   const operationalCandidate=Boolean(dataset?.source!=="demo"&&holdoutMetrics&&holdoutMetrics.cagr>0&&holdoutMetrics.maxDd>-.45&&holdoutMetrics.sharpe>.5);
   const compareAnalysis=analysis?.bt&&analysis.comparison&&analysis.holdout&&analysis.tqqq&&analysis.qqq?{bt:analysis.bt,comparison:analysis.comparison,holdout:analysis.holdout,tqqq:analysis.tqqq,qqq:analysis.qqq}:null;
-  const statusKind=runtimeStatus?.state==="failed"?"bad":runtimeStatus?.state==="not_updated"?"warn":runtimeStatus?"ok":"neutral";
+  const statusKind=runtimeStatus?.state==="failed"?"bad":["not_updated","market_pending"].includes(runtimeStatus?.state||"")?"warn":runtimeStatus?"ok":"neutral";
   const generatedLabel=runtimeStatus?.generatedAt?new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",dateStyle:"medium",timeStyle:"short"}).format(new Date(runtimeStatus.generatedAt)):"未確認";
   return (
     <main>

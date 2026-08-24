@@ -23,6 +23,7 @@ const isNyseHoliday=(date:string)=>{const y=+date.slice(0,4),goodFriday=easter(y
 
 const generatedAt = new Date().toISOString();
 const nyDate = new Intl.DateTimeFormat("en-CA", { timeZone:"America/New_York", year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date());
+const nyHour = Number(new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", hour:"2-digit", hourCycle:"h23" }).format(new Date()));
 await Promise.all(roots.map(dir => mkdir(dir, { recursive:true })));
 const priorSignal = await readJson<{dataDate?:string}|null>("signal.json", null);
 const history = await readJson<LiveSnapshot[]>("live-history.json", []);
@@ -42,7 +43,7 @@ try {
   const updated = priorSignal?.dataDate !== latest.date;
   const nyWeekday = new Date(`${nyDate}T12:00:00Z`).getUTCDay();
   const closed = [0,6].includes(nyWeekday) || isNyseHoliday(nyDate);
-  const state = updated ? "latest" : closed ? "market_closed" : "not_updated";
+  const state = updated ? "latest" : closed ? "market_closed" : nyHour < 18 ? "market_pending" : "not_updated";
   const splitRatio = priorBar.tqqq.close / bar.tqqq.open;
   const splitFactor = [2,3,4,5,10].find(x=>Math.abs(splitRatio-x)/x<.08);
   const snapshot:LiveSnapshot = { date:latest.date,tqqqOpen:bar.tqqq.open,tqqqClose:bar.tqqq.close,qqqOpen:bar.qqq.open,qqqClose:bar.qqq.close,target:latest.signal.target,previousTarget:latest.signal.previousTarget,score:latest.signal.score,regime:latest.signal.regime,reason:latest.signal.reason,crisis:latest.signal.regime==="急落・危機",...(splitFactor?{splitFactor}:{}) };
@@ -53,7 +54,7 @@ try {
   await Promise.all([
     writeJson("market-data.json",payload), writeJson("signal.json",signal), writeJson("live-history.json",history),
     writeJson("forward-ledger.json",forward), writeJson("forward-summary.json",forwardSummary),
-    writeJson("status.json",{generatedAt,actionRunId:process.env.GITHUB_RUN_ID||"local",actionStatus:"success",marketDataDate:latest.date,signalDate:latest.date,lastForwardRecord:forward.records.at(-1)?.marketDataDate||null,forwardRecords:forward.records.length,forwardPersistent:true,buildVersion:process.env.GITHUB_SHA?.slice(0,12)||"local",dataSource:payload.source,jsonValid:true,pwaExpected:true,paperHistoryValid:true,state,message:state==="latest"?"最新データでSignal・Forward台帳を生成済み":state==="market_closed"?"米国市場休場・新規判定なし":"最新データ未更新",errors:[]})
+    writeJson("status.json",{generatedAt,actionRunId:process.env.GITHUB_RUN_ID||"local",actionStatus:"success",marketDataDate:latest.date,signalDate:latest.date,lastForwardRecord:forward.records.at(-1)?.marketDataDate||null,forwardRecords:forward.records.length,forwardPersistent:true,buildVersion:process.env.GITHUB_SHA?.slice(0,12)||"local",dataSource:payload.source,jsonValid:true,pwaExpected:true,paperHistoryValid:true,state,message:state==="latest"?"最新データでSignal・Forward台帳を生成済み":state==="market_closed"?"米国市場休場・新規判定なし":state==="market_pending"?"米国市場終了後の更新待ち・新規判定なし":"最新データ未更新",errors:[]})
   ]);
   await Promise.all(roots.map(dir=>existsSync(new URL(".failed",dir))?writeFile(new URL(".failed",dir),""):Promise.resolve()));
 } catch(error) {
