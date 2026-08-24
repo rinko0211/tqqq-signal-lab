@@ -40,8 +40,6 @@ jobs:
         run: npm run generate:daily
       - name: Run calculation tests
         run: npm run test:core
-      - name: Build PWA
-        run: npm run build:pages
       - name: Save append-only live signal history
         run: |
           git config user.name "github-actions[bot]"
@@ -52,6 +50,11 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+      # A scheduled run can have been queued from an older commit. Build only
+      # after the append-only record has been rebased onto the latest main so
+      # Pages never republishes an older status.json over a newer daily run.
+      - name: Build PWA from the persisted latest main
+        run: npm run build:pages
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
