@@ -1,11 +1,18 @@
-import{mkdir,readFile,writeFile}from"node:fs/promises";
+import{mkdir,writeFile}from"node:fs/promises";
 import{datasetFromPayload}from"../lib/engine.ts";
 import{deepResearchBundle}from"../lib/research.ts";
+import{crossTickerBundle}from"../lib/cross-ticker.ts";
+import{fetchOfficialData}from"../lib/official-data.ts";
 
 const roots=[new URL("../github-pages/public/data/",import.meta.url),new URL("../public/data/",import.meta.url)];
 await Promise.all(roots.map(x=>mkdir(x,{recursive:true})));
-const payload=JSON.parse(await readFile(new URL("market-data.json",roots[0]),"utf8")),dataset=datasetFromPayload(payload),errors=dataset.issues.filter(x=>x.severity==="error");
+const payload=await fetchOfficialData(true),dataset=datasetFromPayload(payload),errors=dataset.issues.filter(x=>x.severity==="error");
 if(errors.length)throw Error(errors.map(x=>x.message).join("; "));
 const report=deepResearchBundle(dataset);
-await Promise.all(roots.map(x=>writeFile(new URL("deep-research.json",x),JSON.stringify(report,null,2)+"\n")));
+const cross=crossTickerBundle(payload);
+await Promise.all(roots.flatMap(x=>[
+  writeFile(new URL("deep-research.json",x),JSON.stringify(report,null,2)+"\n"),
+  writeFile(new URL("cross-ticker.json",x),JSON.stringify(cross,null,2)+"\n"),
+]));
 console.log(`Deep research generated: ${report.dataStart} to ${report.dataEnd}`);
+console.log(`Cross-ticker research generated: ${cross.results.length} candidates, common start ${cross.commonStart||"n/a"}`);

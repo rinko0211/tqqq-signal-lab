@@ -19,8 +19,10 @@ import {
 import {simulatePaper,type LiveSnapshot,type PaperConfig} from "../lib/paper";
 import {researchBundle} from "../lib/research";
 import type {DeepResearchBundle} from "../lib/research";
+import {summarizeForward,type ForwardLedger} from "../lib/forward";
+import type {CrossBundle} from "../lib/cross-ticker";
 
-type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"not_updated"|"failed";message?:string;errors?:string[]};
+type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
 type DailySignalFile={generatedAt:string;dataDate:string;source:string;tqqqClose:number;strategy:string;state:RuntimeStatus["state"];signal:SignalShape&{executionDate?:string};suggestion:string;validation?:{holdout?:Backtest["metrics"]|null};warnings?:string[]};
 type AnalysisBundle={bt?:Backtest;wf?:ReturnType<typeof walkForward>;rob?:ReturnType<typeof robustness>;research?:ReturnType<typeof researchBundle>;comparison?:ReturnType<typeof oosComparison>;holdout?:ReturnType<typeof holdoutForConfig>;tqqq?:Backtest["metrics"];qqq?:Backtest["metrics"]};
@@ -32,6 +34,7 @@ const pct = (v: number, d = 1) =>
   usd = (v: number) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 const TABS = [
   ["signal", "今日のシグナル"],
+  ["forward", "Forward Test"],
   ["compare", "戦略比較"],
   ["walk", "Walk-Forward"],
   ["year", "年別成績"],
@@ -39,6 +42,7 @@ const TABS = [
   ["robust", "頑健性検証"],
   ["research", "研究監査"],
   ["deep", "Challenger研究"],
+  ["universe", "ETF横断研究"],
   ["data", "データ管理"],
   ["paper", "Paper Trading"],
   ["status", "System Status"],
@@ -195,7 +199,9 @@ export default function Home() {
     [dailySignal,setDailySignal]=useState<DailySignalFile|null>(null),
     [analysis,setAnalysis]=useState<AnalysisBundle|null>(null),
     [analysisLoading,setAnalysisLoading]=useState(false),
-    [liveHistory,setLiveHistory]=useState<LiveSnapshot[]>([]);
+    [liveHistory,setLiveHistory]=useState<LiveSnapshot[]>([]),
+    [forwardLedger,setForwardLedger]=useState<ForwardLedger|null>(null),
+    [crossResearch,setCrossResearch]=useState<CrossBundle|null>(null);
   const [deepResearch,setDeepResearch]=useState<DeepResearchBundle|null>(null),[deepLoading,setDeepLoading]=useState(false);
   const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false),deepRequested=useRef(false),analysisWorker=useRef<Worker|null>(null),analysisRequest=useRef(0);
   useEffect(() => {
@@ -212,11 +218,17 @@ export default function Home() {
       fetchJson(new URL("signal.json",staticData)).then((value)=>{setDailySignal(value);setMessage("事前計算済みの最新Signalを読み込みました")}),
       fetchJson(new URL("status.json",staticData)).then(setRuntimeStatus),
       fetchJson(new URL("live-history.json",staticData)).then(setLiveHistory),
+      fetchJson(new URL("forward-ledger.json",staticData)).then(setForwardLedger),
     ]).then((results)=>{
       if(results[0].status==="rejected")setMessage("最新Signalを取得できません。System Statusを確認してください。");
       setLoading(false);
     });
   }, []);
+  useEffect(()=>{
+    if(tab!=="universe"||crossResearch)return;
+    const url=new URL("./data/cross-ticker.json",document.baseURI);
+    fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error(`${r.status}`);return r.json()}).then(setCrossResearch).catch(()=>setMessage("ETF横断研究は初回Weekly Quant Researchの完了後に表示されます。"));
+  },[tab,crossResearch]);
   useEffect(()=>{
     if(tab!=="deep"||deepResearch||deepRequested.current)return;
     deepRequested.current=true;queueMicrotask(()=>setDeepLoading(true));const url=new URL("./data/deep-research.json",document.baseURI);
@@ -490,7 +502,8 @@ export default function Home() {
             </button>
           </section>
         )}
-        {signal&&latestClose!==undefined&&fresh&&tab === "signal" && (
+        {signal&&latestClose!==undefined&&fresh&&tab === "signal" && (<>
+          {forwardLedger&&<ForwardMini ledger={forwardLedger}/>}
           <SignalView
             bt={bt}
             signal={signal}
@@ -505,7 +518,8 @@ export default function Home() {
             jst={jst}
             operationalCandidate={operationalCandidate}
           />
-        )}
+        </>)}
+        {tab==="forward" && (forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>)}
         {compareAnalysis && tab === "compare" && (
           <CompareView
             analysis={compareAnalysis}
@@ -529,6 +543,7 @@ export default function Home() {
         {analysis?.rob && tab === "robust" && <RobustView data={analysis.rob} />}
         {analysis?.research && tab === "research" && <ResearchView data={analysis.research}/>} 
         {tab === "deep" && (deepResearch?<DeepResearchView data={deepResearch}/>:<section className="emptyState"><span>WEEKLY DEEP RESEARCH</span><h2>{deepLoading?"事前計算レポートを読込中":"レポート未生成"}</h2><p>日常Signalを遅くしないため、複数Walk-Forward窓とChallenger比較は週次Actionsで事前計算します。</p></section>)}
+        {tab === "universe" && (crossResearch?<CrossTickerView data={crossResearch}/>:<section className="emptyState"><span>TRACK B</span><h2>ETF横断研究を読込中</h2><p>Track Aの日次Signalとは分離した週次研究です。初回Weekly Quant Research完了後に表示されます。</p></section>)}
         {dataset && tab === "data" && (
           <DataView
             dataset={dataset}
@@ -538,9 +553,9 @@ export default function Home() {
           />
         )}
         {tab === "paper" && <PaperView history={liveHistory} latestDate={latestDate} source={dataset?.source||(dailySignal?"auto":undefined)}/>} 
-        {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory}/>} 
-        {tab === "guide" && <><GuideView/><RecoveryPromptPack/></>}
-        {tab === "roadmap" && <RoadmapView/>}
+        {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/>}
+        {tab === "guide" && <><GuideView/><LifecycleGuide/><RecoveryPromptPack/></>}
+        {tab === "roadmap" && <RoadmapV2/>}
         {tab === "glossary" && <GlossaryView/>}
         {tab === "spec" && <SpecView />}
       </section>
@@ -1204,6 +1219,41 @@ function DataView({
 
 const yen=(v:number)=>Number.isFinite(v)?new Intl.NumberFormat("ja-JP",{style:"currency",currency:"JPY",maximumFractionDigits:0}).format(v):"—";
 
+function ForwardMini({ledger}:{ledger:ForwardLedger}){
+  const rows=summarizeForward(ledger),champ=rows.find(x=>x.id==="VS13")!;
+  return <article className="panel health"><div className="panelHead"><div><em>FORWARD VALIDATION · IMMUTABLE</em><h2>現在のChampion：VS13-v1.0</h2></div><Status kind="warn">{champ.evidence} Evidence</Status></div><section className="metrics compact"><Metric label="Forward資産" value={yen(champ.currentCapital)} sub={pct(champ.totalReturn)}/><Metric label="現在DD" value={pct(champ.currentDd)}/><Metric label="注文" value={String(champ.orders)+"回"}/><Metric label="次の正式Review" value={ledger.reviewSchedule.sixMonth}/></section><p className="note">まだForward期間が短いため順位は確定していません。Championの自動変更は行いません。</p></article>;
+}
+
+function ForwardView({ledger}:{ledger:ForwardLedger}){
+  const rows=summarizeForward(ledger),champ=rows.find(x=>x.id==="VS13")!;
+  return <>
+    <article className="guideHero"><em>STRATEGY FORWARD TEST · APPEND ONLY</em><h2>未来データで戦略を正式比較</h2><p>2026-08-21以降、その日に公開されたSignalだけを保存します。後日の再計算で当時のSignalを上書きしません。</p></article>
+    <section className="glossaryGrid">
+      <article className="panel"><em>BALANCED CHAMPION</em><h2>VS13 — バランス型</h2><p>相場が悪化した時、保有後のTQQQ高値から13%下がることを防御条件の一つにします。成長力と下落抑制の釣り合いが最も安定していたため、現在の基準戦略です。</p><p className="note">平易に言えば「上昇には参加し、危険が強まれば段階的に現金へ逃げる」戦略です。</p></article>
+      <article className="panel"><em>GROWTH CHALLENGER</em><h2>VS12 — やや早く守る成長候補</h2><p>基本ロジックはVS13と同じですが、高値から12%下がった段階で防御を強めます。過去成績は少し良好でも、12%を過去データを見て選んだ影響を否定できません。</p><p className="note">数字だけで昇格させず、これからの日々で本当に再現するか競わせます。</p></article>
+      <article className="panel"><em>DEFENSIVE CANDIDATE</em><h2>VT30 — 値動きを抑える守備型</h2><p>危険な相場ではTQQQの比率をより細かく落とし、ポートフォリオ全体の年率変動を約30%へ近づけます。上昇利益は減りやすい一方、大きな下落を抑える目的です。</p><p className="note">VS13の単純な敗者ではなく「眠りやすさを重視する別目的の候補」です。</p></article>
+    </section>
+    <section className="metrics"><Metric label="Balanced Champion" value="VS13-v1.0"/><Metric label="開始資金" value={yen(1_000_000)}/><Metric label="開始日" value={ledger.freezes[0]?.startDate||"—"}/><Metric label="6か月Review" value={ledger.reviewSchedule.sixMonth}/><Metric label="12か月Review" value={ledger.reviewSchedule.twelveMonth}/><Metric label="24か月Review" value={ledger.reviewSchedule.twentyFourMonth}/></section>
+    <article className="panel"><em>FORWARD LEADERBOARD</em><h2>Historicalとは分離した現在順位</h2><Table heads={["Strategy","Version","区分","現在資産","Total Return","Max DD","Sortino","Calmar","注文","Evidence","判定"]} rows={rows.map(x=>[x.name,x.version,x.category,yen(x.currentCapital),pct(x.totalReturn),pct(x.metrics.maxDd),x.observations<20?"—":num(x.metrics.sortino),x.observations<63?"—":num(x.metrics.calmar),x.orders,x.evidence,x.status])}/><p className="warningNote">1年未満は年率値を強調しません。Total Return・DD・実注文・経験Regimeを優先します。</p></article>
+    <section className="split"><article className="panel"><em>FORWARD EQUITY CURVES</em><h2>100万円を同時スタート</h2>{ledger.freezes.map(f=>{const points=ledger.records.filter(r=>r.strategyVersion===f.version).map(r=>({equity:r.equity}));return <div key={f.version}><strong>{f.version}</strong><Curve points={points} label={f.version+" Forward Equity"}/></div>})}</article><article className="panel"><em>UNDERWATER STATUS</em><h2>最高値からの下落</h2><Table heads={["Version","現在DD","最大DD","回復日数"]} rows={rows.map(x=>[x.version,pct(x.currentDd),pct(x.metrics.maxDd),x.metrics.recoveryDays===null?"未回復":String(x.metrics.recoveryDays)+"日"])}/></article></section>
+    <article className="panel"><em>EVIDENCE METER</em><h2>期間だけで昇格させない</h2><Table heads={["Strategy","経過観測","注文","Regime数","欠測","Evidence","現在DD","累積コスト"]} rows={rows.map(x=>[x.version,x.observations,x.orders,x.regimes,x.missing,x.evidence,pct(x.currentDd),yen(x.transactionCosts)])}/><p className="note">Strong条件：252観測以上・6注文以上・4 Regime以上・欠測1%以下。12か月経過しても条件不足ならEvidence Insufficientのままです。</p></article>
+    <article className="panel formula"><em>PRE-REGISTERED PROMOTION RULE</em><h2>Champion昇格条件</h2><code>{ledger.promotionRule}</code><p>GitHub Actionsは候補を表示するだけです。最終変更には人間の承認が必要です。</p></article>
+    <article className="panel"><em>RESEARCH FREEZE</em><h2>固定Versionと約定仮定</h2><Table heads={["Version","役割","Stop / Sizing","判定","約定","費用"]} rows={ledger.freezes.map(x=>[x.version,x.role,x.config?(x.config.sizing==="volTarget"?"30% Vol Target":String(Math.round(x.config.trailStop*100))+"% Stop"):"Buy & Hold",x.assumptions.signal,x.assumptions.execution,String(x.assumptions.commissionBps+x.assumptions.slippageBps)+" bps"])}/></article>
+    <article className="panel"><em>HISTORICAL vs FORWARD</em><h2>再現性判定</h2><p>{champ.observations<63?"Forward観測が63営業日未満のため、Historical performance has not replicatedという判定はまだ行いません。":"ForwardとHistorical OOSの乖離を確認できる期間に入りました。週次研究のDegradation警告を確認してください。"}</p></article>
+  </>;
+}
+
+function CrossTickerView({data}:{data:CrossBundle}){
+  return <>
+    <article className="guideHero"><em>TRACK B · LEVERAGED ETF SELECTION</em><h2>そもそもTQQQが最適かを別Trackで検証</h2><p>Track AのForwardは変更せず、実ETF価格と共通ルールで比較します。Synthetic値は混ぜません。</p></article>
+    <article className="panel"><em>ONLINE MARKET SCREENING · {data.asOf}</em><h2>Shortlist 5銘柄</h2><Table heads={["Ticker","Issuer","Underlying","Proxy","設定日","費用","AUM","公式出来高","Spread","Operational","理由"]} rows={data.screening.map(x=>[x.ticker,x.issuer,x.underlying,x.proxy,x.inception,pct(x.expenseRatio,2),x.aumUsd?"$"+(x.aumUsd/1e9).toFixed(1)+"B":"公式HTML未確認",x.dailyVolume.toLocaleString(),x.medianSpread===null?"公式HTML未確認":pct(x.medianSpread,2),x.operationalQuality,x.reason])}/><p className="note">未確認値を推測で埋めていません。TQQQ/UPROのAUMとmedian spreadはProShares公表値です。</p></article>
+    {data.results.length>0&&<><article className="panel"><em>COMMON FRAMEWORK · ACTUAL ETF DATA</em><h2>同じVS13ルールによるOOS・共通期間比較</h2><Table heads={["Ticker","実データ期間","OOS CAGR","OOS Max DD","OOS Sortino","OOS Calmar","共通期間CAGR","共通期間DD","30%Vol DD","Operational","Score","Pareto"]} rows={data.results.map(x=>[x.ticker,x.dataStart+"〜"+x.dataEnd,pct(x.oos.cagr),pct(x.oos.maxDd),num(x.oos.sortino),num(x.oos.calmar),pct(x.common.cagr),pct(x.common.maxDd),pct(x.normalized.maxDd),x.operationalQuality,num(x.researchScore,3),x.pareto?"YES":"NO"])}/><p className="note">Common period開始：{data.commonStart||"未計算"}。Ticker別の一点最適化は行いません。</p></article><article className="panel health"><em>FORWARD CANDIDATE GATE</em><h2>{data.forwardCandidates.length?data.forwardCandidates.join(" / "):"Evidence不足"}</h2><p>{data.selectionRule}</p><p className="warningNote">Forward候補であり、TQQQ Championを自動で置き換える判断ではありません。</p></article></>}
+    <article className="panel"><em>EXCLUDED REGISTRY</em><h2>除外結果も保存</h2><Table heads={["候補","除外理由"]} rows={data.excluded.map(x=>[x.ticker,x.reason])}/></article>
+    <section className="glossaryGrid">{data.screening.map(x=><article className="panel" key={x.ticker}><em>OFFICIAL SOURCE</em><h2>{x.ticker}</h2><p>{x.underlying} / {x.leverage}</p><a href={x.officialUrl} target="_blank" rel="noreferrer">発行会社公式ページを開く</a></article>)}</section>
+    <article className="issueBlock"><em>LIMITATIONS</em><h2>研究上の未解決点</h2>{data.limitations.map((x,i)=><p key={i}>• {x}</p>)}</article>
+  </>;
+}
+
 function PaperView({history,latestDate,source}:{history:LiveSnapshot[];latestDate?:string;source?:Dataset["source"]}){
   const [draft,setDraft]=useState<PaperConfig>({initialJpy:1_000_000,startDate:latestDate||"",fxRate:150}),[config,setConfig]=useState<PaperConfig|null>(null);
   useEffect(()=>{queueMicrotask(()=>{try{const saved=JSON.parse(localStorage.getItem("tqqq-paper-v1")||"null");if(saved){setConfig(saved);setDraft(saved)}}catch{}})},[]);
@@ -1235,10 +1285,10 @@ function PaperView({history,latestDate,source}:{history:LiveSnapshot[];latestDat
   </>;
 }
 
-function SystemStatusView({status,latestDate,history}:{status:RuntimeStatus|null;latestDate?:string;history:LiveSnapshot[]}){
+function SystemStatusView({status,latestDate,history,forward}:{status:RuntimeStatus|null;latestDate?:string;history:LiveSnapshot[];forward:ForwardLedger|null}){
   const [pwa,setPwa]=useState<boolean|null>(null);useEffect(()=>{const check=()=>"serviceWorker" in navigator?navigator.serviceWorker.getRegistration().then(r=>setPwa(Boolean(r))).catch(()=>setPwa(false)):setPwa(false);if(document.readyState==="complete")check();else{window.addEventListener("load",check,{once:true});return()=>window.removeEventListener("load",check)}},[]);
-  const operational=Boolean(status&&status.actionStatus==="success"&&status.jsonValid&&status.paperHistoryValid&&status.state!=="not_updated"),state=(ok?:boolean)=>ok?"正常":"要確認",errorCode=!status?"SIGNAL-002":status.actionStatus==="failed"?"ACTION-003":!status.jsonValid?"SIGNAL-002":!status.paperHistoryValid?"PAPER-004":status.state==="not_updated"?"DATA-001":pwa===false?"PWA-005":null;
-  const copyPrompt=()=>{const prompt=`私はGitHub初心者です。TQQQ Signal Labで${errorCode||"状態確認"}が発生しました。\n\nSystem Status:\nActions: ${status?.actionStatus||"未確認"}\n最新市場データ: ${status?.marketDataDate||latestDate||"不明"}\nSignal生成日: ${status?.signalDate||"不明"}\nJSON: ${state(status?.jsonValid)}\nPaper: ${state(status?.paperHistoryValid)}\nMessage: ${status?.message||"なし"}\nError: ${(status?.errors||[]).join(" / ")||"なし"}\n\n専門用語を使わず、1回に1操作ずつ、どこを押せばよいか教えてください。`;navigator.clipboard.writeText(prompt).catch(()=>window.prompt("この内容をコピーしてください",prompt))};
+  const operational=Boolean(status&&status.actionStatus==="success"&&status.jsonValid&&status.paperHistoryValid&&status.forwardPersistent&&forward&&status.state!=="not_updated"),state=(ok?:boolean)=>ok?"正常":"要確認",errorCode=!status?"SIGNAL-002":status.actionStatus==="failed"?"ACTION-003":!status.jsonValid?"SIGNAL-002":!status.forwardPersistent||!forward?"FORWARD-001":!status.paperHistoryValid?"PAPER-004":status.state==="not_updated"?"DATA-001":pwa===false?"PWA-005":null;
+  const copyPrompt=()=>{const prompt=`私はGitHub・プログラミング初心者です。TQQQ Signal Labで${errorCode||"状態確認"}が発生しました。\n\nRepository: rinko0211/tqqq-signal-lab\nSystem Status:\nActions: ${status?.actionStatus||"未確認"}\n最新市場データ: ${status?.marketDataDate||latestDate||"不明"}\nSignal生成日: ${status?.signalDate||"不明"}\nForward最終記録: ${status?.lastForwardRecord||"不明"}\nForward件数: ${status?.forwardRecords??"不明"}\nBuild: ${status?.buildVersion||"不明"}\nData source: ${status?.dataSource||"不明"}\nJSON: ${state(status?.jsonValid)}\nPaper: ${state(status?.paperHistoryValid)}\nMessage: ${status?.message||"なし"}\nError: ${(status?.errors||[]).join(" / ")||"なし"}\n\n期待動作は、日次データ取得→Signal→Forward追記→Pages更新です。秘密情報はありません。専門用語を使わず、一度に1操作ずつ、どこを押すか説明してください。`;navigator.clipboard.writeText(prompt).catch(()=>window.prompt("この内容をコピーしてください",prompt))};
   return <>
     <article className={`systemHero ${operational?"ok":"bad"}`}><em>SYSTEM STATUS</em><h2>{operational?"All Systems Operational":"確認が必要です"}</h2><p>{status?.message||"status.jsonをまだ確認できません"}</p></article>
     <section className="statusGrid">
@@ -1248,11 +1298,17 @@ function SystemStatusView({status,latestDate,history}:{status:RuntimeStatus|null
       <Metric label="JSON" value={state(status?.jsonValid)} tone={status?.jsonValid?"good":"bad"}/>
       <Metric label="PWA対応ブラウザ" value={pwa===null?"確認中":state(pwa)} tone={pwa?"good":"bad"}/>
       <Metric label="Paper Trading履歴" value={status?.paperHistoryValid?`${history.length}日・正常`:"要確認"} tone={status?.paperHistoryValid?"good":"bad"}/>
+      <Metric label="Forward永続台帳" value={status?.forwardPersistent&&forward?`${status.forwardRecords||forward.records.length}件・正常`:"要確認"} tone={status?.forwardPersistent&&forward?"good":"bad"}/>
+      <Metric label="Forward最終日" value={status?.lastForwardRecord||forward?.records.at(-1)?.marketDataDate||"—"}/>
+      <Metric label="Build version" value={status?.buildVersion||"—"}/>
+      <Metric label="Data source" value={status?.dataSource||"—"}/>
     </section>
-    {errorCode&&<article className="issueBlock"><em>ERROR {errorCode}</em><h2>{errorCode==="DATA-001"?"最新市場データを確認できません":errorCode==="ACTION-003"?"GitHub Actionsが失敗しました":errorCode==="PAPER-004"?"Paper Trading履歴を確認できません":errorCode==="PWA-005"?"PWA登録を確認できません":"Signal JSONを確認できません"}</h2><button onClick={copyPrompt}>ChatGPTに相談する内容をコピー</button></article>}
+    {errorCode&&<article className="issueBlock"><em>ERROR {errorCode}</em><h2>{errorCode==="DATA-001"?"最新市場データを確認できません":errorCode==="ACTION-003"?"GitHub Actionsが失敗しました":errorCode==="FORWARD-001"?"Forward永続台帳を確認できません":errorCode==="PAPER-004"?"Paper Trading履歴を確認できません":errorCode==="PWA-005"?"PWA登録を確認できません":"Signal JSONを確認できません"}</h2><button onClick={copyPrompt}>ChatGPTに相談する内容をコピー</button></article>}
     {status?.errors?.length?<article className="issueBlock"><h2>発生した問題</h2>{status.errors.map((e,i)=><p key={i}>× {e}</p>)}</article>:<article className="panel"><em>NO ACTIVE ERROR</em><h2>エラー記録なし</h2><p className="note">休場日は「米国市場休場・新規判定なし」、平日にデータが変わらなければ「最新データ未更新」と明示します。取得失敗時は以前のSignalを上書きしません。</p></article>}
   </>;
 }
+
+function LifecycleGuide(){return <article className="panel"><em>SIX-MONTH OPERATING LIFE CYCLE</em><h2>設定後は、原則何もしません</h2><Table heads={["時期","あなたがすること","判断しないこと"]} rows={[["普段","朝に開くなら、最終データ日・本日の判断・目標比率だけ確認。開かなくても記録はGitHub側で続きます。","短期損益だけで戦略を変更しない"],["月1回（任意）","System Statusが正常、Forward最終日が最新市場日であることを確認。","過去のForward記録を再計算で置換しない"],["6か月後",`Forward Test → Evidence → 6か月Review（${"2027-02-22"}）を見る。`,`原則Championを変更しない`],["12か月後",`Forward LeaderboardとPromotion Ruleを確認（${"2027-08-23"}）。`,`単一のReturnだけで昇格させない`],["エラー時","System Status → エラーCode →「ChatGPTに相談する内容をコピー」。","推測Signalで穴埋めしない"]]}/></article>}
 
 const GUIDE_STEPS=[
   ["このツールでできること","米国市場終了後にTQQQ・QQQ・SPY・VIXを検査し、Signalと翌営業日の理論目標を表示します。","最上部の「最終データ日」「最終計算日時」「データ取得状態」を見ます。"],
@@ -1398,12 +1454,17 @@ const RECOVERY_PROMPTS=[
   ["SIGNAL-002","JSON error","signal.jsonを読めません。Actionsの生成、ファイル存在、JSON形式を初心者向けに確認してください。"],
   ["GIT-006","Git merge conflict","GitHubでmerge conflictが表示されました。データ履歴を消さず、画面上で安全に解決する方法を教えてください。"],
   ["FORK-007","Fork sync problem","Forkが元プロジェクトより遅れています。Sync forkを使う操作と、変更を失わない注意点を教えてください。"],
+  ["FORWARD-001","Forward record missing","Forward台帳が見つからない、または最新市場日まで追記されていません。当時の記録を再計算で上書きせず確認する手順を教えてください。"],
+  ["PERSIST-001","Persistence failed","Forward台帳をGitHubへ保存できませんでした。Actionsの権限、commit、pushを履歴を消さず確認してください。"],
 ] as const;
 function RecoveryPromptPack(){const copy=(code:string,title:string,body:string)=>{const prompt=`私はGitHub初心者です。TQQQ Signal Labで${code}（${title}）が発生しました。\n\n${body}\n\n専門用語を使わず、1回に1操作ずつ、どこを押すか、正常なら何が見えるか、失敗時に次に見る場所を教えてください。`;navigator.clipboard.writeText(prompt).catch(()=>window.prompt("この内容をコピーしてください",prompt))};return <article className="panel trouble"><em>FREE GPT RECOVERY PROMPT PACK</em><h2>無料版ChatGPTへそのまま貼る文</h2><Table heads={["Code","症状","操作"]} rows={RECOVERY_PROMPTS.map(([code,title,body])=>[code,title,<button key={code} onClick={()=>copy(code,title,body)}>相談文をコピー</button>]) as unknown as (string|number)[][]}/></article>}
 
 const GLOSSARY=[
- ["CAGR","複利でならした年平均成長率。高くても最大DDとセットで確認します。"],["Total Return","開始から終了までの累積リターン。資産曲線から直接計算します。"],["Sharpe Ratio","総変動に対する収益効率。高いほど効率的ですが将来保証ではありません。"],["Sortino Ratio","悪い方向の変動だけに対する収益効率です。"],["Maximum Drawdown","過去最高から最大で減った割合。−30%なら100万円が一時70万円です。"],["Calmar Ratio","CAGR÷最大DD。成長と深い下落の効率です。"],["Volatility / VIX","値動きの大きさ / 米国株の予想変動を表す指数です。"],["Momentum / Trend","上昇の勢い / 中長期の方向です。"],["OOS","パラメータ選択に使っていない未来側の検証期間です。"],["Walk-Forward","過去で選び、その直後の未来で試すことを繰り返します。"],["Holdout","最終候補まで触らない検証期間。一度見て調整すると純粋ではありません。"],["Backtest","過去データを使った仮想検証です。実運用成績ではありません。"],["Live Paper Trading","その時点で利用可能だったSignalだけを記録する仮想運用です。"],["Slippage","想定価格より不利に約定する差です。"],["Position Size / Exposure","資産のうちTQQQへ配分する割合 / 平均配分です。"],["Trailing Stop","保有後のTQQQ高値から一定以上下がった時に縮小・撤退する規則です。"],["Volatility Drag / Daily Reset","日次レバレッジ再調整により、長期成績が指数×3と一致しない性質です。"],["Look-Ahead Bias","その時点で知らない未来情報を使ってしまう誤りです。"],["Overfitting","過去だけに合い、未来で再現しにくい複雑化です。"]
+ ["CAGR","複利でならした年平均成長率。高くても最大DDとセットで確認します。"],["Total Return","開始から終了までの累積リターン。資産曲線から直接計算します。"],["Sharpe Ratio","総変動に対する収益効率。高いほど効率的ですが将来保証ではありません。"],["Sortino Ratio","悪い方向の変動だけに対する収益効率です。"],["Maximum Drawdown","過去最高から最大で減った割合。−30%なら100万円が一時70万円です。"],["Calmar Ratio","CAGR÷最大DD。成長と深い下落の効率です。"],["Volatility / VIX","値動きの大きさ / 米国株の予想変動を表す指数です。"],["Momentum / Trend","上昇の勢い / 中長期の方向です。"],["OOS","パラメータ選択に使っていない未来側の検証期間です。"],["Walk-Forward","過去で選び、その直後の未来で試すことを繰り返します。"],["Holdout","最終候補まで触らない検証期間。一度見て調整すると純粋ではありません。"],["Backtest","過去データを使った仮想検証です。実運用成績ではありません。"],["Live Paper Trading","その時点で利用可能だったSignalだけを記録する仮想運用です。"],["Slippage","想定価格より不利に約定する差です。"],["Position Size / Exposure","資産のうちTQQQへ配分する割合 / 平均配分です。"],["Trailing Stop","保有後のTQQQ高値から一定以上下がった時に縮小・撤退する規則です。"],["Volatility Drag / Daily Reset","日次レバレッジ再調整により、長期成績が指数×3と一致しない性質です。"],["Look-Ahead Bias","その時点で知らない未来情報を使ってしまう誤りです。"],["Overfitting","過去だけに合い、未来で再現しにくい複雑化です。"],
+ ["Champion","現在の運用基準として固定された戦略。自動では変更しません。"],["Challenger","Championより良い可能性を未来データで検証する候補です。"],["Forward Test","実際の日々の時点で生成したSignalだけを追記する未来向き検証です。"],["Forward Evidence","期間、注文数、経験相場、欠測から見た証拠の強さです。"],["Promotion","十分な証拠を確認し、人間の承認でChampionへ昇格させることです。"],["Strategy Version","途中変更を区別する固定番号。新Versionを過去へ遡及適用しません。"],["Research Freeze","Forward開始前に式・閾値・費用・約定方法を固定することです。"],["Regime","その時点までの情報で分類した市場環境です。"],["Annualized Return","短期Returnを年率換算した参考値。1年未満では過信しません。"],["Equity Curve","資産額の時間推移です。"],["Drawdown Curve / Underwater","過去最高額から現在どれだけ下にいるかの推移です。"],["Recovery Time","下落前の最高資産額へ戻るまでの日数です。"],["Parameter Stability","少し違う設定でも結果が大崩れしない性質です。"],["Selection Bias","後から成功商品を選んだことで過去成績が良く見える偏りです。"],["Multiple Testing","多数の候補を試すほど偶然の当たりが出やすくなる問題です。"],["Common Period","比較銘柄すべてにデータがある同じ期間です。"]
 ] as const;
 function GlossaryView(){return <><article className="guideHero"><em>BEGINNER GLOSSARY</em><h2>用語集</h2><p>各指標は単独で良し悪しを決めず、OOS・DD・コスト・Live成績と組み合わせて見ます。</p></article><section className="glossaryGrid">{GLOSSARY.map(([term,body])=><article className="panel" key={term}><em>{term}</em><h2>{term}</h2><p className="note">{body}</p></article>)}</section></>}
+
+function RoadmapV2(){const phases=[["Phase 1","TQQQ core strategy research","COMPLETE","VS13をBalanced Championとして固定"],["Phase 2","TQQQ Forward Validation","ACTIVE","6・12・24か月の未来記録を蓄積"],["Phase 3","Leveraged ETF Screening","ACTIVE","公式情報から5銘柄へ限定"],["Phase 4","Cross-Ticker Historical / OOS / WF","ACTIVE","実ETF価格・共通ルール・共通期間で比較"],["Phase 5","Ticker Forward Validation","NEXT","有望2〜3銘柄をVersion固定して開始"],["Phase 6","Ticker × Strategy selection","WAIT","十分なForward Evidence後に人間が承認"],["Phase 7","Optional Rotation","RESEARCH QUEUE","単一Tickerの証拠が揃うまで本番化しない"],["Phase 8","Real-capital decision","NOT READY","Forward証拠と利用者のリスク許容が必要"]];return <><article className="guideHero"><em>ROBUST LEVERAGED ETF PLATFORM</em><h2>Research Roadmap</h2><p>Track AはTQQQ戦略を未来データで比較し、Track Bは運用対象そのものを独立に選びます。両者を混ぜません。</p></article><article className="panel"><Table heads={["段階","テーマ","状態","完了条件"]} rows={phases}/></article><article className="panel formula"><em>RESEARCH BOUNDARY</em><h2>現在地</h2><code>Track A: VS13 / VS12 / VT30 Forward · Track B: TQQQ / UPRO / SOXL / TECL / TNA Screening</code><p>Dynamic RotationはまだChampion化しません。CashはRisk-off時の正式な配分先です。</p></article></>}
 
 function RoadmapView(){const phases=[["Phase 1","TQQQ strategy stabilization","進行中","現行Championの監査・計測・Pseudo-Live蓄積"],["Phase 2","Leveraged ETF market screening","調査準備","公式情報でAUM・流動性・費用・構造を確認"],["Phase 3","Shortlist 4–8 tickers","未着手","大量総当たりを避け候補を限定"],["Phase 4","Parallel robust backtesting","未着手","共通FrameworkでOOS比較"],["Phase 5","Ticker selection","未着手","CAGRだけでなくDD・流動性・再現性で選択"],["Phase 6","Optional rotation research","保留","単一Ticker研究が安定してから検討"],["Phase 7","Live Paper Trading","稼働中","未来情報なしの日次記録"],["Phase 8","Real-capital decision","未判断","十分なLive期間と運用者判断が必要"]];return <><article className="guideHero"><em>ROBUST LEVERAGED ETF PLATFORM</em><h2>Research Roadmap</h2><p>現在はTQQQ戦略の安定化が最優先です。マルチTickerは先入観なく、公式情報で候補を絞ってから検証します。</p></article><article className="panel"><Table heads={["段階","テーマ","状態","完了条件"]} rows={phases}/></article><article className="panel formula"><em>SHORTLIST POLICY</em><h2>将来の候補カテゴリー</h2><code>NASDAQ-100 / S&amp;P 500 / Semiconductor / Technology / Small Cap — 4〜8銘柄へ限定</code><p>TQQQ、UPRO、SOXL、TECLは調査対象候補であり採用決定ではありません。いずれも日次目標商品で、長期成績は指数×3と一致しません。</p><p><a href="https://www.proshares.com/our-etfs/leveraged-and-inverse/tqqq" target="_blank" rel="noreferrer">TQQQ公式</a> · <a href="https://www.proshares.com/our-etfs/leveraged-and-inverse/upro" target="_blank" rel="noreferrer">UPRO公式</a> · <a href="https://www.direxion.com/product/daily-semiconductor-bull-bear-3x-etfs" target="_blank" rel="noreferrer">SOXL公式</a> · <a href="https://www.direxion.com/product/daily-technology-bull-bear-3x-etfs" target="_blank" rel="noreferrer">TECL公式</a></p><p className="note">2026-08-24調査。次段階でAUM、平均出来高、spread、運用年数、費用、tracking、split、閉鎖リスクを同一基準で確認し、4〜8銘柄へ限定します。</p></article></>}

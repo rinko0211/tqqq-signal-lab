@@ -22,9 +22,9 @@ const isoDate = (value: string) => {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 };
 
-async function fetchNasdaq(symbol: "TQQQ" | "QQQ" | "SPY") {
+async function fetchNasdaq(symbol: string, fromDate = "2016-01-01", minimumRows = 1500) {
   const today = new Date().toISOString().slice(0, 10);
-  const url = `https://api.nasdaq.com/api/quote/${symbol}/historical?assetclass=etf&fromdate=2016-01-01&todate=${today}&limit=5000`;
+  const url = `https://api.nasdaq.com/api/quote/${symbol}/historical?assetclass=etf&fromdate=${fromDate}&todate=${today}&limit=10000`;
   const response = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 TQQQ-Signal-Lab/3.0",
@@ -56,7 +56,7 @@ async function fetchNasdaq(symbol: "TQQQ" | "QQQ" | "SPY") {
       ] as Bar[];
     })
     .sort((a, b) => a.date.localeCompare(b.date));
-  if (bars.length < 1500)
+  if (bars.length < minimumRows)
     throw new Error(`${symbol}: Nasdaqデータ件数不足 (${bars.length})`);
   return bars;
 }
@@ -91,24 +91,31 @@ async function fetchVix() {
         },
       ] as Bar[];
     })
-    .filter((bar) => bar.date >= "2016-01-01")
+    .filter((bar) => bar.date >= "2008-01-01")
     .sort((a, b) => a.date.localeCompare(b.date));
   if (bars.length < 1500)
     throw new Error(`VIX: Cboeデータ件数不足 (${bars.length})`);
   return bars;
 }
 
-export async function fetchOfficialData() {
+export async function fetchOfficialData(includeCross = false) {
   const [TQQQ, QQQ, SPY, VIX] = await Promise.all([
     fetchNasdaq("TQQQ"),
     fetchNasdaq("QQQ"),
     fetchNasdaq("SPY"),
     fetchVix(),
   ]);
+  let crossSeries:Record<string,Bar[]>|undefined;
+  if(includeCross){
+    const crossTickers = ["TQQQ","QQQ","UPRO","SOXL","SOXX","TECL","XLK","TNA","IWM","SPY"] as const;
+    const crossRows = await Promise.all(crossTickers.map(symbol => fetchNasdaq(symbol, "2008-01-01", 1000)));
+    crossSeries = Object.fromEntries(crossTickers.map((symbol,i)=>[symbol,crossRows[i]]));
+  }
   return {
     source: "Nasdaq Historical + Cboe VIX History",
     retrievedAt: new Date().toISOString(),
     series: { TQQQ, QQQ, SPY, VIX },
+    ...(crossSeries?{crossSeries:{...crossSeries,VIX}}:{}),
     warnings: [
       "TQQQ・QQQ・SPYはNasdaq公式HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
       "VIXはCboe公式VIX Historyを使用しています。",
