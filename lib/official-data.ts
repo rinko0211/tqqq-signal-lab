@@ -123,3 +123,20 @@ export async function fetchOfficialData(includeCross = false) {
     ],
   };
 }
+
+export async function fetchUproForwardData() {
+  const [UPRO, SPY, VIX] = await Promise.all([
+    fetchNasdaq("UPRO"),
+    fetchNasdaq("SPY"),
+    fetchVix(),
+  ]);
+  return {
+    source: "Nasdaq Historical + Cboe VIX History · UPRO Track B",
+    retrievedAt: new Date().toISOString(),
+    series: { TQQQ: UPRO, QQQ: SPY, SPY, VIX },
+    warnings: [
+      "Track B UPROは独立取得です。失敗してもTrack Aの日次TQQQ Signalを変更・停止しません。",
+      "UPRO実価格を使用し、Synthetic 3x returnは使用しません。",
+    ],
+  };
+}

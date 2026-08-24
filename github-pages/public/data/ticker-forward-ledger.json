@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-08-24T11:15:00.000Z",
+  "updatedAt": "2026-08-24T11:15:00.000Z",
+  "appendOnly": true,
+  "championId": "VS13",
+  "track": "Track B",
+  "candidateTicker": "UPRO",
+  "selectionRule": "UPRO and TQQQ were the only 2026-08-24 cross-ticker candidates passing Pareto and Operational Quality >=80. TQQQ is already recorded in Track A; UPRO starts here. Human approval is required for any production selection.",
+  "freezes": [],
+  "promotionRule": "Human approval only.",
+  "reviewSchedule": {"sixMonth":"2027-02-22","twelveMonth":"2027-08-23","twentyFourMonth":"2028-08-21"},
+  "records": [],
+  "corrections": []
+}

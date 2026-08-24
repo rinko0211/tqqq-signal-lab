@@ -21,6 +21,7 @@ import {researchBundle} from "../lib/research";
 import type {DeepResearchBundle} from "../lib/research";
 import {summarizeForward,type ForwardLedger} from "../lib/forward";
 import type {CrossBundle} from "../lib/cross-ticker";
+import type {TickerForwardLedger} from "../lib/ticker-forward";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -201,7 +202,9 @@ export default function Home() {
     [analysisLoading,setAnalysisLoading]=useState(false),
     [liveHistory,setLiveHistory]=useState<LiveSnapshot[]>([]),
     [forwardLedger,setForwardLedger]=useState<ForwardLedger|null>(null),
-    [crossResearch,setCrossResearch]=useState<CrossBundle|null>(null);
+    [crossResearch,setCrossResearch]=useState<CrossBundle|null>(null),
+    [tickerForward,setTickerForward]=useState<TickerForwardLedger|null>(null),
+    [tickerForwardStatus,setTickerForwardStatus]=useState<{status:string;marketDataDate:string|null;records:number;version:string;errors:string[]}|null>(null);
   const [deepResearch,setDeepResearch]=useState<DeepResearchBundle|null>(null),[deepLoading,setDeepLoading]=useState(false);
   const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false),deepRequested=useRef(false),analysisWorker=useRef<Worker|null>(null),analysisRequest=useRef(0);
   useEffect(() => {
@@ -225,10 +228,10 @@ export default function Home() {
     });
   }, []);
   useEffect(()=>{
-    if(tab!=="universe"||crossResearch)return;
-    const url=new URL("./data/cross-ticker.json",document.baseURI);
-    fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error(`${r.status}`);return r.json()}).then(setCrossResearch).catch(()=>setMessage("ETF横断研究は初回Weekly Quant Researchの完了後に表示されます。"));
-  },[tab,crossResearch]);
+    if(tab!=="universe"||(crossResearch&&tickerForward))return;
+    const load=(name:string)=>fetch(new URL(`./data/${name}`,document.baseURI),{cache:"no-store"}).then(r=>{if(!r.ok)throw Error(`${r.status}`);return r.json()});
+    Promise.allSettled([load("cross-ticker.json").then(setCrossResearch),load("ticker-forward-ledger.json").then(setTickerForward),load("ticker-forward-status.json").then(setTickerForwardStatus)]).then(results=>{if(results[0].status==="rejected")setMessage("ETF横断研究は初回Weekly Quant Researchの完了後に表示されます。");});
+  },[tab,crossResearch,tickerForward]);
   useEffect(()=>{
     if(tab!=="deep"||deepResearch||deepRequested.current)return;
     deepRequested.current=true;queueMicrotask(()=>setDeepLoading(true));const url=new URL("./data/deep-research.json",document.baseURI);
@@ -543,7 +546,7 @@ export default function Home() {
         {analysis?.rob && tab === "robust" && <RobustView data={analysis.rob} />}
         {analysis?.research && tab === "research" && <ResearchView data={analysis.research}/>} 
         {tab === "deep" && (deepResearch?<DeepResearchView data={deepResearch}/>:<section className="emptyState"><span>WEEKLY DEEP RESEARCH</span><h2>{deepLoading?"事前計算レポートを読込中":"レポート未生成"}</h2><p>日常Signalを遅くしないため、複数Walk-Forward窓とChallenger比較は週次Actionsで事前計算します。</p></section>)}
-        {tab === "universe" && (crossResearch?<CrossTickerView data={crossResearch}/>:<section className="emptyState"><span>TRACK B</span><h2>ETF横断研究を読込中</h2><p>Track Aの日次Signalとは分離した週次研究です。初回Weekly Quant Research完了後に表示されます。</p></section>)}
+        {tab === "universe" && (crossResearch?<CrossTickerView data={crossResearch} forward={tickerForward} forwardStatus={tickerForwardStatus}/>:<section className="emptyState"><span>TRACK B</span><h2>ETF横断研究を読込中</h2><p>Track Aの日次Signalとは分離した週次研究です。初回Weekly Quant Research完了後に表示されます。</p></section>)}
         {dataset && tab === "data" && (
           <DataView
             dataset={dataset}
@@ -1243,11 +1246,12 @@ function ForwardView({ledger}:{ledger:ForwardLedger}){
   </>;
 }
 
-function CrossTickerView({data}:{data:CrossBundle}){
+function CrossTickerView({data,forward,forwardStatus}:{data:CrossBundle;forward:TickerForwardLedger|null;forwardStatus:{status:string;marketDataDate:string|null;records:number;version:string;errors:string[]}|null}){
   return <>
     <article className="guideHero"><em>TRACK B · LEVERAGED ETF SELECTION</em><h2>そもそもTQQQが最適かを別Trackで検証</h2><p>Track AのForwardは変更せず、実ETF価格と共通ルールで比較します。Synthetic値は混ぜません。</p></article>
     <article className="panel"><em>ONLINE MARKET SCREENING · {data.asOf}</em><h2>Shortlist 5銘柄</h2><Table heads={["Ticker","Issuer","Underlying","Proxy","設定日","費用","AUM","公式出来高","Spread","Operational","理由"]} rows={data.screening.map(x=>[x.ticker,x.issuer,x.underlying,x.proxy,x.inception,pct(x.expenseRatio,2),x.aumUsd?"$"+(x.aumUsd/1e9).toFixed(1)+"B":"公式HTML未確認",x.dailyVolume.toLocaleString(),x.medianSpread===null?"公式HTML未確認":pct(x.medianSpread,2),x.operationalQuality,x.reason])}/><p className="note">未確認値を推測で埋めていません。TQQQ/UPROのAUMとmedian spreadはProShares公表値です。</p></article>
     {data.results.length>0&&<><article className="panel"><em>COMMON FRAMEWORK · ACTUAL ETF DATA</em><h2>同じVS13ルールによるOOS・共通期間比較</h2><Table heads={["Ticker","実データ期間","OOS CAGR","OOS Max DD","OOS Sortino","OOS Calmar","共通期間CAGR","共通期間DD","30%Vol DD","Operational","Score","Pareto"]} rows={data.results.map(x=>[x.ticker,x.dataStart+"〜"+x.dataEnd,pct(x.oos.cagr),pct(x.oos.maxDd),num(x.oos.sortino),num(x.oos.calmar),pct(x.common.cagr),pct(x.common.maxDd),pct(x.normalized.maxDd),x.operationalQuality,num(x.researchScore,3),x.pareto?"YES":"NO"])}/><p className="note">Common period開始：{data.commonStart||"未計算"}。Ticker別の一点最適化は行いません。</p></article><article className="panel health"><em>FORWARD CANDIDATE GATE</em><h2>{data.forwardCandidates.length?data.forwardCandidates.join(" / "):"Evidence不足"}</h2><p>{data.selectionRule}</p><p className="warningNote">Forward候補であり、TQQQ Championを自動で置き換える判断ではありません。</p></article></>}
+    <article className="panel"><div className="panelHead"><div><em>TICKER FORWARD · ISOLATED TRACK</em><h2>UPRO-VS13-v1.0</h2></div><Status kind={forwardStatus?.status==="success"?"ok":"warn"}>{forwardStatus?.status||"初回実行待ち"}</Status></div><section className="metrics compact"><Metric label="開始日" value={forward?.freezes[0]?.startDate||"2026-08-21"}/><Metric label="最終市場日" value={forwardStatus?.marketDataDate||"初回実行待ち"}/><Metric label="Immutable records" value={String(forwardStatus?.records??forward?.records.length??0)}/><Metric label="比較対象" value="TQQQ Track A"/></section><p className="note">UPRO取得・記録は独立Workflowです。失敗してもTQQQの日次Signalや既存Forward台帳を変更しません。</p>{forwardStatus?.errors?.length?<p className="warningNote">{forwardStatus.errors.join(" / ")}</p>:null}</article>
     <article className="panel"><em>EXCLUDED REGISTRY</em><h2>除外結果も保存</h2><Table heads={["候補","除外理由"]} rows={data.excluded.map(x=>[x.ticker,x.reason])}/></article>
     <section className="glossaryGrid">{data.screening.map(x=><article className="panel" key={x.ticker}><em>OFFICIAL SOURCE</em><h2>{x.ticker}</h2><p>{x.underlying} / {x.leverage}</p><a href={x.officialUrl} target="_blank" rel="noreferrer">発行会社公式ページを開く</a></article>)}</section>
     <article className="issueBlock"><em>LIMITATIONS</em><h2>研究上の未解決点</h2>{data.limitations.map((x,i)=><p key={i}>• {x}</p>)}</article>
