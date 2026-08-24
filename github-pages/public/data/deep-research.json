@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T09:33:10.372Z",
+  "generatedAt": "2026-08-24T09:53:44.791Z",
   "dataStart": "2016-08-22",
   "dataEnd": "2026-08-21",
   "boundaryPolicy": "Indicatorは過去方向だけを参照。OOS年には直前1年をwarm-upとして渡すがactiveFrom以前は売買禁止。予測ラベルを使わない決定論的ルールのためEmbargoは不要。",
