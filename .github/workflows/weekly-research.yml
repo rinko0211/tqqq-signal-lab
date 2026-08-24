@@ -35,8 +35,6 @@ jobs:
         run: npm run generate:research
       - name: Run calculation tests
         run: npm run test:core
-      - name: Build PWA
-        run: npm run build:pages
       - name: Save research report
         run: |
           git config user.name "github-actions[bot]"
@@ -47,6 +45,10 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+      # Weekly research may have been queued before the latest daily commit.
+      # Rebase/persist first, then package Pages from the current main data.
+      - name: Build PWA from the persisted latest main
+        run: npm run build:pages
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
