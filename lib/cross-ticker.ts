@@ -41,7 +41,7 @@ export const EXCLUDED = [
 type Payload = { source?:string; retrievedAt?:string; crossSeries?:Record<string,Bar[]> };
 const meta = (bars:Bar[]) => ({start:bars[0]?.date||"",end:bars.at(-1)?.date||"",count:bars.length,adjusted:false});
 
-function makeDataset(payload:Payload,row:ScreeningRow,start?:string):Dataset|null {
+export function makeCrossTickerDataset(payload:Payload,row:ScreeningRow,start?:string):Dataset|null {
   const s=payload.crossSeries;if(!s)return null;
   const lev=s[row.ticker],under=s[row.proxy],spy=s.SPY,vix=s.VIX;
   if(!lev||!under||!spy||!vix)return null;
@@ -64,12 +64,12 @@ export type CrossBundle={
 
 const norm=(x:number,min:number,max:number)=>max===min ? .5 : (x-min)/(max-min);
 export function crossTickerBundle(payload:Payload):CrossBundle {
-  const datasets=SCREENING.map(row=>({row,ds:makeDataset(payload,row)})).filter((x):x is {row:ScreeningRow;ds:Dataset}=>Boolean(x.ds));
+  const datasets=SCREENING.map(row=>({row,ds:makeCrossTickerDataset(payload,row)})).filter((x):x is {row:ScreeningRow;ds:Dataset}=>Boolean(x.ds));
   const commonStart=datasets.length?datasets.map(x=>x.ds.days[0].date).sort().at(-1)!:null;
   const raw=datasets.map(({row,ds})=>{
     const full=runBacktest(ds,STRATEGIES.defensive).metrics;
     const oos=fixedOos(ds,STRATEGIES.defensive).metrics;
-    const commonDs=commonStart?makeDataset(payload,row,commonStart)!:ds;
+    const commonDs=commonStart?makeCrossTickerDataset(payload,row,commonStart)!:ds;
     const common=runBacktest(commonDs,STRATEGIES.defensive).metrics;
     const normalized=runBacktest(ds,{...STRATEGIES.defensive,sizing:"volTarget",targetPortfolioVol:.30}).metrics;
     return{ticker:row.ticker,underlying:row.underlying,proxy:row.proxy,dataStart:ds.days[0].date,dataEnd:ds.days.at(-1)!.date,days:ds.days.length,actualOnly:true as const,full,oos,common,normalized,operationalQuality:row.operationalQuality,researchScore:0,pareto:false};

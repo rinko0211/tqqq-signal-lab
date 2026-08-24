@@ -1,11 +1,14 @@
 {
-  "generatedAt": "2026-08-24T11:26:28.695Z",
+  "generatedAt": "2026-08-24T13:01:03.546Z",
   "status": "success",
   "ticker": "UPRO",
-  "version": "UPRO-VS13-v1.0",
+  "versions": [
+    "UPRO-VS13-v1.0",
+    "UPRO-Native-v1.0"
+  ],
   "marketDataDate": "2026-08-21",
   "records": 1,
   "dataSource": "Nasdaq Historical + Cboe VIX History · UPRO Track B",
-  "buildVersion": "a08768f1b574",
+  "buildVersion": "ticker-forward-1.0.0",
   "errors": []
 }

@@ -4,6 +4,8 @@ import { fetchOfficialData } from "../lib/official-data.ts";
 import { STRATEGIES, datasetFromPayload, nextExecutionDate, oosComparison, runBacktest, walkForward } from "../lib/engine.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
 import type { LiveSnapshot } from "../lib/paper.ts";
+import {DEFAULT_PRODUCTION_CONFIG,type ProductionConfig} from "../lib/production.ts";
+import {SCREENING,makeCrossTickerDataset} from "../lib/cross-ticker.ts";
 
 const pagesRoot = new URL("../github-pages/public/data/", import.meta.url);
 const roots = process.env.GITHUB_ACTIONS === "true"
@@ -28,13 +30,19 @@ await Promise.all(roots.map(dir => mkdir(dir, { recursive:true })));
 const priorSignal = await readJson<{dataDate?:string}|null>("signal.json", null);
 const history = await readJson<LiveSnapshot[]>("live-history.json", []);
 const priorForward = await readJson<ForwardLedger>("forward-ledger.json", emptyForwardLedger(generatedAt));
+const production = await readJson<ProductionConfig>("production-config.json", DEFAULT_PRODUCTION_CONFIG);
 
 try {
-  const payload = await fetchOfficialData();
-  const dataset = datasetFromPayload(payload);
+  const productionTicker=production.mode==="PRODUCTION"&&production.approvedByHuman?production.selectedTicker:null;
+  const payload = await fetchOfficialData(Boolean(productionTicker&&productionTicker!=="TQQQ"));
+  const baseDataset = datasetFromPayload(payload);
+  const productionRow=productionTicker?SCREENING.find(x=>x.ticker===productionTicker):null;
+  const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload,productionRow):baseDataset;
+  if(!dataset)throw Error(`CONFIG-001: selected ticker ${productionTicker} data unavailable`);
   const errors = dataset.issues.filter(x=>x.severity==="error");
   if (errors.length) throw Error(errors.map(x=>x.message).join("; "));
-  const bt = runBacktest(dataset, STRATEGIES.defensive);
+  const productionConfig=production.strategyVersion?.includes("Native")?{...STRATEGIES.defensive,sizing:"volTarget" as const,targetPortfolioVol:.25}:STRATEGIES.defensive;
+  const bt = runBacktest(dataset, productionConfig);
   const latest = bt.daily.at(-1)!;
   const bar = dataset.days.at(-1)!;
   const priorBar = dataset.days.at(-2)!;
@@ -50,7 +58,8 @@ try {
   if (!history.some(x=>x.date===snapshot.date)) history.push(snapshot);
   const forward = updateForwardLedger(dataset, priorForward, payload.source, generatedAt);
   const forwardSummary = summarizeForward(forward);
-  const signal = { generatedAt,dataDate:latest.date,source:payload.source,tqqqClose:bar.tqqq.close,strategy:STRATEGIES.defensive.name,state,signal:{...latest.signal,executionDate:nextExecutionDate(latest.date)},suggestion:latest.signal.target===latest.signal.previousTarget?`${latest.signal.target*100}%を維持。売買なし。`:`${latest.signal.previousTarget*100}%から${latest.signal.target*100}%へ変更。次営業日始値で${Math.abs(latest.signal.target-latest.signal.previousTarget)*100}%分を${latest.signal.target>latest.signal.previousTarget?"増加":"縮小"}。`,validation:{oos:oos.metrics,walkForward:wf.metrics,holdout:wf.holdout?.metrics||null},warnings:dataset.issues.filter(x=>x.severity==="warning").map(x=>x.message) };
+  const primaryTicker=productionTicker||"TQQQ",primaryName=productionTicker?production.selectedStrategy!:STRATEGIES.defensive.name;
+  const signal = { generatedAt,dataDate:latest.date,source:payload.source,platformMode:production.mode,assetTicker:primaryTicker,assetClose:bar.tqqq.close,tqqqClose:bar.tqqq.close,strategy:primaryName,strategyVersion:productionTicker?production.strategyVersion:"VS13-v1.0",state,signal:{...latest.signal,executionDate:nextExecutionDate(latest.date)},suggestion:latest.signal.target===latest.signal.previousTarget?`${latest.signal.target*100}%を維持。売買なし。`:`${latest.signal.previousTarget*100}%から${latest.signal.target*100}%へ変更。次営業日始値で${Math.abs(latest.signal.target-latest.signal.previousTarget)*100}%分を${latest.signal.target>latest.signal.previousTarget?"増加":"縮小"}。`,validation:{oos:oos.metrics,walkForward:wf.metrics,holdout:wf.holdout?.metrics||null},warnings:dataset.issues.filter(x=>x.severity==="warning").map(x=>x.message) };
   await Promise.all([
     writeJson("market-data.json",payload), writeJson("signal.json",signal), writeJson("live-history.json",history),
     writeJson("forward-ledger.json",forward), writeJson("forward-summary.json",forwardSummary),

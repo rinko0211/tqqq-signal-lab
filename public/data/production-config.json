@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "mode": "RESEARCH",
+  "selectedTicker": null,
+  "selectedStrategy": null,
+  "strategyVersion": null,
+  "approvedByHuman": false,
+  "approvalDate": null,
+  "effectiveDate": null,
+  "lastHealthReview": null,
+  "nextHealthReview": null,
+  "updatedAt": "2026-08-24T00:00:00.000Z"
+}

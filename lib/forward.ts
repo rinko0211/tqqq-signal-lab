@@ -24,7 +24,7 @@ export type ForwardStatus =
   | "BENCHMARK";
 
 export type StrategyFreeze = {
-  id: "VS13" | "VS12" | "VT30" | "TQQQ_BH" | "QQQ_BH" | "UPRO_VS13";
+  id: "VS13" | "VS12" | "VT30" | "TQQQ_BH" | "QQQ_BH" | "UPRO_VS13" | "UPRO_NATIVE";
   name: string;
   version: string;
   category: ForwardCategory;

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { demoDataset } from "../lib/engine.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger } from "../lib/forward.ts";
+import { DEFAULT_PRODUCTION_CONFIG, assessHealth, transitionMode } from "../lib/production.ts";
 
 function forwardDataset(extra=0){
   const base=demoDataset(),days=base.days.slice(0,201+extra).map((d,i)=>({...d,date:new Date(Date.UTC(2025,0,1+i)).toISOString().slice(0,10)}));
@@ -56,4 +57,18 @@ test("データSource変更後も以前のForward Recordを書き換えない",(
   const next=updateForwardLedger(forwardDataset(1),first,"source-B","2026-08-25T00:00:00Z");
   assert.ok(next.records.filter(x=>x.marketDataDate==="2026-08-21").every(x=>x.dataSource==="source-A"));
   assert.ok(next.records.filter(x=>x.marketDataDate==="2026-08-24").every(x=>x.dataSource==="source-B"));
+});
+
+test("ProductionはDECISIONと明示Human Approvalなしに開始できない",()=>{
+  assert.throws(()=>transitionMode(DEFAULT_PRODUCTION_CONFIG,"PRODUCTION"),/DECISION/);
+  const decision=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION");
+  assert.throws(()=>transitionMode(decision,"PRODUCTION"),/Human approval/);
+  const production=transitionMode(decision,"PRODUCTION",{ticker:"TQQQ",system:"Volatility Shield 13%",version:"VS13-v1.0",date:"2027-08-23"});
+  assert.equal(production.mode,"PRODUCTION");assert.equal(production.approvedByHuman,true);assert.equal(production.nextHealthReview,"2027-11-23");
+});
+
+test("Health Reviewは異常を示してもStrategyを自動置換しない",()=>{
+  assert.equal(assessHealth({integrity:true,dataFresh:true,dd:-.50,historicalDd:-.38,rollingSortino:1,benchmarkGap:0,costRatio:1}),"Revalidation Required");
+  assert.equal(assessHealth({integrity:false,dataFresh:true,dd:0,historicalDd:-.38,rollingSortino:1,benchmarkGap:0,costRatio:1}),"Critical");
+  assert.equal(DEFAULT_PRODUCTION_CONFIG.selectedStrategy,null);
 });

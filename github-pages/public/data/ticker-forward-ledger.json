@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-24T11:26:28.695Z",
-  "updatedAt": "2026-08-24T11:26:28.695Z",
+  "updatedAt": "2026-08-24T13:01:03.546Z",
   "appendOnly": true,
   "championId": "VS13",
   "freezes": [
@@ -33,6 +33,45 @@
         "trailStop": 0.13,
         "mode": "five",
         "ablation": "none"
+      },
+      "assumptions": {
+        "signal": "market close t",
+        "execution": "next available US market open t+1",
+        "commissionBps": 3,
+        "slippageBps": 5,
+        "currency": "JPY-normalized; FX return excluded"
+      }
+    },
+    {
+      "id": "UPRO_NATIVE",
+      "name": "UPRO Native Broad Volatility Target",
+      "version": "UPRO-Native-v1.0",
+      "category": "Defensive",
+      "role": "challenger",
+      "frozenAt": "2026-08-24T12:54:53.120Z",
+      "startDate": "2026-08-24",
+      "initialCapital": 1000000,
+      "asset": "TQQQ",
+      "config": {
+        "key": "defensive",
+        "name": "Volatility Shield",
+        "weights": {
+          "trend": 0.27,
+          "momentum": 0.16,
+          "volatility": 0.37,
+          "market": 0.2
+        },
+        "entry": 70,
+        "exit": 48,
+        "strong": 82,
+        "confirmDays": 2,
+        "minHold": 6,
+        "cooldown": 8,
+        "trailStop": 0.13,
+        "mode": "five",
+        "ablation": "none",
+        "sizing": "volTarget",
+        "targetPortfolioVol": 0.25
       },
       "assumptions": {
         "signal": "market close t",
@@ -88,5 +127,5 @@
   "corrections": [],
   "track": "Track B",
   "candidateTicker": "UPRO",
-  "selectionRule": "UPRO and TQQQ were the only 2026-08-24 cross-ticker candidates passing Pareto and Operational Quality >=80. TQQQ is already recorded in Track A; UPRO starts here. Human approval is required for any production selection."
+  "selectionRule": "UPRO Common VS13 and the single pre-registered UPRO Native candidate run in one isolated Track B ledger. The total live-system budget remains 6. Human approval is required for any production selection."
 }
