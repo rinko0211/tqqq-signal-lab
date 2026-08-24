@@ -37,7 +37,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # A queued push run can start after an earlier scheduled run has already
+      # persisted data. Always calculate from the current branch tip, not the
+      # event SHA, so same-day JSON never rebases against an older snapshot.
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
