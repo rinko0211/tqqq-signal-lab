@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {STRATEGIES,annualize,demoDataset,maxDrawdown,metricSet,nextExecutionDate,parseMarketCsv,runBacktest,signals,walkForward} from "../lib/engine.ts";
 import type {StrategyConfig} from "../lib/engine.ts";
+import {blockBootstrap,drawdownEpisodes,regimeAttribution} from "../lib/research.ts";
 
 const close=(a:number,b:number)=>Math.abs(a-b)<1e-9;
 
@@ -69,6 +70,24 @@ test("t日終値シグナルはt+1始値で約定し、同日終値を使わな�
   assert.equal(order.executionPrice,110);
   const day=bt.daily.find(x=>x.date===ds.days[201].date)!;
   assert.ok(close(day.dailyReturn,.10));
+});
+
+test("始値なしのt+1終値代替でも価格リターンを資産曲線へ反映する",()=>{
+  const ds=fixedDataset(),config:StrategyConfig={...STRATEGIES.adaptive,entry:0,exit:-1,strong:0,confirmDays:1,minHold:0,cooldown:0,trailStop:.99,weights:{trend:1,momentum:0,volatility:0,market:0}};
+  ds.precision="next-close";ds.days[201].tqqq={...ds.days[201].tqqq,close:110,adjClose:110};ds.days[202].tqqq={...ds.days[202].tqqq,close:121,adjClose:121};
+  const bt=runBacktest(ds,config,{commissionBps:0,slippageBps:0,delay:1}),day=bt.daily.find(x=>x.date===ds.days[202].date)!;
+  assert.ok(close(day.dailyReturn,.10));
+});
+
+test("拡張指標は資産曲線・保有比率・保有日数から計算する",()=>{
+  const rounds=[{entry:"2024-01-01",exit:"2024-01-03",return:.1,mfe:.1,mae:0,days:2},{entry:"2024-02-01",exit:"2024-02-08",return:-.05,mfe:0,mae:-.05,days:5}];
+  const m=metricSet([.1,-.2,.15],rounds,[],[],[0,.5,1]);
+  assert.ok(close(m.exposure,.5));assert.ok(close(m.timeInCash,1/3));assert.ok(close(m.medianHold,3.5));assert.ok(close(m.expectancy,.025));assert.ok(m.annualizedVolatility>0);assert.ok(m.ulcerIndex>0);
+});
+
+test("DD Attribution・Regime・Block Bootstrapは再現可能な値を返す",()=>{
+  const bt=runBacktest(demoDataset(),STRATEGIES.defensive),dd=drawdownEpisodes(bt),regime=regimeAttribution(bt),a=blockBootstrap(bt,50,10),b=blockBootstrap(bt,50,10);
+  assert.ok(dd.length>0&&dd.length<=10);assert.ok(dd.every(x=>x.peak<=x.trough));assert.ok(regime.length>=3);assert.deepEqual(a,b);assert.ok(a.prob30>=0&&a.prob30<=1);
 });
 
 test("OOS開始前のシグナルは開始ポジションへ持ち越さない",()=>{

@@ -101,6 +101,7 @@ export type RoundTrade = {
 export type Metrics = {
   cagr: number;
   totalReturn: number;
+  annualizedVolatility: number;
   sharpe: number;
   sortino: number;
   downsideDeviation: number;
@@ -111,6 +112,12 @@ export type Metrics = {
   avgWin: number;
   avgLoss: number;
   avgHold: number;
+  medianHold: number;
+  expectancy: number;
+  ulcerIndex: number;
+  exposure: number;
+  timeInCash: number;
+  recoveryDays: number | null;
   maxLossStreak: number;
   entries: number;
   exits: number;
@@ -210,6 +217,7 @@ export const metricSet = (
   rounds: RoundTrade[] = [],
   orders: Order[] = [],
   dates: string[] = [],
+  positions: number[] = [],
 ): Metrics => {
   void dates;
   const eq = returns.reduce((e, r) => e * (1 + r), 1),
@@ -226,6 +234,12 @@ export const metricSet = (
   const dd = maxDrawdown(curve),
     wins = rounds.filter((x) => x.return > 0),
     loss = rounds.filter((x) => x.return <= 0);
+  let peak=curve[0]||1,peakIndex=0,worstPeakIndex=0,worstIndex=0,worst=0;
+  const drawdowns=curve.map((v,i)=>{if(v>=peak){peak=v;peakIndex=i}const d=v/peak-1;if(d<worst){worst=d;worstIndex=i;worstPeakIndex=peakIndex}return d});
+  let recoveryDays:number|null=null;
+  if(worstIndex>=worstPeakIndex&&worst<0){const recovery=curve.findIndex((v,i)=>i>worstIndex&&v>=curve[worstPeakIndex]);if(recovery>=0)recoveryDays=recovery-worstPeakIndex;}
+  const holds=rounds.map(x=>x.days).sort((a,b)=>a-b),medianHold=holds.length?(holds.length%2?holds[(holds.length-1)/2]:(holds[holds.length/2-1]+holds[holds.length/2])/2):0;
+  const exposure=positions.length?mean(positions):0;
   let streak = 0,
     maxStreak = 0;
   for (const t of rounds) {
@@ -235,6 +249,7 @@ export const metricSet = (
   return {
     cagr: eq ** (1 / years) - 1,
     totalReturn: eq - 1,
+    annualizedVolatility: stdev(returns)*Math.sqrt(252),
     sharpe: sh,
     sortino: sort,
     downsideDeviation: stdev(down) * Math.sqrt(252),
@@ -250,6 +265,12 @@ export const metricSet = (
     avgWin: mean(wins.map((x) => x.return)),
     avgLoss: mean(loss.map((x) => x.return)),
     avgHold: mean(rounds.map((x) => x.days)),
+    medianHold,
+    expectancy: mean(rounds.map(x=>x.return)),
+    ulcerIndex: Math.sqrt(mean(drawdowns.map(x=>x*x))),
+    exposure,
+    timeInCash: positions.length?positions.filter(x=>x===0).length/positions.length:0,
+    recoveryDays,
     maxLossStreak: maxStreak,
     entries: orders.filter((x) => x.before === 0 && x.after > 0).length,
     exits: orders.filter((x) => x.before > 0 && x.after === 0).length,
@@ -790,6 +811,7 @@ export function runBacktest(
     const d = days[i],
       prev = days[i - 1],
       execSignal = sig[i - options.delay];
+    const dayStartEquity=equity;
     let overnight = 0,
       intraday = 0,
       order: Order | undefined;
@@ -856,8 +878,7 @@ export function runBacktest(
       intraday = position * (d.tqqq.close / d.tqqq.open - 1);
       equity *= 1 + intraday;
     }
-    const dailyReturn =
-      (1 + overnight) * (1 + intraday) * (1 - (order?.cost || 0)) - 1;
+    const dailyReturn = equity/dayStartEquity-1;
     if (openTrade) {
       openTrade.days++;
       const r = d.tqqq.close / openTrade.price - 1;
@@ -905,6 +926,7 @@ export function runBacktest(
       rounds,
       orders,
       daily.map((x) => x.date),
+      daily.map((x)=>x.position),
     ),
     years = [...new Set(daily.map((x) => +x.date.slice(0, 4)))];
   const yearly = years.map((year) => {
@@ -940,7 +962,7 @@ export function runBacktest(
   };
 }
 
-export function benchmark(ds: Dataset, ticker: "tqqq" | "qqq") {
+export function benchmark(ds: Dataset, ticker: "tqqq" | "qqq" | "spy") {
   const x = ds.days.map((d) => d[ticker].close),
     r = x.slice(1).map((v, i) => v / x[i] - 1);
   return metricSet(
@@ -948,6 +970,7 @@ export function benchmark(ds: Dataset, ticker: "tqqq" | "qqq") {
     [],
     [],
     ds.days.slice(1).map((d) => d.date),
+    r.map(()=>1),
   );
 }
 const utility = (m: Metrics, yearly: { return: number }[]) => {
@@ -997,6 +1020,7 @@ const metricsFromDaily = (daily: DailyResult[]) =>
     [],
     daily.flatMap((x) => (x.execution ? [x.execution] : [])),
     daily.map((x) => x.date),
+    daily.map((x)=>x.position),
   );
 export function holdoutForConfig(ds: Dataset, config: StrategyConfig) {
   const years = [...new Set(ds.days.map((d) => +d.date.slice(0, 4)))].sort();
@@ -1014,7 +1038,8 @@ export function walkForward(ds: Dataset): WalkForward {
     holdoutStart = ys.length >= 8 ? ys.at(-2)! : Infinity,
     testYears = ys.slice(4).filter((y) => y < holdoutStart),
     years: WalkForwardYear[] = [],
-    oosCurve: { date: string; equity: number }[] = [];
+    oosCurve: { date: string; equity: number }[] = [],
+    oosDaily: DailyResult[]=[];
   let equity = 1;
   for (const year of testYears) {
     const train = subset(ds, year - 4, year - 1),
@@ -1033,6 +1058,7 @@ export function walkForward(ds: Dataset): WalkForward {
     for (const d of daily) {
       equity *= 1 + d.dailyReturn;
       oosCurve.push({ date: d.date, equity });
+      oosDaily.push(d);
     }
     const om = metricsFromDaily(daily);
     years.push({
@@ -1054,7 +1080,7 @@ export function walkForward(ds: Dataset): WalkForward {
   const oosReturns = oosCurve.map((x, i) =>
       i ? x.equity / oosCurve[i - 1].equity - 1 : 0,
     ),
-    wfMetrics = metricSet(oosReturns);
+    wfMetrics = oosDaily.length?metricsFromDaily(oosDaily):metricSet(oosReturns);
   let holdout: WalkForward["holdout"] = null;
   if (Number.isFinite(holdoutStart)) {
     const pre = subset(ds, ys[0], holdoutStart - 1),
