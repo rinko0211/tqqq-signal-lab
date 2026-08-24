@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "buildVersion": "native-research-1.0.0",
-  "generatedAt": "2026-08-24T13:00:14.816Z",
+  "generatedAt": "2026-08-24T14:24:15.254Z",
   "source": "Nasdaq Historical + Cboe VIX History",
   "track": "B2",
   "policy": "Hypothesis-first; 3 families/ticker; one frozen candidate maximum; OOS multi-objective score with complexity penalty; parameter plateau required; no holdout-driven retuning.",
@@ -392,7 +392,7 @@
             "sortino": 1.127779235872424,
             "downsideDeviation": 0.21173946258071188,
             "maxDd": -0.44432912510444145,
-            "calmar": 0.4677488239749202,
+            "calmar": 0.4677488239749197,
             "winRate": 0.5555555555555556,
             "profitFactor": 4.502929617875893,
             "avgWin": 0.32604344447884276,
