@@ -5,7 +5,10 @@ import { STRATEGIES, datasetFromPayload, nextExecutionDate, oosComparison, runBa
 import { emptyForwardLedger, summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
 import type { LiveSnapshot } from "../lib/paper.ts";
 
-const roots = [new URL("../github-pages/public/data/", import.meta.url), new URL("../public/data/", import.meta.url)];
+const pagesRoot = new URL("../github-pages/public/data/", import.meta.url);
+const roots = process.env.GITHUB_ACTIONS === "true"
+  ? [pagesRoot]
+  : [pagesRoot, new URL("../public/data/", import.meta.url)];
 const root = roots[0];
 const readJson = async <T>(name: string, fallback: T) => {
   try { return JSON.parse(await readFile(new URL(name, root), "utf8")) as T; } catch { return fallback; }

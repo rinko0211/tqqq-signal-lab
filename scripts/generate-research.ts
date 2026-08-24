@@ -4,7 +4,8 @@ import{deepResearchBundle}from"../lib/research.ts";
 import{crossTickerBundle}from"../lib/cross-ticker.ts";
 import{fetchOfficialData}from"../lib/official-data.ts";
 
-const roots=[new URL("../github-pages/public/data/",import.meta.url),new URL("../public/data/",import.meta.url)];
+const pagesRoot=new URL("../github-pages/public/data/",import.meta.url);
+const roots=process.env.GITHUB_ACTIONS==="true"?[pagesRoot]:[pagesRoot,new URL("../public/data/",import.meta.url)];
 await Promise.all(roots.map(x=>mkdir(x,{recursive:true})));
 const payload=await fetchOfficialData(true),dataset=datasetFromPayload(payload),errors=dataset.issues.filter(x=>x.severity==="error");
 if(errors.length)throw Error(errors.map(x=>x.message).join("; "));
