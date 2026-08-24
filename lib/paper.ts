@@ -1,4 +1,4 @@
-export type LiveSnapshot={date:string;tqqqOpen:number;tqqqClose:number;qqqOpen:number;qqqClose:number;target:number;previousTarget:number;score:number;regime:string;reason:string;crisis:boolean;splitFactor?:number};
+export type LiveSnapshot={date:string;tqqqOpen:number;tqqqClose:number;qqqOpen:number;qqqClose:number;target:number;previousTarget:number;score:number;regime:string;reason:string;crisis:boolean;assetTicker?:string;strategyVersion?:string;splitFactor?:number};
 export type PaperConfig={initialJpy:number;startDate:string;fxRate:number};
 export type PaperTrade={signalDate:string;executionDate:string;side:"BUY"|"SELL";before:number;after:number;price:number;quantity:number;commissionUsd:number;equityJpy:number;reason:string;score:number;realizedPnlUsd:number};
 export type PaperPoint={date:string;equityJpy:number;tqqqJpy:number;qqqJpy:number;drawdown:number};

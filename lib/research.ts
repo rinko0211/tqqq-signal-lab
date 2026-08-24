@@ -61,10 +61,10 @@ export function researchBundle(ds:Dataset,config:StrategyConfig){
 
 const sub=(ds:Dataset,start:number,end:number,warm=1)=>({...ds,days:ds.days.filter(d=>+d.date.slice(0,4)>=start-warm&&+d.date.slice(0,4)<=end)});
 const fromDaily=(daily:DailyResult[])=>metricSet(daily.map(x=>x.dailyReturn),[],daily.flatMap(x=>x.execution?[x.execution]:[]),daily.map(x=>x.date),daily.map(x=>x.position));
-export function fixedOos(ds:Dataset,config:StrategyConfig){
-  const ys=[...new Set(ds.days.map(d=>+d.date.slice(0,4)))].sort(),holdout=ys.length>=8?ys.at(-2)!:Infinity,testYears=ys.slice(4).filter(y=>y<holdout),daily:DailyResult[]=[];
-  for(const year of testYears){const bt=runBacktest(sub(ds,year,year),{...config,activeFrom:`${year}-01-01`});daily.push(...bt.daily.filter(d=>+d.date.slice(0,4)===year))}
-  return{years:testYears,metrics:fromDaily(daily)};
+export function fixedOos(ds:Dataset,config:StrategyConfig,execution={commissionBps:3,slippageBps:5,delay:1}){
+  const ys=[...new Set(ds.days.map(d=>+d.date.slice(0,4)))].sort(),holdout=ys.length>=8?ys.at(-2)!:Infinity,testYears=ys.slice(4).filter(y=>y<holdout),daily:DailyResult[]=[],yearMetrics:{year:number;metrics:Metrics}[]=[];
+  for(const year of testYears){const bt=runBacktest(sub(ds,year,year),{...config,activeFrom:`${year}-01-01`},execution),rows=bt.daily.filter(d=>+d.date.slice(0,4)===year);daily.push(...rows);yearMetrics.push({year,metrics:fromDaily(rows)})}
+  return{years:testYears,metrics:fromDaily(daily),yearMetrics};
 }
 
 type WindowKind="3Y"|"5Y"|"EXPANDING";

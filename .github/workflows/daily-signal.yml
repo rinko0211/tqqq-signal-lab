@@ -16,12 +16,19 @@ on:
       - "package.json"
       - "package-lock.json"
       - "tests/**"
+      - ".github/workflows/daily-signal.yml"
+      - "github-pages/public/data/deep-research.json"
+      - "github-pages/public/data/cross-ticker.json"
+      - "github-pages/public/data/native-research.json"
+      - "github-pages/public/data/ticker-forward-ledger.json"
+      - "github-pages/public/data/ticker-forward-status.json"
+      - "github-pages/public/data/production-config.json"
 permissions:
   contents: write
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  group: daily-signal-pages
   cancel-in-progress: false
 jobs:
   update:

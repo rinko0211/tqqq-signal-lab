@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { demoDataset } from "../lib/engine.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger } from "../lib/forward.ts";
-import { DEFAULT_PRODUCTION_CONFIG, assessHealth, transitionMode } from "../lib/production.ts";
+import { DEFAULT_PRODUCTION_CONFIG, assessHealth, resolveProductionSystem, transitionMode } from "../lib/production.ts";
 
 function forwardDataset(extra=0){
   const base=demoDataset(),days=base.days.slice(0,201+extra).map((d,i)=>({...d,date:new Date(Date.UTC(2025,0,1+i)).toISOString().slice(0,10)}));
@@ -63,8 +63,15 @@ test("ProductionはDECISIONと明示Human Approvalなしに開始できない",(
   assert.throws(()=>transitionMode(DEFAULT_PRODUCTION_CONFIG,"PRODUCTION"),/DECISION/);
   const decision=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION");
   assert.throws(()=>transitionMode(decision,"PRODUCTION"),/Human approval/);
-  const production=transitionMode(decision,"PRODUCTION",{ticker:"TQQQ",system:"Volatility Shield 13%",version:"VS13-v1.0",date:"2027-08-23"});
+  assert.throws(()=>transitionMode(decision,"PRODUCTION",{ticker:"TQQQ",system:"Volatility Shield 13%",version:"VS13-v1.0",date:"2027-08-23"}),/Strong Forward evidence/);
+  const production=transitionMode(decision,"PRODUCTION",{ticker:"TQQQ",system:"Volatility Shield 13%",version:"VS13-v1.0",date:"2027-08-23",evidence:"Strong",finalReviewComplete:true});
   assert.equal(production.mode,"PRODUCTION");assert.equal(production.approvedByHuman,true);assert.equal(production.nextHealthReview,"2027-11-23");
+});
+
+test("Productionは登録済みTicker × Strategy × Versionだけを許可する",()=>{
+  assert.equal(resolveProductionSystem("UPRO","UPRO-Native-v1.0").config.targetPortfolioVol,.25);
+  assert.throws(()=>resolveProductionSystem("TECL","TECL-Native-v1.0"),/unregistered production system/);
+  assert.throws(()=>resolveProductionSystem("UPRO","UPRO-Native-v1.0","任意入力"),/does not match/);
 });
 
 test("Health Reviewは異常を示してもStrategyを自動置換しない",()=>{

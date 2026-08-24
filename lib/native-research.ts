@@ -2,10 +2,10 @@ import { STRATEGIES, runBacktest, type Metrics, type StrategyConfig } from "./en
 import { SCREENING, makeCrossTickerDataset, type CrossTicker } from "./cross-ticker.ts";
 import { fixedOos } from "./research.ts";
 
-export const NATIVE_RESEARCH_VERSION = "native-research-1.0.0";
+export const NATIVE_RESEARCH_VERSION = "native-research-1.1.0";
 type Payload={source?:string;retrievedAt?:string;crossSeries?:Record<string,any[]>};
 type Family={id:string;name:string;hypothesis:string;config:StrategyConfig;complexity:number;parameter:string;neighbors:StrategyConfig[]};
-export type NativeExperiment={ticker:CrossTicker;family:string;name:string;hypothesis:string;parameter:string;complexity:number;full:Metrics;oos:Metrics;stable:boolean;score:number;decision:"CANDIDATE"|"REJECT";reason:string};
+export type NativeExperiment={ticker:CrossTicker;family:string;name:string;hypothesis:string;parameter:string;complexity:number;full:Metrics;oos:Metrics;stress25:Metrics;delay2:Metrics;positiveYearShare:number;stable:boolean;gatePassed:boolean;score:number;decision:"CANDIDATE"|"COMMON RETAINED"|"REJECT";reason:string};
 export type NativeTickerResult={ticker:CrossTicker;status:"CANDIDATE SELECTED"|"RESEARCH QUEUE"|"EXCLUDED";commonName:string;nativeCandidate:string|null;version:string|null;hypothesis:string;families:number;experiments:NativeExperiment[]};
 export type NativeResearchBundle={schemaVersion:1;buildVersion:string;generatedAt:string;source:string;track:"B2";policy:string;forwardCap:string;results:NativeTickerResult[];forwardCandidates:{ticker:CrossTicker;strategy:string;version:string}[];limitations:string[]};
 
@@ -36,20 +36,22 @@ export function nativeResearchBundle(payload:Payload):NativeResearchBundle{
     const row=SCREENING.find(x=>x.ticker===ticker)!,ds=makeCrossTickerDataset(payload,row);
     if(!ds)return{ticker,status:"RESEARCH QUEUE" as const,commonName:"VS13 Common",nativeCandidate:null,version:null,hypothesis:"実データ不足",families:0,experiments:[]};
     const definitions=families(ticker),experiments=definitions.map(f=>{
-      const full=runBacktest(ds,f.config).metrics,oos=fixedOos(ds,f.config).metrics;
-      return{ticker,family:f.id,name:f.name,hypothesis:f.hypothesis,parameter:f.parameter,complexity:f.complexity,full,oos,stable:true,score:boundedScore(oos,f.complexity),decision:"REJECT" as const,reason:"候補比較中"};
+      const full=runBacktest(ds,f.config).metrics,oosRun=fixedOos(ds,f.config),oos=oosRun.metrics,stress25=fixedOos(ds,f.config,{commissionBps:3,slippageBps:22,delay:1}).metrics,delay2=fixedOos(ds,f.config,{commissionBps:3,slippageBps:5,delay:2}).metrics,positiveYearShare=oosRun.yearMetrics.filter(x=>x.metrics.totalReturn>0).length/Math.max(1,oosRun.yearMetrics.length);
+      return{ticker,family:f.id,name:f.name,hypothesis:f.hypothesis,parameter:f.parameter,complexity:f.complexity,full,oos,stress25,delay2,positiveYearShare,stable:true,gatePassed:false,score:boundedScore(oos,f.complexity),decision:"REJECT" as const,reason:"候補比較中"};
     }).sort((a,b)=>b.score-a.score);
     let best:NativeExperiment|undefined;
     for(const candidate of experiments){
       const definition=definitions.find(x=>x.id===candidate.family)!;
       candidate.stable=!definition.neighbors.length||definition.neighbors.every(n=>{const m=fixedOos(ds,n).metrics;return m.calmar>=candidate.oos.calmar*.80&&m.cagr>=candidate.oos.cagr*.80&&m.maxDd>=candidate.oos.maxDd-.07});
-      if(candidate.stable&&candidate.oos.ordersPerYear>=3&&candidate.oos.ordersPerYear<=20){best=candidate;break}
+      candidate.gatePassed=candidate.stable&&candidate.oos.ordersPerYear>=3&&candidate.oos.ordersPerYear<=20&&candidate.oos.calmar>0&&candidate.stress25.cagr>0&&candidate.delay2.cagr>0&&candidate.positiveYearShare>=.5;
     }
+    best=experiments.find(x=>x.gatePassed);
     const common=experiments.find(x=>x.family==="shield")!;
-    if(best){best.decision="CANDIDATE";best.reason=best.family===common.family?"専用複雑化は共通戦略を明確に上回らず、単純な共通系をNative候補として維持":"OOS複合Score、近傍安定性、注文数、複雑性を通過"}
-    for(const x of experiments)if(x!==best)x.reason=!x.stable?"Parameter plateau不合格":x.complexity>0&&x.score<=common.score?"複雑性に見合うOOS改善なし":"複合Scoreで選抜候補に届かず";
-    const selected=ticker==="TECL"?null:best;
+    if(best){best.decision=best.family===common.family?"COMMON RETAINED":"CANDIDATE";best.reason=best.family===common.family?"Common VS13を上回る独立Native優位がなく、新Versionは作らない":"OOS、年別再現性、近傍安定性、25bpsコスト、T+2遅延、注文数、複雑性Gateを通過"}
+    for(const x of experiments)if(x!==best)x.reason=!x.stable?"Parameter plateau不合格":!x.gatePassed?"OOS・年別安定・Stress・執行遅延Gateのいずれかに不合格":x.complexity>0&&x.score<=common.score?"複雑性に見合うOOS改善なし":"複合Scoreで選抜候補に届かず";
+    if(ticker==="TECL"&&best){best.decision="REJECT";best.reason="Operational QualityとCommon-period DDの懸念によりForward Gateを保留"}
+    const selected=ticker==="TECL"||best?.family==="shield"?null:best;
     return{ticker,status:selected?"CANDIDATE SELECTED" as const:"RESEARCH QUEUE" as const,commonName:"VS13 Common",nativeCandidate:selected?.name||null,version:selected?`${ticker}-Native-v1.0`:null,hypothesis:experiments.map(x=>x.hypothesis).join(" "),families:experiments.length,experiments};
   });
-  return{schemaVersion:1,buildVersion:NATIVE_RESEARCH_VERSION,generatedAt:new Date().toISOString(),source:payload.source||"Nasdaq Historical + Cboe VIX",track:"B2",policy:"Hypothesis-first; 3 families/ticker; one frozen candidate maximum; OOS multi-objective score with complexity penalty; parameter plateau required; no holdout-driven retuning.",forwardCap:"Common and Native combined maximum 6 live systems. New Native Forward requires human approval.",results,forwardCandidates:results.filter(x=>x.version&&x.ticker==="UPRO").map(x=>({ticker:x.ticker,strategy:x.nativeCandidate!,version:x.version!})),limitations:["Native候補の同じHistorical/OOS期間を研究に使用したため、優位性の最終判断は新しいForwardが必要。","TECLはOperational QualityとCommon-period DDの懸念が残り、Native候補をForwardへ送らない。","現存ETFを対象とするSurvivorship/Selection Biasは除去できず、Decision Logへ明記する。"]};
+  return{schemaVersion:1,buildVersion:NATIVE_RESEARCH_VERSION,generatedAt:new Date().toISOString(),source:payload.source||"Nasdaq Historical + Cboe VIX",track:"B2",policy:"Hypothesis-first; 3 families/ticker; one frozen candidate maximum; OOS multi-objective score with complexity penalty; parameter plateau, year stability, 25bps cost stress and T+2 execution delay required; no holdout-driven retuning.",forwardCap:"Common and Native combined maximum 6 live systems. New Native Forward requires human approval.",results,forwardCandidates:results.filter(x=>x.version&&x.ticker==="UPRO").map(x=>({ticker:x.ticker,strategy:x.nativeCandidate!,version:x.version!})),limitations:["Native候補の同じHistorical/OOS期間を研究に使用したため、優位性の最終判断は新しいForwardが必要。","TECLはOperational QualityとCommon-period DDの懸念が残り、Native候補をForwardへ送らない。","現存ETFを対象とするSurvivorship/Selection Biasは除去できず、Decision Logへ明記する。"]};
 }

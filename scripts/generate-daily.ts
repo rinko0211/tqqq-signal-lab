@@ -1,11 +1,12 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { fetchOfficialData } from "../lib/official-data.ts";
-import { STRATEGIES, datasetFromPayload, nextExecutionDate, oosComparison, runBacktest, walkForward } from "../lib/engine.ts";
+import { datasetFromPayload, nextExecutionDate, runBacktest, walkForward } from "../lib/engine.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
 import type { LiveSnapshot } from "../lib/paper.ts";
-import {DEFAULT_PRODUCTION_CONFIG,type ProductionConfig} from "../lib/production.ts";
+import {DEFAULT_PRODUCTION_CONFIG,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
 import {SCREENING,makeCrossTickerDataset} from "../lib/cross-ticker.ts";
+import {fixedOos} from "../lib/research.ts";
 
 const pagesRoot = new URL("../github-pages/public/data/", import.meta.url);
 const roots = process.env.GITHUB_ACTIONS === "true"
@@ -27,39 +28,40 @@ const generatedAt = new Date().toISOString();
 const nyDate = new Intl.DateTimeFormat("en-CA", { timeZone:"America/New_York", year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date());
 const nyHour = Number(new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", hour:"2-digit", hourCycle:"h23" }).format(new Date()));
 await Promise.all(roots.map(dir => mkdir(dir, { recursive:true })));
-const priorSignal = await readJson<{dataDate?:string}|null>("signal.json", null);
+const priorSignal = await readJson<{dataDate?:string;assetTicker?:string;strategyVersion?:string}|null>("signal.json", null);
 const history = await readJson<LiveSnapshot[]>("live-history.json", []);
 const priorForward = await readJson<ForwardLedger>("forward-ledger.json", emptyForwardLedger(generatedAt));
 const production = await readJson<ProductionConfig>("production-config.json", DEFAULT_PRODUCTION_CONFIG);
 
 try {
   const productionTicker=production.mode==="PRODUCTION"&&production.approvedByHuman?production.selectedTicker:null;
+  const selected=productionTicker?resolveProductionSystem(productionTicker,production.strategyVersion||"",production.selectedStrategy):resolveProductionSystem("TQQQ","VS13-v1.0");
   const payload = await fetchOfficialData(Boolean(productionTicker&&productionTicker!=="TQQQ"));
-  const baseDataset = datasetFromPayload(payload);
+  const trackADataset = datasetFromPayload(payload);
   const productionRow=productionTicker?SCREENING.find(x=>x.ticker===productionTicker):null;
-  const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload,productionRow):baseDataset;
+  const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload,productionRow):trackADataset;
   if(!dataset)throw Error(`CONFIG-001: selected ticker ${productionTicker} data unavailable`);
   const errors = dataset.issues.filter(x=>x.severity==="error");
   if (errors.length) throw Error(errors.map(x=>x.message).join("; "));
-  const productionConfig=production.strategyVersion?.includes("Native")?{...STRATEGIES.defensive,sizing:"volTarget" as const,targetPortfolioVol:.25}:STRATEGIES.defensive;
-  const bt = runBacktest(dataset, productionConfig);
+  const bt = runBacktest(dataset, selected.config);
   const latest = bt.daily.at(-1)!;
   const bar = dataset.days.at(-1)!;
   const priorBar = dataset.days.at(-2)!;
   const wf = walkForward(dataset);
-  const oos = oosComparison(dataset).find(x=>x.key==="defensive")!;
-  const updated = priorSignal?.dataDate !== latest.date;
+  const oos = fixedOos(dataset,selected.config);
+  const updated = priorSignal?.dataDate !== latest.date||priorSignal?.assetTicker!==selected.ticker||priorSignal?.strategyVersion!==selected.version;
   const nyWeekday = new Date(`${nyDate}T12:00:00Z`).getUTCDay();
   const closed = [0,6].includes(nyWeekday) || isNyseHoliday(nyDate);
   const state = updated ? "latest" : closed ? "market_closed" : nyHour < 18 ? "market_pending" : "not_updated";
   const splitRatio = priorBar.tqqq.close / bar.tqqq.open;
   const splitFactor = [2,3,4,5,10].find(x=>Math.abs(splitRatio-x)/x<.08);
-  const snapshot:LiveSnapshot = { date:latest.date,tqqqOpen:bar.tqqq.open,tqqqClose:bar.tqqq.close,qqqOpen:bar.qqq.open,qqqClose:bar.qqq.close,target:latest.signal.target,previousTarget:latest.signal.previousTarget,score:latest.signal.score,regime:latest.signal.regime,reason:latest.signal.reason,crisis:latest.signal.regime==="急落・危機",...(splitFactor?{splitFactor}:{}) };
-  if (!history.some(x=>x.date===snapshot.date)) history.push(snapshot);
-  const forward = updateForwardLedger(dataset, priorForward, payload.source, generatedAt);
+  const snapshot:LiveSnapshot = { date:latest.date,assetTicker:selected.ticker,strategyVersion:selected.version,tqqqOpen:bar.tqqq.open,tqqqClose:bar.tqqq.close,qqqOpen:bar.qqq.open,qqqClose:bar.qqq.close,target:latest.signal.target,previousTarget:latest.signal.previousTarget,score:latest.signal.score,regime:latest.signal.regime,reason:latest.signal.reason,crisis:latest.signal.regime==="急落・危機",...(splitFactor?{splitFactor}:{}) };
+  if (!history.some(x=>x.date===snapshot.date&&(x.assetTicker||"TQQQ")===selected.ticker&&(x.strategyVersion||"VS13-v1.0")===selected.version)) history.push(snapshot);
+  // Track A is permanently TQQQ-only. A future UPRO Production selection must
+  // never rewrite or append UPRO returns into the TQQQ strategy ledger.
+  const forward = updateForwardLedger(trackADataset, priorForward, payload.source, generatedAt);
   const forwardSummary = summarizeForward(forward);
-  const primaryTicker=productionTicker||"TQQQ",primaryName=productionTicker?production.selectedStrategy!:STRATEGIES.defensive.name;
-  const signal = { generatedAt,dataDate:latest.date,source:payload.source,platformMode:production.mode,assetTicker:primaryTicker,assetClose:bar.tqqq.close,tqqqClose:bar.tqqq.close,strategy:primaryName,strategyVersion:productionTicker?production.strategyVersion:"VS13-v1.0",state,signal:{...latest.signal,executionDate:nextExecutionDate(latest.date)},suggestion:latest.signal.target===latest.signal.previousTarget?`${latest.signal.target*100}%を維持。売買なし。`:`${latest.signal.previousTarget*100}%から${latest.signal.target*100}%へ変更。次営業日始値で${Math.abs(latest.signal.target-latest.signal.previousTarget)*100}%分を${latest.signal.target>latest.signal.previousTarget?"増加":"縮小"}。`,validation:{oos:oos.metrics,walkForward:wf.metrics,holdout:wf.holdout?.metrics||null},warnings:dataset.issues.filter(x=>x.severity==="warning").map(x=>x.message) };
+  const signal = { generatedAt,dataDate:latest.date,source:payload.source,platformMode:production.mode,assetTicker:selected.ticker,assetClose:bar.tqqq.close,tqqqClose:bar.tqqq.close,strategy:selected.strategy,strategyVersion:selected.version,state,signal:{...latest.signal,executionDate:nextExecutionDate(latest.date)},suggestion:latest.signal.target===latest.signal.previousTarget?`${latest.signal.target*100}%を維持。売買なし。`:`${latest.signal.previousTarget*100}%から${latest.signal.target*100}%へ変更。次営業日始値で${Math.abs(latest.signal.target-latest.signal.previousTarget)*100}%分を${latest.signal.target>latest.signal.previousTarget?"増加":"縮小"}。`,validation:{oos:oos.metrics,walkForward:wf.metrics,holdout:wf.holdout?.metrics||null},warnings:dataset.issues.filter(x=>x.severity==="warning").map(x=>x.message) };
   await Promise.all([
     writeJson("market-data.json",payload), writeJson("signal.json",signal), writeJson("live-history.json",history),
     writeJson("forward-ledger.json",forward), writeJson("forward-summary.json",forwardSummary),

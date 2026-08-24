@@ -23,7 +23,7 @@ import {summarizeForward,type ForwardLedger} from "../lib/forward";
 import type {CrossBundle} from "../lib/cross-ticker";
 import type {TickerForwardLedger} from "../lib/ticker-forward";
 import type {NativeResearchBundle} from "../lib/native-research";
-import {HEALTH_POLICY,DEGRADATION_RULES,type ProductionConfig} from "../lib/production";
+import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,type ProductionConfig} from "../lib/production";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -569,7 +569,12 @@ export default function Home() {
             openFiles={() => fileRef.current?.click()}
           />
         )}
-        {tab === "paper" && <PaperView history={liveHistory} latestDate={latestDate} source={dataset?.source||(dailySignal?"auto":undefined)} ticker={dailySignal?.assetTicker||"TQQQ"}/>} 
+        {tab === "paper" && <PaperView
+          history={liveHistory.filter(x=>(x.assetTicker||"TQQQ")===(dailySignal?.assetTicker||"TQQQ")&&(x.strategyVersion||"VS13-v1.0")===(dailySignal?.strategyVersion||"VS13-v1.0"))}
+          latestDate={latestDate}
+          source={dataset?.source||(dailySignal?"auto":undefined)}
+          ticker={dailySignal?.assetTicker||"TQQQ"}
+        />}
         {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/>}
         {tab === "guide" && <><GuideView/><LifecycleGuide/><RecoveryPromptPack/></>}
         {tab === "roadmap" && <RoadmapV2/>}
@@ -1277,7 +1282,7 @@ function CrossTickerView({data,forward,forwardStatus}:{data:CrossBundle;forward:
 function NativeResearchView({data}:{data:NativeResearchBundle}){return <>
   <article className="guideHero"><em>TRACK B2 · HYPOTHESIS FIRST</em><h2>Tickerごとの専用戦略を1本だけ選ぶ</h2><p>共通戦略との公平比較を残し、各Ticker最大3系統・候補1本・Forward全体6本以内に制限します。</p></article>
   <article className="panel formula"><em>ANTI-OVERFITTING BUDGET</em><h2>事前固定した研究ルール</h2><code>{data.policy}</code><p>{data.forwardCap}</p></article>
-  {data.results.map(r=><article className="panel" key={r.ticker}><div className="panelHead"><div><em>{r.ticker} · {r.families} FAMILIES</em><h2>{r.nativeCandidate||"Forward候補なし"}</h2></div><Status kind={r.status==="CANDIDATE SELECTED"?"ok":"warn"}>{r.status}</Status></div><Table heads={["区分","戦略","Parameter","OOS CAGR","OOS DD","Sortino","Calmar","注文/年","Plateau","判断"]} rows={r.experiments.map(x=>[x.family==="shield"?"Common / Native基準":"Native",x.name,x.parameter,pct(x.oos.cagr),pct(x.oos.maxDd),num(x.oos.sortino),num(x.oos.calmar),num(x.oos.ordersPerYear,1),x.stable?"PASS":"FAIL",x.decision+" — "+x.reason])}/><p className="note">仮説：{r.hypothesis}</p>{r.version&&<p><strong>固定候補Version：</strong> {r.version}</p>}</article>)}
+  {data.results.map(r=><article className="panel" key={r.ticker}><div className="panelHead"><div><em>{r.ticker} · {r.families} FAMILIES</em><h2>{r.nativeCandidate||"NO NATIVE CANDIDATE"}</h2></div><Status kind={r.status==="CANDIDATE SELECTED"?"ok":"warn"}>{r.status}</Status></div><Table heads={["区分","戦略","Parameter","OOS CAGR","OOS DD","Sortino","Calmar","注文/年","25bps CAGR","T+2 CAGR","勝越年","Plateau","Gate","判断"]} rows={r.experiments.map(x=>[x.family==="shield"?"Common基準":"Native",x.name,x.parameter,pct(x.oos.cagr),pct(x.oos.maxDd),num(x.oos.sortino),num(x.oos.calmar),num(x.oos.ordersPerYear,1),pct(x.stress25.cagr),pct(x.delay2.cagr),pct(x.positiveYearShare),x.stable?"PASS":"FAIL",x.gatePassed?"PASS":"FAIL",x.decision+" — "+x.reason])}/><p className="note">仮説：{r.hypothesis}</p>{r.version&&<p><strong>固定候補Version：</strong> {r.version}</p>}</article>)}
   <article className="panel"><em>REJECTED EXPERIMENTS</em><h2>不採用結果も保存</h2><Table heads={["Ticker","Family","理由"]} rows={data.results.flatMap(r=>r.experiments.filter(x=>x.decision==="REJECT").map(x=>[r.ticker,x.name,x.reason]))}/></article>
   <article className="issueBlock"><em>RESEARCH LIMITATIONS</em><h2>まだProduction判断には使えません</h2>{data.limitations.map((x,i)=><p key={i}>• {x}</p>)}</article>
  </>}
@@ -1287,6 +1292,7 @@ function ProductionView({config}:{config:ProductionConfig|null}){const c=config;
   <section className="metrics"><Metric label="Selected Ticker" value={c?.selectedTicker||"NO FINAL SELECTION YET"}/><Metric label="Strategy" value={c?.selectedStrategy||"未選定"}/><Metric label="Version" value={c?.strategyVersion||"—"}/><Metric label="Human Approval" value={c?.approvedByHuman?"記録済み":"未承認"}/><Metric label="次回Health Review" value={c?.nextHealthReview||"Production開始後に設定"}/></section>
   <article className="panel"><em>MODE GATES</em><h2>Research → Decision → Production</h2><Table heads={["Mode","意味","移行条件"]} rows={[["RESEARCH","Historical/OOS/Forwardを蓄積","現在地"],["DECISION","候補2〜3本のFinal Selection Review","十分なEvidenceとデータ品質"],["PRODUCTION","承認済み1本だけをPrimary表示","Actionsで明示承認文字を入力"]]}/><p className="warningNote">GitHub Actionsは自動昇格しません。PRODUCTIONへ直接飛ぶこともできません。</p></article>
   <article className="panel"><em>FINAL SELECTION FRAMEWORK</em><h2>勝者を無理に作らない</h2><p>Historical、OOS、Walk-Forward、汚染状況、Forward、DD、Total Return、Sharpe、Sortino、Calmar、回復時間、回転率、コスト、Regime、Operational Quality、複雑性、データ品質をTicker × Strategy × Version単位で比較します。</p><strong>{c?.mode==="PRODUCTION"?`${c.selectedTicker} × ${c.selectedStrategy} × ${c.strategyVersion}`:"NO FINAL SELECTION YET"}</strong></article>
+  <article className="panel"><em>PRODUCTION REGISTRY</em><h2>承認可能な固定Version</h2><Table heads={["Track","Ticker","Strategy","Version","追加条件"]} rows={PRODUCTION_SYSTEMS.map(x=>[x.track,x.ticker,x.strategy,x.version,"Strong Forward Evidence + Final Review + Human Approval"])}/><p className="note">表にないTicker・Strategy・Versionは入力しても拒否されます。現在は全候補がEvidence不足のためProduction承認できません。</p></article>
   <article className="panel"><em>HEALTH REVIEW FREQUENCY STUDY</em><h2>Recommended Production Health Review Policy：Hybrid</h2><Table heads={["頻度","利点","弱点","採用"]} rows={HEALTH_POLICY.alternatives.map(x=>[x.frequency,x.benefit,x.cost,x.adopt?"YES":"NO"])}/><p>{HEALTH_POLICY.reason}</p><code>Operational: daily automated · Strategy health: quarterly · Formal revalidation: annual · Event-driven: immediate</code></article>
   <article className="panel"><em>PRE-REGISTERED DEGRADATION RULES</em><h2>Healthy → Watch → Revalidation Required → Critical</h2>{DEGRADATION_RULES.map((x,i)=><p key={i}>• {x}</p>)}<p className="note">検出しても戦略は自動変更しません。Research → Challenger → Forward → Review → Human Approvalを再度通します。</p></article>
   <article className="panel trouble"><em>将来Productionへ切り替える操作</em><h2>知識ゼロ向け</h2><ol><li>GitHubでActionsを押します。</li><li>Human Production Approvalを押します。</li><li>まずmodeをDECISIONにしてRun workflowを押します。</li><li>Final Selection Review後、同じ画面でPRODUCTIONを選びます。</li><li>Ticker・Strategy・Versionを入力します。</li><li>confirmationへ <code>APPROVE PRODUCTION</code> と正確に入力します。</li><li>緑のチェック後、サイトのProductionタブを確認します。</li></ol></article>
