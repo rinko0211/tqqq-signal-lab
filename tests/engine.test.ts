@@ -110,6 +110,20 @@ test("トレーリングストップはQQQではなくTQQQ価格で判定する"
   assert.match(result[202].reason,/トレーリングストップ/);
 });
 
+test("Volatility Targetingは通常配分を超えず、現行Championを変更しない",()=>{
+  const ds=demoDataset(),base=signals(ds.days,STRATEGIES.defensive),targeted=signals(ds.days,{...STRATEGIES.defensive,sizing:"volTarget",targetPortfolioVol:.30});
+  assert.ok(targeted.every((x,i)=>x.target<=base[i].target));
+  assert.ok(targeted.some((x,i)=>x.target<base[i].target));
+  assert.equal(STRATEGIES.defensive.sizing,undefined);
+});
+
+test("ATR Stop計算で未来日の価格を過去Signalへ伝播させない",()=>{
+  const ds=demoDataset(),config={...STRATEGIES.defensive,trailMode:"atr" as const,atrMultiple:3},before=signals(ds.days,config);
+  const last=ds.days.length-1;ds.days[last].tqqq={...ds.days[last].tqqq,high:ds.days[last].tqqq.high*5,low:ds.days[last].tqqq.low*.2,close:ds.days[last].tqqq.close*.5,adjClose:ds.days[last].tqqq.adjClose*.5};
+  const after=signals(ds.days,config);
+  assert.deepEqual(after.slice(0,-1).map(x=>x.target),before.slice(0,-1).map(x=>x.target));
+});
+
 test("手数料・スリッページと段階ポジション変更量を控除する",()=>{
   const ds=fixedDataset(),config:StrategyConfig={...STRATEGIES.adaptive,entry:0,exit:-1,strong:101,confirmDays:1,minHold:0,cooldown:0,trailStop:.99,mode:"three",weights:{trend:1,momentum:0,volatility:0,market:0}};
   const bt=runBacktest(ds,config,{commissionBps:3,slippageBps:5,delay:1}),order=bt.orders[0];

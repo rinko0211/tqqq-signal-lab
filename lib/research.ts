@@ -58,3 +58,32 @@ export function researchBundle(ds:Dataset,config:StrategyConfig){
   const health={return:bt.metrics.cagr>=.2?"Good":bt.metrics.cagr>0?"Moderate":"Weak",drawdown:bt.metrics.maxDd>=-.3?"Good":bt.metrics.maxDd>=-.45?"Moderate":"High",robustness:stress.at(-1)!.metrics.cagr>0&&mc.p05>-.5?"Moderate":"Weak",overall:bt.metrics.maxDd>-.45&&bt.metrics.sharpe>.5?"Paper Trading Recommended":"Research Only"};
   return{bt,dd,regime,mc,frontier,simple,benchmarks:{tqqq:benchmark(ds,"tqqq"),qqq:benchmark(ds,"qqq"),spy:benchmark(ds,"spy")},stress,whipsaw:whipsaw(bt,ds),health,audit:{champion:"Volatility Shield",decision:"KEEP",reason:"今回のRefineではSignalルールを変更せず、監査・計測基盤を拡張。ChallengerはOOS優位が確認されるまで昇格させない。",holdoutStatus:"既に結果を閲覧済みのため純粋な未接触Holdoutとは呼ばず、診断用Holdoutとして固定。以後はLive Paper TradingをPseudo-Live期間とする。"}};
 }
+
+const sub=(ds:Dataset,start:number,end:number,warm=1)=>({...ds,days:ds.days.filter(d=>+d.date.slice(0,4)>=start-warm&&+d.date.slice(0,4)<=end)});
+const fromDaily=(daily:DailyResult[])=>metricSet(daily.map(x=>x.dailyReturn),[],daily.flatMap(x=>x.execution?[x.execution]:[]),daily.map(x=>x.date),daily.map(x=>x.position));
+export function fixedOos(ds:Dataset,config:StrategyConfig){
+  const ys=[...new Set(ds.days.map(d=>+d.date.slice(0,4)))].sort(),holdout=ys.length>=8?ys.at(-2)!:Infinity,testYears=ys.slice(4).filter(y=>y<holdout),daily:DailyResult[]=[];
+  for(const year of testYears){const bt=runBacktest(sub(ds,year,year),{...config,activeFrom:`${year}-01-01`});daily.push(...bt.daily.filter(d=>+d.date.slice(0,4)===year))}
+  return{years:testYears,metrics:fromDaily(daily)};
+}
+
+type WindowKind="3Y"|"5Y"|"EXPANDING";
+function windowStudy(ds:Dataset,kind:WindowKind){
+  const ys=[...new Set(ds.days.map(d=>+d.date.slice(0,4)))].sort(),holdout=ys.length>=8?ys.at(-2)!:Infinity,minTrain=kind==="3Y"?3:5,testYears=ys.slice(minTrain).filter(y=>y<holdout),daily:DailyResult[]=[],selected:{year:number;strategy:string}[]=[];
+  for(const year of testYears){const start=kind==="EXPANDING"?ys[0]:year-minTrain,train=sub(ds,start,year-1,0),candidates=Object.values(STRATEGIES).map(c=>{const r=runBacktest(train,c),m=r.metrics,score=.35*m.sharpe+.2*m.sortino+.35*m.calmar+.4*m.cagr-.25*Math.abs(m.maxDd);return{c,r,score}}).sort((a,b)=>b.score-a.score),pick=candidates[0].c,test=runBacktest(sub(ds,year,year),{...pick,activeFrom:`${year}-01-01`}),x=test.daily.filter(d=>+d.date.slice(0,4)===year);daily.push(...x);selected.push({year,strategy:pick.name})}
+  return{kind,training:kind==="EXPANDING"?"Expanding":"直近"+kind.replace("Y","年"),testing:"翌1年",years:testYears,metrics:fromDaily(daily),selected};
+}
+
+export type DeepResearchBundle=ReturnType<typeof deepResearchBundle>;
+export function deepResearchBundle(ds:Dataset){
+  const champion=STRATEGIES.defensive,championOos=fixedOos(ds,champion),stops=[.10,.12,.13,.14,.16].map(stop=>{const c={...champion,trailStop:stop},full=runBacktest(ds,c).metrics,oos=fixedOos(ds,c).metrics;return{stop,full,oos}}),base=stops.find(x=>x.stop===.13)!;
+  const stopPlateau={stable:[.12,.14].every(stop=>{const x=stops.find(v=>v.stop===stop)!;return x.oos.calmar>=base.oos.calmar*.85&&x.oos.cagr>=base.oos.cagr*.85&&x.oos.maxDd>=base.oos.maxDd-.05}),rule:"隣接12%・14%のOOS Calmar/CAGRが13%の85%以上、DD悪化が5pt以内"};
+  const configs=[
+    {id:"champion",name:"Volatility Shield 13%固定Stop",config:champion,complexity:0},
+    {id:"stop12",name:"Volatility Shield 12%固定Stop",config:{...champion,trailStop:.12},complexity:0},
+    {id:"volTarget",name:"30% Volatility Targeting",config:{...champion,sizing:"volTarget" as const,targetPortfolioVol:.30},complexity:1},
+    {id:"atrStop",name:"TQQQ ATR×3 Stop",config:{...champion,trailMode:"atr" as const,atrMultiple:3},complexity:1},
+  ];
+  const challengers=configs.map(x=>{const full=runBacktest(ds,x.config).metrics,oos=fixedOos(ds,x.config).metrics,pass=x.id==="champion"||oos.calmar>=championOos.metrics.calmar*1.05&&oos.sortino>=championOos.metrics.sortino*.95&&oos.maxDd>=championOos.metrics.maxDd-.02&&oos.cagr>=championOos.metrics.cagr*.9&&oos.ordersPerYear>=5&&oos.ordersPerYear<=15,ddCandidate=oos.maxDd>=championOos.metrics.maxDd+.10&&oos.calmar>championOos.metrics.calmar;return{...x,full,oos,decision:x.id==="champion"?"CHAMPION":pass?"ACCEPT CANDIDATE":ddCandidate?"DD CANDIDATE":"REJECT"}});
+  return{generatedAt:new Date().toISOString(),dataStart:ds.days[0]?.date,dataEnd:ds.days.at(-1)?.date,boundaryPolicy:"Indicatorは過去方向だけを参照。OOS年には直前1年をwarm-upとして渡すがactiveFrom以前は売買禁止。予測ラベルを使わない決定論的ルールのためEmbargoは不要。",windows:[windowStudy(ds,"3Y"),windowStudy(ds,"5Y"),windowStudy(ds,"EXPANDING")],stops,stopPlateau,challengers,adoptionRule:"OOS Calmar +5%以上、Sortino維持、DD悪化2pt以内、CAGR90%以上、年5〜15注文、追加自由パラメータ1個以内"};
+}

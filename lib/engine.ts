@@ -48,6 +48,10 @@ export type StrategyConfig = {
   mode: PositionMode;
   ablation: Ablation;
   activeFrom?: string;
+  sizing?: "score" | "volTarget";
+  targetPortfolioVol?: number;
+  trailMode?: "fixed" | "atr";
+  atrMultiple?: number;
 };
 export type Signal = {
   date: string;
@@ -577,6 +581,11 @@ function atrPct(days: Day[], i: number, n = 20) {
   }
   return mean(tr) * 100;
 }
+function tqqqAtrPct(days:Day[],i:number,n=20){
+  if(i<n)return 0;const tr:number[]=[];
+  for(let j=i-n+1;j<=i;j++){const x=days[j].tqqq,prev=days[j-1].tqqq.close;tr.push(Math.max(x.high-x.low,Math.abs(x.high-prev),Math.abs(x.low-prev))/x.close)}
+  return mean(tr)*100;
+}
 function realized(x: number[], i: number, n = 20) {
   if (i < n) return 0;
   return (
@@ -670,6 +679,7 @@ export function signals(days: Day[], config: StrategyConfig): Signal[] {
       rs = rsi(q, i),
       rv = realized(q, i),
       at = atrPct(days, i),
+      tAt=tqqqAtrPct(days,i),
       v = d.vix.close;
     const trend = Number.isFinite(m200)
         ? clamp(
@@ -735,9 +745,14 @@ export function signals(days: Day[], config: StrategyConfig): Signal[] {
       i < 200 || (config.activeFrom && d.date < config.activeFrom)
         ? 0
         : mapPosition(score, rg, config);
+    if(config.sizing==="volTarget"&&desired>0){
+      const targetVol=config.targetPortfolioVol||.30,estimatedTqqqVol=Math.max(.01,rv/100*3),cap=Math.floor(clamp(targetVol/estimatedTqqqVol,0,1)*4)/4;
+      desired=Math.min(desired,cap);
+    }
+    const effectiveStop=config.trailMode==="atr"?clamp((config.atrMultiple||3)*tAt/100,.10,.25):config.trailStop;
     const crisis =
       rg === "急落・危機" ||
-      (target > 0 && trail > 0 && t[i] / trail - 1 < -config.trailStop);
+      (target > 0 && trail > 0 && t[i] / trail - 1 < -effectiveStop);
     if (crisis) desired = 0;
     if (desired > target && cool > 0) desired = target;
     const threshold = desired > target ? config.entry : config.exit,
@@ -763,7 +778,7 @@ export function signals(days: Day[], config: StrategyConfig): Signal[] {
     const nextChange =
       target === 0
         ? `総合${config.entry}点以上が${config.confirmDays}日中${Math.max(1, config.confirmDays - 1)}日かつ上昇レジーム`
-        : `総合${config.exit}点未満、危機判定、または${Math.round(config.trailStop * 100)}%トレーリングストップ`;
+        : `総合${config.exit}点未満、危機判定、または${config.trailMode==="atr"?`ATR連動（現在${Math.round(effectiveStop*100)}%）`:`${Math.round(config.trailStop * 100)}%`}トレーリングストップ`;
     out.push({
       date: d.date,
       score,

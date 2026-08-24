@@ -13,6 +13,7 @@
     "test": "npm run test:core && npm run build && node --test tests/rendered-html.test.mjs tests/deployment.test.mjs && npm run build:pages",
     "test:core": "node --experimental-strip-types --test tests/engine.test.ts tests/paper.test.ts",
     "generate:daily": "node --experimental-strip-types scripts/generate-daily.ts",
+    "generate:research": "node --experimental-strip-types scripts/generate-research.ts",
     "build:pages": "vite build --config vite.pages.config.ts",
     "validate:real": "node --experimental-strip-types scripts/validate-real-data.ts",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern dist-pages --ignore-pattern .next",

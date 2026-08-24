@@ -18,6 +18,7 @@ import {
 } from "../lib/engine";
 import {simulatePaper,type LiveSnapshot,type PaperConfig} from "../lib/paper";
 import {researchBundle} from "../lib/research";
+import type {DeepResearchBundle} from "../lib/research";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -37,6 +38,7 @@ const TABS = [
   ["trades", "取引履歴"],
   ["robust", "頑健性検証"],
   ["research", "研究監査"],
+  ["deep", "Challenger研究"],
   ["data", "データ管理"],
   ["paper", "Paper Trading"],
   ["status", "System Status"],
@@ -194,7 +196,8 @@ export default function Home() {
     [analysis,setAnalysis]=useState<AnalysisBundle|null>(null),
     [analysisLoading,setAnalysisLoading]=useState(false),
     [liveHistory,setLiveHistory]=useState<LiveSnapshot[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false),analysisWorker=useRef<Worker|null>(null),analysisRequest=useRef(0);
+  const [deepResearch,setDeepResearch]=useState<DeepResearchBundle|null>(null),[deepLoading,setDeepLoading]=useState(false);
+  const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false),deepRequested=useRef(false),analysisWorker=useRef<Worker|null>(null),analysisRequest=useRef(0);
   useEffect(() => {
     queueMicrotask(() => {
       try {
@@ -214,6 +217,11 @@ export default function Home() {
       setLoading(false);
     });
   }, []);
+  useEffect(()=>{
+    if(tab!=="deep"||deepResearch||deepRequested.current)return;
+    deepRequested.current=true;queueMicrotask(()=>setDeepLoading(true));const url=new URL("./data/deep-research.json",document.baseURI);
+    fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error(`${r.status}`);return r.json()}).then(setDeepResearch).catch(()=>setMessage("週次研究レポートがまだありません。GitHub ActionsのWeekly Quant Researchを手動実行してください。" )).finally(()=>setDeepLoading(false));
+  },[tab,deepResearch]);
   useEffect(()=>{
     if(!RESEARCH_TABS.has(tab)||dataset||marketRequested.current)return;
     marketRequested.current=true;setLoading(true);setMessage("検証用の全期間データを読み込んでいます…");
@@ -520,6 +528,7 @@ export default function Home() {
         )}
         {analysis?.rob && tab === "robust" && <RobustView data={analysis.rob} />}
         {analysis?.research && tab === "research" && <ResearchView data={analysis.research}/>} 
+        {tab === "deep" && (deepResearch?<DeepResearchView data={deepResearch}/>:<section className="emptyState"><span>WEEKLY DEEP RESEARCH</span><h2>{deepLoading?"事前計算レポートを読込中":"レポート未生成"}</h2><p>日常Signalを遅くしないため、複数Walk-Forward窓とChallenger比較は週次Actionsで事前計算します。</p></section>)}
         {dataset && tab === "data" && (
           <DataView
             dataset={dataset}
@@ -530,7 +539,7 @@ export default function Home() {
         )}
         {tab === "paper" && <PaperView history={liveHistory} latestDate={latestDate} source={dataset?.source||(dailySignal?"auto":undefined)}/>} 
         {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory}/>} 
-        {tab === "guide" && <GuideView/>}
+        {tab === "guide" && <><GuideView/><RecoveryPromptPack/></>}
         {tab === "roadmap" && <RoadmapView/>}
         {tab === "glossary" && <GlossaryView/>}
         {tab === "spec" && <SpecView />}
@@ -1368,6 +1377,29 @@ function ResearchView({data}:{data:ReturnType<typeof researchBundle>}){
     <article className="panel"><em>HONEST BENCHMARK</em><h2>複雑な戦略を単純ルールと比較</h2><Table heads={["対象","Total Return","CAGR","Sharpe","Max DD","Calmar"]} rows={[["Volatility Shield",m],["TQQQ Buy & Hold",data.benchmarks.tqqq],["QQQ Buy & Hold",data.benchmarks.qqq],["SPY Buy & Hold",data.benchmarks.spy],["TQQQ / QQQ 200DMA",data.simple]].map(([name,x])=>{const z=x as Backtest["metrics"];return[name as string,pct(z.totalReturn),pct(z.cagr),num(z.sharpe),pct(z.maxDd),num(z.calmar)]})}/><p className="note">60/40は債券データを現在取得していないため、推測値で追加していません。</p></article>
   </>;
 }
+
+function DeepResearchView({data}:{data:DeepResearchBundle}){
+  return <>
+    <article className="guideHero"><em>BOUNDED WEEKLY RESEARCH · {data.dataEnd}</em><h2>Challenger研究</h2><p>毎日のSignalとは分離した週次事前計算です。Championのルールは、下の採用基準を満たすChallengerが出るまで変更しません。</p></article>
+    <article className="panel formula"><em>ADOPTION GATE</em><h2>採用基準</h2><code>{data.adoptionRule}</code><p>{data.boundaryPolicy}</p></article>
+    <article className="panel"><em>MULTI-WINDOW WALK-FORWARD</em><h2>学習窓を変えても再現するか</h2><Table heads={["学習","検証","OOS年","Total Return","CAGR","Sharpe","Sortino","Max DD","Calmar","注文/年"]} rows={data.windows.map(x=>[x.training,x.testing,x.years.length,pct(x.metrics.totalReturn),pct(x.metrics.cagr),num(x.metrics.sharpe),num(x.metrics.sortino),pct(x.metrics.maxDd),num(x.metrics.calmar),num(x.metrics.ordersPerYear,1)])}/><p className="note">候補は既存3戦略だけに限定し、3年・5年・Expandingの代表ケースのみ比較します。無制限なWindow探索は行いません。</p></article>
+    <article className={`panel ${data.stopPlateau.stable?"health":"holdout"}`}><div className="panelHead"><div><em>TRAILING STOP PLATEAU</em><h2>13%は孤立した最良点か</h2></div><Status kind={data.stopPlateau.stable?"ok":"bad"}>{data.stopPlateau.stable?"Plateau確認":"不安定"}</Status></div><Table heads={["Stop","OOS CAGR","OOS Sharpe","OOS DD","OOS Calmar","注文/年","全期間CAGR"]} rows={data.stops.map(x=>[pct(x.stop,0),pct(x.oos.cagr),num(x.oos.sharpe),pct(x.oos.maxDd),num(x.oos.calmar),num(x.oos.ordersPerYear,1),pct(x.full.cagr)])}/><p className="note">判定規則: {data.stopPlateau.rule}</p></article>
+    <article className="panel"><em>CHAMPION / CHALLENGER</em><h2>固定Stop、Volatility Targeting、ATR Stop</h2><Table heads={["候補","自由度追加","判定","OOS CAGR","OOS Sortino","OOS DD","OOS Calmar","注文/年","Exposure"]} rows={data.challengers.map(x=>[x.name,x.complexity,x.decision,pct(x.oos.cagr),num(x.oos.sortino),pct(x.oos.maxDd),num(x.oos.calmar),num(x.oos.ordersPerYear,1),pct(x.oos.exposure)])}/><p className="warningNote">ACCEPT CANDIDATEでも即時置換しません。次のPseudo-Live期間でChampionと並行記録してから昇格判断します。</p></article>
+  </>;
+}
+
+const RECOVERY_PROMPTS=[
+  ["ACTION-003","GitHub Actions failed","Actionsの最新実行が赤くなりました。赤い工程名と表示されたエラーを使い、1回に1操作ずつ復旧方法を教えてください。"],
+  ["PAGES-404","Pages 404","GitHub Pagesが404です。Settings → PagesとActionsのどこを確認するか、押す順番で教えてください。"],
+  ["DATA-001","Signal old","最終市場データ日が古いです。休場か取得失敗かを区別する確認方法を教えてください。"],
+  ["DATA-002","Market data unavailable","TQQQ・QQQ・SPY・VIXの市場データ取得に失敗しました。推測Signalを作らず復旧する手順を教えてください。"],
+  ["PAPER-004","Paper Trading stopped","Live Paper Trading履歴が増えません。開始日、公開履歴、二重約定防止を順番に確認してください。"],
+  ["PWA-005","PWA not updating","iPhoneホーム画面の表示が古いです。最終データ日を守りながらPWAを更新する操作を教えてください。"],
+  ["SIGNAL-002","JSON error","signal.jsonを読めません。Actionsの生成、ファイル存在、JSON形式を初心者向けに確認してください。"],
+  ["GIT-006","Git merge conflict","GitHubでmerge conflictが表示されました。データ履歴を消さず、画面上で安全に解決する方法を教えてください。"],
+  ["FORK-007","Fork sync problem","Forkが元プロジェクトより遅れています。Sync forkを使う操作と、変更を失わない注意点を教えてください。"],
+] as const;
+function RecoveryPromptPack(){const copy=(code:string,title:string,body:string)=>{const prompt=`私はGitHub初心者です。TQQQ Signal Labで${code}（${title}）が発生しました。\n\n${body}\n\n専門用語を使わず、1回に1操作ずつ、どこを押すか、正常なら何が見えるか、失敗時に次に見る場所を教えてください。`;navigator.clipboard.writeText(prompt).catch(()=>window.prompt("この内容をコピーしてください",prompt))};return <article className="panel trouble"><em>FREE GPT RECOVERY PROMPT PACK</em><h2>無料版ChatGPTへそのまま貼る文</h2><Table heads={["Code","症状","操作"]} rows={RECOVERY_PROMPTS.map(([code,title,body])=>[code,title,<button key={code} onClick={()=>copy(code,title,body)}>相談文をコピー</button>]) as unknown as (string|number)[][]}/></article>}
 
 const GLOSSARY=[
  ["CAGR","複利でならした年平均成長率。高くても最大DDとセットで確認します。"],["Total Return","開始から終了までの累積リターン。資産曲線から直接計算します。"],["Sharpe Ratio","総変動に対する収益効率。高いほど効率的ですが将来保証ではありません。"],["Sortino Ratio","悪い方向の変動だけに対する収益効率です。"],["Maximum Drawdown","過去最高から最大で減った割合。−30%なら100万円が一時70万円です。"],["Calmar Ratio","CAGR÷最大DD。成長と深い下落の効率です。"],["Volatility / VIX","値動きの大きさ / 米国株の予想変動を表す指数です。"],["Momentum / Trend","上昇の勢い / 中長期の方向です。"],["OOS","パラメータ選択に使っていない未来側の検証期間です。"],["Walk-Forward","過去で選び、その直後の未来で試すことを繰り返します。"],["Holdout","最終候補まで触らない検証期間。一度見て調整すると純粋ではありません。"],["Backtest","過去データを使った仮想検証です。実運用成績ではありません。"],["Live Paper Trading","その時点で利用可能だったSignalだけを記録する仮想運用です。"],["Slippage","想定価格より不利に約定する差です。"],["Position Size / Exposure","資産のうちTQQQへ配分する割合 / 平均配分です。"],["Trailing Stop","保有後のTQQQ高値から一定以上下がった時に縮小・撤退する規則です。"],["Volatility Drag / Daily Reset","日次レバレッジ再調整により、長期成績が指数×3と一致しない性質です。"],["Look-Ahead Bias","その時点で知らない未来情報を使ってしまう誤りです。"],["Overfitting","過去だけに合い、未来で再現しにくい複雑化です。"]
