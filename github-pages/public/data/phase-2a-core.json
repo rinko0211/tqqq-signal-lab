@@ -1,0 +1,4283 @@
+{
+  "schemaVersion": 1,
+  "phase": "PHASE_2A_CORE_ROBUSTNESS",
+  "generatedAt": "2026-08-25T13:43:05.648Z",
+  "oosStart": "2020-01-02",
+  "rows": [
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "VS13_FIXED",
+      "full": {
+        "cagr": 0.23040701956765042,
+        "totalReturn": 6.900040348701364,
+        "annualizedVolatility": 0.3532056567135187,
+        "sharpe": 0.7666000883538114,
+        "sortino": 1.1117744787703794,
+        "maxDd": -0.3815846420370027,
+        "calmar": 0.6038162813305982,
+        "ulcerIndex": 0.1976039942099811,
+        "exposure": 0.5691679936305732,
+        "timeInCash": 0.3996815286624204,
+        "actionDaysPerYear": 9.730891719745223
+      },
+      "oos": {
+        "cagr": 0.2732759298059557,
+        "totalReturn": 3.953402012440133,
+        "annualizedVolatility": 0.3777401327484529,
+        "sharpe": 0.8315273874715563,
+        "sortino": 1.2195951841662318,
+        "maxDd": -0.3815846420370025,
+        "calmar": 0.716160714296924,
+        "ulcerIndex": 0.20889228903682872,
+        "exposure": 0.5724985020970641,
+        "timeInCash": 0.39125224685440385,
+        "actionDaysPerYear": 11.173157579388857
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.6280720365773869,
+            "totalReturn": 0.631223959225935,
+            "annualizedVolatility": 0.3927075792771887,
+            "sharpe": 1.445295805961246,
+            "sortino": 1.949043092061881,
+            "maxDd": -0.23616818751669288,
+            "calmar": 2.659426924437032,
+            "ulcerIndex": 0.15159529112464673,
+            "exposure": 0.43280632411067194,
+            "timeInCash": 0.4901185770750988,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.41062381629698286,
+            "totalReturn": 0.41062381629698286,
+            "annualizedVolatility": 0.41773696821659473,
+            "sharpe": 1.0345547393110737,
+            "sortino": 1.5749755588815106,
+            "maxDd": -0.23481090940820815,
+            "calmar": 1.7487424980886723,
+            "ulcerIndex": 0.11370324177046352,
+            "exposure": 0.7896825396825397,
+            "timeInCash": 0.18253968253968253,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.18611704736417467,
+            "totalReturn": -0.18545165642803418,
+            "annualizedVolatility": 0.1279180638127315,
+            "sharpe": -1.543037334663837,
+            "sortino": -1.661664629124576,
+            "maxDd": -0.23485198170397703,
+            "calmar": -0.7924865952324341,
+            "ulcerIndex": 0.20524493334339577,
+            "exposure": 0.021912350597609563,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.86218988528317,
+            "totalReturn": 0.853023453063078,
+            "annualizedVolatility": 0.37456723249338003,
+            "sharpe": 1.8475867250103237,
+            "sortino": 3.275695885242876,
+            "maxDd": -0.21704638421812306,
+            "calmar": 3.9723761738260666,
+            "ulcerIndex": 0.09290624718901036,
+            "exposure": 0.647,
+            "timeInCash": 0.32,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.18883879170240636,
+            "totalReturn": 0.18883879170240636,
+            "annualizedVolatility": 0.45298661379264693,
+            "sharpe": 0.6107277578958342,
+            "sortino": 0.9169849047131612,
+            "maxDd": -0.38158464203700293,
+            "calmar": 0.49488048233370546,
+            "ulcerIndex": 0.2035681153390019,
+            "exposure": 0.814484126984127,
+            "timeInCash": 0.15476190476190477,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.3596053624094937,
+            "totalReturn": 0.3562946121113877,
+            "annualizedVolatility": 0.3721274807975339,
+            "sharpe": 1.0133934486390364,
+            "sortino": 1.515162755464346,
+            "maxDd": -0.2279308023022968,
+            "calmar": 1.5776953302369439,
+            "ulcerIndex": 0.09841656892254026,
+            "exposure": 0.69,
+            "timeInCash": 0.3,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": -0.1747602204878329,
+            "totalReturn": -0.11548747406993765,
+            "annualizedVolatility": 0.43108473156821425,
+            "sharpe": -0.2266724323586365,
+            "sortino": -0.32406358790266476,
+            "maxDd": -0.3304540567350507,
+            "calmar": -0.5288487671009318,
+            "ulcerIndex": 0.1763306267886134,
+            "exposure": 0.6335403726708074,
+            "timeInCash": 0.2857142857142857,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.5231623669694851,
+            "totalReturn": -0.18593613270142162,
+            "annualizedVolatility": 0.2943058056428696,
+            "sharpe": -2.3573541093074764,
+            "sortino": -2.494813049275581,
+            "maxDd": -0.2317833737714814,
+            "calmar": -2.2571177494606602,
+            "ulcerIndex": 0.20838421958773046,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.2735503449904577,
+            "totalReturn": -0.11125283517834439,
+            "annualizedVolatility": 0.37894287744703553,
+            "sharpe": -0.6434740332328278,
+            "sortino": -0.7434177455004352,
+            "maxDd": -0.18956462815517539,
+            "calmar": -1.4430452962275884,
+            "ulcerIndex": 0.1611588322942849,
+            "exposure": 0.15053763440860216,
+            "timeInCash": 0.8064516129032258,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.18611704736417467,
+            "totalReturn": -0.18545165642803418,
+            "annualizedVolatility": 0.1279180638127318,
+            "sharpe": -1.5430373346638324,
+            "sortino": -1.6616646291245734,
+            "maxDd": -0.23485198170397736,
+            "calmar": -0.792486595232433,
+            "ulcerIndex": 0.20524493334339583,
+            "exposure": 0.021912350597609563,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.4865694945143164,
+            "totalReturn": 1.2029461629357279,
+            "annualizedVolatility": 0.4155778978509792,
+            "sharpe": 1.1634906408787686,
+            "sortino": 1.8497847189802679,
+            "maxDd": -0.38158464203700293,
+            "calmar": 1.275128610828978,
+            "ulcerIndex": 0.15869328753643241,
+            "exposure": 0.7310756972111554,
+            "timeInCash": 0.23705179282868527,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.3056197294913865,
+            "totalReturn": 4.848653196930449,
+            "annualizedVolatility": 0.3716974892025304,
+            "sharpe": 0.9063183805004665,
+            "sortino": 1.3351411890652436,
+            "maxDd": -0.3504903115598147,
+            "calmar": 0.8719776821540741,
+            "ulcerIndex": 0.20252217177798704,
+            "exposure": 0.5518274415817855,
+            "timeInCash": 0.4038346315158778,
+            "actionDaysPerYear": 12.53205512282804
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.2732759298059557,
+            "totalReturn": 3.953402012440133,
+            "annualizedVolatility": 0.3777401327484529,
+            "sharpe": 0.8315273874715563,
+            "sortino": 1.2195951841662318,
+            "maxDd": -0.3815846420370025,
+            "calmar": 0.716160714296924,
+            "ulcerIndex": 0.20889228903682872,
+            "exposure": 0.5724985020970641,
+            "timeInCash": 0.39125224685440385,
+            "actionDaysPerYear": 11.173157579388857
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.25492206341482904,
+            "totalReturn": 3.499252153096915,
+            "annualizedVolatility": 0.38143706002436034,
+            "sharpe": 0.7890422368752884,
+            "sortino": 1.1561628603706555,
+            "maxDd": -0.3849306199932616,
+            "calmar": 0.6622545730949946,
+            "ulcerIndex": 0.22046131385311174,
+            "exposure": 0.579388855602157,
+            "timeInCash": 0.3810665068903535,
+            "actionDaysPerYear": 10.871180347513482
+          }
+        }
+      ],
+      "stabilityFloor": 0.9247289887230821,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "full": {
+        "cagr": 0.23040701956765042,
+        "totalReturn": 6.900040348701364,
+        "annualizedVolatility": 0.3532056567135187,
+        "sharpe": 0.7666000883538114,
+        "sortino": 1.1117744787703794,
+        "maxDd": -0.3815846420370027,
+        "calmar": 0.6038162813305982,
+        "ulcerIndex": 0.1976039942099811,
+        "exposure": 0.5691679936305732,
+        "timeInCash": 0.3996815286624204,
+        "actionDaysPerYear": 9.730891719745223
+      },
+      "oos": {
+        "cagr": 0.2732759298059557,
+        "totalReturn": 3.953402012440133,
+        "annualizedVolatility": 0.3777401327484529,
+        "sharpe": 0.8315273874715563,
+        "sortino": 1.2195951841662318,
+        "maxDd": -0.3815846420370025,
+        "calmar": 0.716160714296924,
+        "ulcerIndex": 0.20889228903682872,
+        "exposure": 0.5724985020970641,
+        "timeInCash": 0.39125224685440385,
+        "actionDaysPerYear": 11.173157579388857
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.6280720365773869,
+            "totalReturn": 0.631223959225935,
+            "annualizedVolatility": 0.3927075792771887,
+            "sharpe": 1.445295805961246,
+            "sortino": 1.949043092061881,
+            "maxDd": -0.23616818751669288,
+            "calmar": 2.659426924437032,
+            "ulcerIndex": 0.15159529112464673,
+            "exposure": 0.43280632411067194,
+            "timeInCash": 0.4901185770750988,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.41062381629698286,
+            "totalReturn": 0.41062381629698286,
+            "annualizedVolatility": 0.41773696821659473,
+            "sharpe": 1.0345547393110737,
+            "sortino": 1.5749755588815106,
+            "maxDd": -0.23481090940820815,
+            "calmar": 1.7487424980886723,
+            "ulcerIndex": 0.11370324177046352,
+            "exposure": 0.7896825396825397,
+            "timeInCash": 0.18253968253968253,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.18611704736417467,
+            "totalReturn": -0.18545165642803418,
+            "annualizedVolatility": 0.1279180638127315,
+            "sharpe": -1.543037334663837,
+            "sortino": -1.661664629124576,
+            "maxDd": -0.23485198170397703,
+            "calmar": -0.7924865952324341,
+            "ulcerIndex": 0.20524493334339577,
+            "exposure": 0.021912350597609563,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.86218988528317,
+            "totalReturn": 0.853023453063078,
+            "annualizedVolatility": 0.37456723249338003,
+            "sharpe": 1.8475867250103237,
+            "sortino": 3.275695885242876,
+            "maxDd": -0.21704638421812306,
+            "calmar": 3.9723761738260666,
+            "ulcerIndex": 0.09290624718901036,
+            "exposure": 0.647,
+            "timeInCash": 0.32,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.18883879170240636,
+            "totalReturn": 0.18883879170240636,
+            "annualizedVolatility": 0.45298661379264693,
+            "sharpe": 0.6107277578958342,
+            "sortino": 0.9169849047131612,
+            "maxDd": -0.38158464203700293,
+            "calmar": 0.49488048233370546,
+            "ulcerIndex": 0.2035681153390019,
+            "exposure": 0.814484126984127,
+            "timeInCash": 0.15476190476190477,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.3596053624094937,
+            "totalReturn": 0.3562946121113877,
+            "annualizedVolatility": 0.3721274807975339,
+            "sharpe": 1.0133934486390364,
+            "sortino": 1.515162755464346,
+            "maxDd": -0.2279308023022968,
+            "calmar": 1.5776953302369439,
+            "ulcerIndex": 0.09841656892254026,
+            "exposure": 0.69,
+            "timeInCash": 0.3,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": -0.1747602204878329,
+            "totalReturn": -0.11548747406993765,
+            "annualizedVolatility": 0.43108473156821425,
+            "sharpe": -0.2266724323586365,
+            "sortino": -0.32406358790266476,
+            "maxDd": -0.3304540567350507,
+            "calmar": -0.5288487671009318,
+            "ulcerIndex": 0.1763306267886134,
+            "exposure": 0.6335403726708074,
+            "timeInCash": 0.2857142857142857,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.5231623669694851,
+            "totalReturn": -0.18593613270142162,
+            "annualizedVolatility": 0.2943058056428696,
+            "sharpe": -2.3573541093074764,
+            "sortino": -2.494813049275581,
+            "maxDd": -0.2317833737714814,
+            "calmar": -2.2571177494606602,
+            "ulcerIndex": 0.20838421958773046,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.2735503449904577,
+            "totalReturn": -0.11125283517834439,
+            "annualizedVolatility": 0.37894287744703553,
+            "sharpe": -0.6434740332328278,
+            "sortino": -0.7434177455004352,
+            "maxDd": -0.18956462815517539,
+            "calmar": -1.4430452962275884,
+            "ulcerIndex": 0.1611588322942849,
+            "exposure": 0.15053763440860216,
+            "timeInCash": 0.8064516129032258,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.18611704736417467,
+            "totalReturn": -0.18545165642803418,
+            "annualizedVolatility": 0.1279180638127318,
+            "sharpe": -1.5430373346638324,
+            "sortino": -1.6616646291245734,
+            "maxDd": -0.23485198170397736,
+            "calmar": -0.792486595232433,
+            "ulcerIndex": 0.20524493334339583,
+            "exposure": 0.021912350597609563,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.4865694945143164,
+            "totalReturn": 1.2029461629357279,
+            "annualizedVolatility": 0.4155778978509792,
+            "sharpe": 1.1634906408787686,
+            "sortino": 1.8497847189802679,
+            "maxDd": -0.38158464203700293,
+            "calmar": 1.275128610828978,
+            "ulcerIndex": 0.15869328753643241,
+            "exposure": 0.7310756972111554,
+            "timeInCash": 0.23705179282868527,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.3056197294913865,
+            "totalReturn": 4.848653196930449,
+            "annualizedVolatility": 0.3716974892025304,
+            "sharpe": 0.9063183805004665,
+            "sortino": 1.3351411890652436,
+            "maxDd": -0.3504903115598147,
+            "calmar": 0.8719776821540741,
+            "ulcerIndex": 0.20252217177798704,
+            "exposure": 0.5518274415817855,
+            "timeInCash": 0.4038346315158778,
+            "actionDaysPerYear": 12.53205512282804
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.2732759298059557,
+            "totalReturn": 3.953402012440133,
+            "annualizedVolatility": 0.3777401327484529,
+            "sharpe": 0.8315273874715563,
+            "sortino": 1.2195951841662318,
+            "maxDd": -0.3815846420370025,
+            "calmar": 0.716160714296924,
+            "ulcerIndex": 0.20889228903682872,
+            "exposure": 0.5724985020970641,
+            "timeInCash": 0.39125224685440385,
+            "actionDaysPerYear": 11.173157579388857
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.25492206341482904,
+            "totalReturn": 3.499252153096915,
+            "annualizedVolatility": 0.38143706002436034,
+            "sharpe": 0.7890422368752884,
+            "sortino": 1.1561628603706555,
+            "maxDd": -0.3849306199932616,
+            "calmar": 0.6622545730949946,
+            "ulcerIndex": 0.22046131385311174,
+            "exposure": 0.579388855602157,
+            "timeInCash": 0.3810665068903535,
+            "actionDaysPerYear": 10.871180347513482
+          }
+        }
+      ],
+      "stabilityFloor": 0.9247289887230821,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "SIMPLE_200DMA",
+      "full": {
+        "cagr": 0.3629585469324019,
+        "totalReturn": 20.9057024114223,
+        "annualizedVolatility": 0.49247747773685946,
+        "sharpe": 0.8788617713952052,
+        "sortino": 1.3340595426991673,
+        "maxDd": -0.5778140864442047,
+        "calmar": 0.6281580104182007,
+        "ulcerIndex": 0.22925568701348242,
+        "exposure": 0.7563694267515924,
+        "timeInCash": 0.24363057324840764,
+        "actionDaysPerYear": 3.511146496815287
+      },
+      "oos": {
+        "cagr": 0.4310298075940606,
+        "totalReturn": 9.73652347754713,
+        "annualizedVolatility": 0.5364733908018927,
+        "sharpe": 0.9403969328611713,
+        "sortino": 1.4508167024552066,
+        "maxDd": -0.5778140864442047,
+        "calmar": 0.7459662505747547,
+        "ulcerIndex": 0.24451805374298763,
+        "exposure": 0.8010784901138406,
+        "timeInCash": 0.19892150988615936,
+        "actionDaysPerYear": 3.3217495506291193
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.9101335533769508,
+            "totalReturn": 0.9150453624579427,
+            "annualizedVolatility": 0.7903592019368058,
+            "sharpe": 1.2266040550049535,
+            "sortino": 1.805449050286175,
+            "maxDd": -0.5778140864442047,
+            "calmar": 1.5751321657417496,
+            "ulcerIndex": 0.28974369323623206,
+            "exposure": 0.9169960474308301,
+            "timeInCash": 0.08300395256916997,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.829812981298131,
+            "totalReturn": 0.829812981298131,
+            "annualizedVolatility": 0.5405522201732721,
+            "sharpe": 1.3896628653432754,
+            "sortino": 2.3061746157802596,
+            "maxDd": -0.3043320316047593,
+            "calmar": 2.726669870806836,
+            "ulcerIndex": 0.0965542726739312,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.3918914112068641,
+            "totalReturn": -0.39068993094701643,
+            "annualizedVolatility": 0.1865892553862141,
+            "sharpe": -2.5665981453511195,
+            "sortino": -2.711026111598059,
+            "maxDd": -0.40778037874374584,
+            "calmar": -0.96103547800453,
+            "ulcerIndex": 0.382703085462639,
+            "exposure": 0.06772908366533864,
+            "timeInCash": 0.9322709163346613,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 1.0170178211439613,
+            "totalReturn": 1.0058174450879207,
+            "annualizedVolatility": 0.5028791755870408,
+            "sharpe": 1.6467426220889252,
+            "sortino": 2.95419750486959,
+            "maxDd": -0.33376511226252237,
+            "calmar": 3.04710643437181,
+            "ulcerIndex": 0.12115603805498255,
+            "exposure": 0.924,
+            "timeInCash": 0.076,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.560749506903357,
+            "totalReturn": 0.560749506903357,
+            "annualizedVolatility": 0.5368616174203138,
+            "sharpe": 1.099644745703362,
+            "sortino": 1.7622517089863434,
+            "maxDd": -0.37371953373366273,
+            "calmar": 1.5004554386043525,
+            "ulcerIndex": 0.12693059587624106,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.311025058116575,
+            "totalReturn": 0.3082103236908891,
+            "annualizedVolatility": 0.43124197435476935,
+            "sharpe": 0.8455822434641609,
+            "sortino": 1.276677362710769,
+            "maxDd": -0.2797397829288154,
+            "calmar": 1.1118370610722919,
+            "ulcerIndex": 0.15684313757651658,
+            "exposure": 0.816,
+            "timeInCash": 0.184,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.378857426128582,
+            "totalReturn": 0.22782754037342423,
+            "annualizedVolatility": 0.6000234839294074,
+            "sharpe": 0.8351491379350199,
+            "sortino": 1.4191187920391564,
+            "maxDd": -0.3378812199036919,
+            "calmar": 1.121273997520696,
+            "ulcerIndex": 0.13855852043779038,
+            "exposure": 0.9254658385093167,
+            "timeInCash": 0.07453416149068323,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.7222225029444084,
+            "totalReturn": -0.2993979469421988,
+            "annualizedVolatility": 0.49604693971029196,
+            "sharpe": -2.3207176647376255,
+            "sortino": -2.82874693867444,
+            "maxDd": -0.33885513514453225,
+            "calmar": -2.1313606554504716,
+            "ulcerIndex": 0.2757622958446505,
+            "exposure": 0.37142857142857144,
+            "timeInCash": 0.6285714285714286,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.49715980503574175,
+            "totalReturn": -0.224086251489786,
+            "annualizedVolatility": 0.9606852087460689,
+            "sharpe": -0.21812756652999538,
+            "sortino": -0.30456064124568344,
+            "maxDd": -0.5778140864442047,
+            "calmar": -0.8604148232093141,
+            "ulcerIndex": 0.4334373837052853,
+            "exposure": 0.7741935483870968,
+            "timeInCash": 0.22580645161290322,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.3918914112068641,
+            "totalReturn": -0.39068993094701643,
+            "annualizedVolatility": 0.1865892553862141,
+            "sharpe": -2.5665981453511195,
+            "sortino": -2.711026111598059,
+            "maxDd": -0.40778037874374584,
+            "calmar": -0.96103547800453,
+            "ulcerIndex": 0.382703085462639,
+            "exposure": 0.06772908366533864,
+            "timeInCash": 0.9322709163346613,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.773371012837911,
+            "totalReturn": 2.1305785883591217,
+            "annualizedVolatility": 0.5197505342476193,
+            "sharpe": 1.3636565067594744,
+            "sortino": 2.295294011523558,
+            "maxDd": -0.37371953373366307,
+            "calmar": 2.0693887876598542,
+            "ulcerIndex": 0.12442011321264292,
+            "exposure": 0.9621513944223108,
+            "timeInCash": 0.037848605577689244,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "VS13_VOL30",
+      "full": {
+        "cagr": 0.19097905023302442,
+        "totalReturn": 4.709940290527077,
+        "annualizedVolatility": 0.26997542219066506,
+        "sharpe": 0.7842933940657437,
+        "sortino": 1.126990412646101,
+        "maxDd": -0.3347873205948446,
+        "calmar": 0.5704488745084371,
+        "ulcerIndex": 0.1558918897342294,
+        "exposure": 0.4330214968152866,
+        "timeInCash": 0.3996815286624204,
+        "actionDaysPerYear": 10.43312101910828
+      },
+      "oos": {
+        "cagr": 0.22281490344376587,
+        "totalReturn": 2.7895832867638646,
+        "annualizedVolatility": 0.271076125175609,
+        "sharpe": 0.8791540512071478,
+        "sortino": 1.2882811470016577,
+        "maxDd": -0.2928893594599642,
+        "calmar": 0.7607476893479389,
+        "ulcerIndex": 0.14698613163095703,
+        "exposure": 0.4071300179748352,
+        "timeInCash": 0.39125224685440385,
+        "actionDaysPerYear": 11.324146195326543
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.42460538801266257,
+            "totalReturn": 0.42660743043370997,
+            "annualizedVolatility": 0.27690235624160797,
+            "sharpe": 1.4199731590606721,
+            "sortino": 1.9282378324764693,
+            "maxDd": -0.18956462815517539,
+            "calmar": 2.2398977707227403,
+            "ulcerIndex": 0.11991279270000163,
+            "exposure": 0.31521739130434784,
+            "timeInCash": 0.4901185770750988,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.21726547946643393,
+            "totalReturn": 0.21726547946643393,
+            "annualizedVolatility": 0.3231104364940689,
+            "sharpe": 0.7713915848208872,
+            "sortino": 1.1349514109448817,
+            "maxDd": -0.17762543340048054,
+            "calmar": 1.223166498778244,
+            "ulcerIndex": 0.09810403904436897,
+            "exposure": 0.6031746031746031,
+            "timeInCash": 0.18253968253968253,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.06765450420365315,
+            "totalReturn": -0.06739529155959612,
+            "annualizedVolatility": 0.04507635504728644,
+            "sharpe": -1.5312140040986768,
+            "sortino": -1.7049631652426458,
+            "maxDd": -0.08984084679467363,
+            "calmar": -0.7530483807468316,
+            "ulcerIndex": 0.07265374501060956,
+            "exposure": 0.00796812749003984,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.44338015428259503,
+            "totalReturn": 0.4391822805208907,
+            "annualizedVolatility": 0.20435215055582756,
+            "sharpe": 1.8987593109974978,
+            "sortino": 3.313652160739813,
+            "maxDd": -0.10697459167319578,
+            "calmar": 4.144723969941463,
+            "ulcerIndex": 0.04334594487612911,
+            "exposure": 0.359,
+            "timeInCash": 0.32,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.2876799610909577,
+            "totalReturn": 0.2876799610909577,
+            "annualizedVolatility": 0.36500207263483914,
+            "sharpe": 0.8756946232460637,
+            "sortino": 1.3774507339797308,
+            "maxDd": -0.23232396389276777,
+            "calmar": 1.2382707159031612,
+            "ulcerIndex": 0.13137470770751492,
+            "exposure": 0.6537698412698413,
+            "timeInCash": 0.15476190476190477,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.29645595905159317,
+            "totalReturn": 0.29378724520608546,
+            "annualizedVolatility": 0.30330709796867916,
+            "sharpe": 1.0090974665596297,
+            "sortino": 1.5011969320782717,
+            "maxDd": -0.20961568913197914,
+            "calmar": 1.4142832546515032,
+            "ulcerIndex": 0.07680574636041468,
+            "exposure": 0.538,
+            "timeInCash": 0.3,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": -0.03742179749288921,
+            "totalReturn": -0.02407271750713824,
+            "annualizedVolatility": 0.24493121818120778,
+            "sharpe": -0.03242015591743315,
+            "sortino": -0.04505834918779156,
+            "maxDd": -0.200670385417826,
+            "calmar": -0.1864839070048696,
+            "ulcerIndex": 0.11454954811802676,
+            "exposure": 0.35248447204968947,
+            "timeInCash": 0.2857142857142857,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.5231623669694851,
+            "totalReturn": -0.18593613270142162,
+            "annualizedVolatility": 0.2943058056428698,
+            "sharpe": -2.357354109307475,
+            "sortino": -2.4948130492755802,
+            "maxDd": -0.2317833737714815,
+            "calmar": -2.2571177494606594,
+            "ulcerIndex": 0.20838421958773048,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.2826357587125362,
+            "totalReturn": -0.11537117022645293,
+            "annualizedVolatility": 0.2758452494366693,
+            "sharpe": -1.0597961748616826,
+            "sortino": -1.1781822447868102,
+            "maxDd": -0.1895646281551755,
+            "calmar": -1.4909730863986594,
+            "ulcerIndex": 0.16231691406672225,
+            "exposure": 0.10483870967741936,
+            "timeInCash": 0.8064516129032258,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.0676545042036536,
+            "totalReturn": -0.06739529155959656,
+            "annualizedVolatility": 0.04507635504728643,
+            "sharpe": -1.5312140040986868,
+            "sortino": -1.7049631652426527,
+            "maxDd": -0.08984084679467386,
+            "calmar": -0.7530483807468347,
+            "ulcerIndex": 0.07265374501060977,
+            "exposure": 0.00796812749003984,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.3629991433562765,
+            "totalReturn": 0.853206182983935,
+            "annualizedVolatility": 0.29581368643912626,
+            "sharpe": 1.1956401656136442,
+            "sortino": 1.9008800685248233,
+            "maxDd": -0.23232396389276733,
+            "calmar": 1.56246965346986,
+            "ulcerIndex": 0.09839797079215522,
+            "exposure": 0.5069721115537849,
+            "timeInCash": 0.23705179282868527,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "VS13_FIXED",
+      "full": {
+        "cagr": 0.13902788657752763,
+        "totalReturn": 2.6605709426957294,
+        "annualizedVolatility": 0.2497207908609217,
+        "sharpe": 0.647561108324144,
+        "sortino": 0.9343719637112654,
+        "maxDd": -0.2834119976338346,
+        "calmar": 0.49055046271241565,
+        "ulcerIndex": 0.13317753915072697,
+        "exposure": 0.5999203821656051,
+        "timeInCash": 0.3730095541401274,
+        "actionDaysPerYear": 7.724522292993631
+      },
+      "oos": {
+        "cagr": 0.12697869066434997,
+        "totalReturn": 1.2071839721397106,
+        "annualizedVolatility": 0.2679105943826738,
+        "sharpe": 0.581588141351616,
+        "sortino": 0.844727898773606,
+        "maxDd": -0.2834119976338364,
+        "calmar": 0.4480356926470139,
+        "ulcerIndex": 0.1458124730391968,
+        "exposure": 0.6088975434391851,
+        "timeInCash": 0.36129418813660874,
+        "actionDaysPerYear": 8.75733972438586
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.1894838194899222,
+            "totalReturn": 0.19030314350497912,
+            "annualizedVolatility": 0.2916473247846005,
+            "sharpe": 0.7444752549360539,
+            "sortino": 0.9664399771747517,
+            "maxDd": -0.247010358242017,
+            "calmar": 0.7671087999648535,
+            "ulcerIndex": 0.1575706389991043,
+            "exposure": 0.44861660079051385,
+            "timeInCash": 0.47035573122529645,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.2598526481948942,
+            "totalReturn": 0.2598526481948942,
+            "annualizedVolatility": 0.30424444121256466,
+            "sharpe": 0.9120084684817866,
+            "sortino": 1.4124542245924874,
+            "maxDd": -0.16697065689238266,
+            "calmar": 1.5562773305873534,
+            "ulcerIndex": 0.07896305931273012,
+            "exposure": 0.8363095238095238,
+            "timeInCash": 0.15079365079365079,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.11403142893391272,
+            "totalReturn": -0.11360566164906771,
+            "annualizedVolatility": 0.09588689342799853,
+            "sharpe": -1.213297086357325,
+            "sortino": -1.321652966250456,
+            "maxDd": -0.13165154616485109,
+            "calmar": -0.8661609548521758,
+            "ulcerIndex": 0.13025320884333397,
+            "exposure": 0.035856573705179286,
+            "timeInCash": 0.9641434262948207,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.2964535062606364,
+            "totalReturn": 0.2937848168906272,
+            "annualizedVolatility": 0.262393109796476,
+            "sharpe": 1.120390106238156,
+            "sortino": 1.913163205765789,
+            "maxDd": -0.28341199763383673,
+            "calmar": 1.0460160781324757,
+            "ulcerIndex": 0.13303045397433666,
+            "exposure": 0.704,
+            "timeInCash": 0.28,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.17262090090428406,
+            "totalReturn": 0.17262090090428406,
+            "annualizedVolatility": 0.30601439897382027,
+            "sharpe": 0.6742728661797205,
+            "sortino": 1.0134344188661732,
+            "maxDd": -0.23787051757935307,
+            "calmar": 0.725692711568167,
+            "ulcerIndex": 0.12122645471196654,
+            "exposure": 0.8511904761904762,
+            "timeInCash": 0.12301587301587301,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.10061722109685389,
+            "totalReturn": 0.09978009977547209,
+            "annualizedVolatility": 0.26109843721430204,
+            "sharpe": 0.49837514703832286,
+            "sortino": 0.7291031631714149,
+            "maxDd": -0.22104421546982278,
+            "calmar": 0.45519047346701674,
+            "ulcerIndex": 0.10233504425734911,
+            "exposure": 0.704,
+            "timeInCash": 0.288,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": -0.007508849636453596,
+            "totalReturn": -0.004803846894734787,
+            "annualizedVolatility": 0.30627767771444775,
+            "sharpe": 0.1292715310434173,
+            "sortino": 0.19361174107077633,
+            "maxDd": -0.2036484601221502,
+            "calmar": -0.036871624916533716,
+            "ulcerIndex": 0.1105178987669542,
+            "exposure": 0.7236024844720497,
+            "timeInCash": 0.19254658385093168,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.3837395879427261,
+            "totalReturn": -0.1258193561142794,
+            "annualizedVolatility": 0.19693162018586738,
+            "sharpe": -2.354213378225077,
+            "sortino": -2.48245448735313,
+            "maxDd": -0.15957137086874296,
+            "calmar": -2.404814760025938,
+            "ulcerIndex": 0.1434211416916988,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.304837661468387,
+            "totalReturn": -0.1255755325317447,
+            "annualizedVolatility": 0.26831679738994074,
+            "sharpe": -1.2160935119584944,
+            "sortino": -1.385072270390505,
+            "maxDd": -0.1762606382978723,
+            "calmar": -1.7294709948413183,
+            "ulcerIndex": 0.15907368855437645,
+            "exposure": 0.16129032258064516,
+            "timeInCash": 0.7956989247311828,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.11403142893391305,
+            "totalReturn": -0.11360566164906805,
+            "annualizedVolatility": 0.09588689342799846,
+            "sharpe": -1.2132970863573291,
+            "sortino": -1.3216529662504606,
+            "maxDd": -0.13165154616485142,
+            "calmar": -0.8661609548521761,
+            "ulcerIndex": 0.13025320884333408,
+            "exposure": 0.035856573705179286,
+            "timeInCash": 0.9641434262948207,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.23273701752579123,
+            "totalReturn": 0.5171191175585728,
+            "annualizedVolatility": 0.28485511020756177,
+            "sharpe": 0.877587670222996,
+            "sortino": 1.3839232072554537,
+            "maxDd": -0.28341199763383473,
+            "calmar": 0.8211967717276563,
+            "ulcerIndex": 0.13115489498697894,
+            "exposure": 0.7778884462151394,
+            "timeInCash": 0.20119521912350596,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.15808121278486853,
+            "totalReturn": 1.643288194241963,
+            "annualizedVolatility": 0.26000872553163396,
+            "sharpe": 0.6958116640449618,
+            "sortino": 1.018452681593519,
+            "maxDd": -0.2631237855465174,
+            "calmar": 0.6007864794759177,
+            "ulcerIndex": 0.13928984358096763,
+            "exposure": 0.5909227082085081,
+            "timeInCash": 0.3738765727980827,
+            "actionDaysPerYear": 9.965248651887359
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.12697869066434997,
+            "totalReturn": 1.2071839721397106,
+            "annualizedVolatility": 0.2679105943826738,
+            "sharpe": 0.581588141351616,
+            "sortino": 0.844727898773606,
+            "maxDd": -0.2834119976338364,
+            "calmar": 0.4480356926470139,
+            "ulcerIndex": 0.1458124730391968,
+            "exposure": 0.6088975434391851,
+            "timeInCash": 0.36129418813660874,
+            "actionDaysPerYear": 8.75733972438586
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.16102097674717064,
+            "totalReturn": 1.6880465737680357,
+            "annualizedVolatility": 0.2791043664252971,
+            "sharpe": 0.6758509963810183,
+            "sortino": 0.9954049185010992,
+            "maxDd": -0.28341199763383507,
+            "calmar": 0.5681515888230244,
+            "ulcerIndex": 0.1421393686757391,
+            "exposure": 0.6247753145596165,
+            "timeInCash": 0.347513481126423,
+            "actionDaysPerYear": 7.851408028759737
+          }
+        }
+      ],
+      "stabilityFloor": 1,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "full": {
+        "cagr": 0.172508850557479,
+        "totalReturn": 3.88615380442831,
+        "annualizedVolatility": 0.23595978850824909,
+        "sharpe": 0.7937528913440203,
+        "sortino": 1.1564058580556267,
+        "maxDd": -0.27054677655079096,
+        "calmar": 0.6376304044601808,
+        "ulcerIndex": 0.132614404490439,
+        "exposure": 0.5683718152866242,
+        "timeInCash": 0.4004777070063694,
+        "actionDaysPerYear": 9.730891719745223
+      },
+      "oos": {
+        "cagr": 0.20511583866404992,
+        "totalReturn": 2.440764836413738,
+        "annualizedVolatility": 0.2518788977125259,
+        "sharpe": 0.8680241625116094,
+        "sortino": 1.2821509502787252,
+        "maxDd": -0.2705467765507906,
+        "calmar": 0.7581529570563664,
+        "ulcerIndex": 0.14084347669817227,
+        "exposure": 0.5713001797483523,
+        "timeInCash": 0.39245056920311566,
+        "actionDaysPerYear": 11.173157579388857
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.4058938784113817,
+            "totalReturn": 0.407795761000453,
+            "annualizedVolatility": 0.2626907238139603,
+            "sharpe": 1.4317240104995281,
+            "sortino": 1.9311626085405333,
+            "maxDd": -0.16089606694141856,
+            "calmar": 2.5227085169158645,
+            "ulcerIndex": 0.10226211602692534,
+            "exposure": 0.43280632411067194,
+            "timeInCash": 0.4901185770750988,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.30503789478505317,
+            "totalReturn": 0.30503789478505317,
+            "annualizedVolatility": 0.2722879037522853,
+            "sharpe": 1.1145225508769903,
+            "sortino": 1.7460414763111487,
+            "maxDd": -0.1590033616224097,
+            "calmar": 1.9184367655662293,
+            "ulcerIndex": 0.06933286154390714,
+            "exposure": 0.7817460317460317,
+            "timeInCash": 0.19047619047619047,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.12604649948599278,
+            "totalReturn": -0.1255791281262041,
+            "annualizedVolatility": 0.08651384701930279,
+            "sharpe": -1.5126807364421027,
+            "sortino": -1.6341004310492964,
+            "maxDd": -0.1626078175935961,
+            "calmar": -0.7751564552758428,
+            "ulcerIndex": 0.1412554262443457,
+            "exposure": 0.021912350597609563,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.5598201417967161,
+            "totalReturn": 0.5543262677682816,
+            "annualizedVolatility": 0.2510104905735271,
+            "sharpe": 1.8971833525510895,
+            "sortino": 3.401656985290432,
+            "maxDd": -0.14359660497527027,
+            "calmar": 3.8985611247085297,
+            "ulcerIndex": 0.06029256520733385,
+            "exposure": 0.647,
+            "timeInCash": 0.32,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.16806403553794502,
+            "totalReturn": 0.16806403553794502,
+            "annualizedVolatility": 0.30423096822740325,
+            "sharpe": 0.6636128396679586,
+            "sortino": 0.9997699419579373,
+            "maxDd": -0.2705467765507903,
+            "calmar": 0.6212013969657998,
+            "ulcerIndex": 0.13880006831733474,
+            "exposure": 0.814484126984127,
+            "timeInCash": 0.15476190476190477,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.26020118782158996,
+            "totalReturn": 0.2578902262519547,
+            "annualizedVolatility": 0.24940372602823907,
+            "sharpe": 1.0527920576448473,
+            "sortino": 1.5787420146803663,
+            "maxDd": -0.15579541534165653,
+            "calmar": 1.6701466294818335,
+            "ulcerIndex": 0.06629223033901559,
+            "exposure": 0.69,
+            "timeInCash": 0.3,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": -0.09559714505756878,
+            "totalReturn": -0.06217864341907009,
+            "annualizedVolatility": 0.28802449734124325,
+            "sharpe": -0.20373735353986433,
+            "sortino": -0.2915509597505339,
+            "maxDd": -0.2294783110623947,
+            "calmar": -0.41658466377493997,
+            "ulcerIndex": 0.11950188990223673,
+            "exposure": 0.6335403726708074,
+            "timeInCash": 0.2857142857142857,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.38373958794272467,
+            "totalReturn": -0.12581935611427886,
+            "annualizedVolatility": 0.19693162018586746,
+            "sharpe": -2.354213378225064,
+            "sortino": -2.482454487353117,
+            "maxDd": -0.15957137086874262,
+            "calmar": -2.404814760025934,
+            "ulcerIndex": 0.14342114169169842,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.180698489021899,
+            "totalReturn": -0.0709124848703726,
+            "annualizedVolatility": 0.2543521160627005,
+            "sharpe": -0.6522801510775236,
+            "sortino": -0.7532632038549386,
+            "maxDd": -0.12925531914893607,
+            "calmar": -1.397996540580948,
+            "ulcerIndex": 0.1084575116406288,
+            "exposure": 0.15053763440860216,
+            "timeInCash": 0.8064516129032258,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.126046499485993,
+            "totalReturn": -0.1255791281262043,
+            "annualizedVolatility": 0.08651384701930293,
+            "sharpe": -1.5126807364421044,
+            "sortino": -1.6341004310492981,
+            "maxDd": -0.16260781759359633,
+            "calmar": -0.7751564552758431,
+            "ulcerIndex": 0.14125542624434587,
+            "exposure": 0.021912350597609563,
+            "timeInCash": 0.9681274900398407,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.34902616557222643,
+            "totalReturn": 0.8155526128720549,
+            "annualizedVolatility": 0.2788546345538508,
+            "sharpe": 1.2139148917518363,
+            "sortino": 1.9408605368925747,
+            "maxDd": -0.2705467765507912,
+            "calmar": 1.2900769693949834,
+            "ulcerIndex": 0.10731764819540648,
+            "exposure": 0.7310756972111554,
+            "timeInCash": 0.23705179282868527,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.2203893636250025,
+            "totalReturn": 2.7400754892426233,
+            "annualizedVolatility": 0.24941356673153406,
+            "sharpe": 0.9246474805634671,
+            "sortino": 1.3655540735291263,
+            "maxDd": -0.24723794826127343,
+            "calmar": 0.8914058912675558,
+            "ulcerIndex": 0.1378526997717834,
+            "exposure": 0.5518274415817855,
+            "timeInCash": 0.4038346315158778,
+            "actionDaysPerYear": 12.53205512282804
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.20511583866404992,
+            "totalReturn": 2.440764836413738,
+            "annualizedVolatility": 0.2518788977125259,
+            "sharpe": 0.8680241625116094,
+            "sortino": 1.2821509502787252,
+            "maxDd": -0.2705467765507906,
+            "calmar": 0.7581529570563664,
+            "ulcerIndex": 0.14084347669817227,
+            "exposure": 0.5713001797483523,
+            "timeInCash": 0.39245056920311566,
+            "actionDaysPerYear": 11.173157579388857
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.21222594225104818,
+            "totalReturn": 2.5774645311958078,
+            "annualizedVolatility": 0.255222718520447,
+            "sharpe": 0.8830434451095698,
+            "sortino": 1.3054292794392692,
+            "maxDd": -0.2728372045193803,
+            "calmar": 0.7778482506625054,
+            "ulcerIndex": 0.14175193480664847,
+            "exposure": 0.5780407429598562,
+            "timeInCash": 0.3822648292390653,
+            "actionDaysPerYear": 10.871180347513482
+          }
+        }
+      ],
+      "stabilityFloor": 1,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "SIMPLE_200DMA",
+      "full": {
+        "cagr": 0.27354816400808746,
+        "totalReturn": 10.138325863293284,
+        "annualizedVolatility": 0.33094888573366565,
+        "sharpe": 0.8978935383478783,
+        "sortino": 1.3638440243920793,
+        "maxDd": -0.4254447154244174,
+        "calmar": 0.6429699420174954,
+        "ulcerIndex": 0.15655669617094456,
+        "exposure": 0.7563694267515924,
+        "timeInCash": 0.24363057324840764,
+        "actionDaysPerYear": 3.511146496815287
+      },
+      "oos": {
+        "cagr": 0.32594816478126454,
+        "totalReturn": 5.478810280732584,
+        "annualizedVolatility": 0.36070606930710475,
+        "sharpe": 0.964393358651831,
+        "sortino": 1.4903364997373005,
+        "maxDd": -0.4254447154244172,
+        "calmar": 0.7661351827019484,
+        "ulcerIndex": 0.16790692863579024,
+        "exposure": 0.8010784901138406,
+        "timeInCash": 0.19892150988615936,
+        "actionDaysPerYear": 3.3217495506291193
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.6480087752898371,
+            "totalReturn": 0.6512790476613941,
+            "annualizedVolatility": 0.5321972554134584,
+            "sharpe": 1.2102049952712333,
+            "sortino": 1.7813963527700134,
+            "maxDd": -0.4254447154244172,
+            "calmar": 1.5231327403923525,
+            "ulcerIndex": 0.20012739118256243,
+            "exposure": 0.9169960474308301,
+            "timeInCash": 0.08300395256916997,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.5466944661627986,
+            "totalReturn": 0.5466944661627986,
+            "annualizedVolatility": 0.3644358424500294,
+            "sharpe": 1.3797640392639323,
+            "sortino": 2.290080106129619,
+            "maxDd": -0.21021431828545367,
+            "calmar": 2.600652850965331,
+            "ulcerIndex": 0.06405078487424028,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.2782608859553575,
+            "totalReturn": -0.2773263408668488,
+            "annualizedVolatility": 0.1269244779062157,
+            "sharpe": -2.5026780572736422,
+            "sortino": -2.6513874338955903,
+            "maxDd": -0.29203907630644754,
+            "calmar": -0.9528207302757248,
+            "ulcerIndex": 0.27306658299353903,
+            "exposure": 0.06772908366533864,
+            "timeInCash": 0.9322709163346613,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.6818092312640451,
+            "totalReturn": 0.6748844600945567,
+            "annualizedVolatility": 0.3373961720920493,
+            "sharpe": 1.7099894704790863,
+            "sortino": 3.0829477863485497,
+            "maxDd": -0.22598627787307002,
+            "calmar": 3.01703819223483,
+            "ulcerIndex": 0.07842825826362422,
+            "exposure": 0.924,
+            "timeInCash": 0.076,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.4242105263157838,
+            "totalReturn": 0.4242105263157838,
+            "annualizedVolatility": 0.36059914003516297,
+            "sharpe": 1.161845098225483,
+            "sortino": 1.8703799693237475,
+            "maxDd": -0.2619502868068835,
+            "calmar": 1.6194314252785025,
+            "ulcerIndex": 0.08132216678241347,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.24083144494023245,
+            "totalReturn": 0.23870827389629068,
+            "annualizedVolatility": 0.28882328262385404,
+            "sharpe": 0.8922955766867828,
+            "sortino": 1.3528307773565034,
+            "maxDd": -0.19319032458225482,
+            "calmar": 1.246601999665327,
+            "ulcerIndex": 0.1066825263651136,
+            "exposure": 0.816,
+            "timeInCash": 0.184,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.30941763723103777,
+            "totalReturn": 0.18795489773762042,
+            "annualizedVolatility": 0.40241529569988743,
+            "sharpe": 0.8706187810992078,
+            "sortino": 1.4846963971684517,
+            "maxDd": -0.22829006266786056,
+            "calmar": 1.3553705913218386,
+            "ulcerIndex": 0.08896629463793203,
+            "exposure": 0.9254658385093167,
+            "timeInCash": 0.07453416149068323,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.5619258057309806,
+            "totalReturn": -0.2048850695987804,
+            "annualizedVolatility": 0.3323046066978183,
+            "sharpe": -2.3112485987832976,
+            "sortino": -2.8086304118857854,
+            "maxDd": -0.23558436619165335,
+            "calmar": -2.385242343602041,
+            "ulcerIndex": 0.19044744851696394,
+            "exposure": 0.37142857142857144,
+            "timeInCash": 0.6285714285714286,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.3043888423842267,
+            "totalReturn": -0.12536722673632505,
+            "annualizedVolatility": 0.6495481435517765,
+            "sharpe": -0.22808535619085682,
+            "sortino": -0.3188804779441697,
+            "maxDd": -0.4254447154244172,
+            "calmar": -0.7154603908537752,
+            "ulcerIndex": 0.3045872172628533,
+            "exposure": 0.7741935483870968,
+            "timeInCash": 0.22580645161290322,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.2782608859553575,
+            "totalReturn": -0.2773263408668488,
+            "annualizedVolatility": 0.1269244779062157,
+            "sharpe": -2.5026780572736422,
+            "sortino": -2.6513874338955903,
+            "maxDd": -0.29203907630644754,
+            "calmar": -0.9528207302757248,
+            "ulcerIndex": 0.27306658299353903,
+            "exposure": 0.06772908366533864,
+            "timeInCash": 0.9322709163346613,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.5471471864018222,
+            "totalReturn": 1.3853880784293988,
+            "annualizedVolatility": 0.3489236498638615,
+            "sharpe": 1.4262071784939092,
+            "sortino": 2.411681878021303,
+            "maxDd": -0.26195028680688304,
+            "calmar": 2.088744368526667,
+            "ulcerIndex": 0.08011666249744467,
+            "exposure": 0.9621513944223108,
+            "timeInCash": 0.037848605577689244,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "VS13_VOL30",
+      "full": {
+        "cagr": 0.0975273156386196,
+        "totalReturn": 1.5285430525240455,
+        "annualizedVolatility": 0.19976105701885818,
+        "sharpe": 0.5666758446346339,
+        "sortino": 0.8072397068752325,
+        "maxDd": -0.24342567489944567,
+        "calmar": 0.4006451483760134,
+        "ulcerIndex": 0.12405046377905057,
+        "exposure": 0.4707404458598726,
+        "timeInCash": 0.3730095541401274,
+        "actionDaysPerYear": 8.527070063694268
+      },
+      "oos": {
+        "cagr": 0.08163936422963758,
+        "totalReturn": 0.6816237560937908,
+        "annualizedVolatility": 0.20599183705421273,
+        "sharpe": 0.48475241743690334,
+        "sortino": 0.6967216825470552,
+        "maxDd": -0.24342567489944567,
+        "calmar": 0.3353769657344534,
+        "ulcerIndex": 0.13264781610435902,
+        "exposure": 0.45326542840023964,
+        "timeInCash": 0.36129418813660874,
+        "actionDaysPerYear": 9.210305572198923
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.14024078105609794,
+            "totalReturn": 0.14083476339071566,
+            "annualizedVolatility": 0.2010111702988671,
+            "sharpe": 0.7548565129929076,
+            "sortino": 0.9880252458581433,
+            "maxDd": -0.17626063829787264,
+            "calmar": 0.79564435038013,
+            "ulcerIndex": 0.12340890804301881,
+            "exposure": 0.325098814229249,
+            "timeInCash": 0.47035573122529645,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.1459255939344537,
+            "totalReturn": 0.1459255939344537,
+            "annualizedVolatility": 0.2546346968951087,
+            "sharpe": 0.6623876426032945,
+            "sortino": 1.0173298863203497,
+            "maxDd": -0.14903093776333232,
+            "calmar": 0.979163092741119,
+            "ulcerIndex": 0.07515671420650177,
+            "exposure": 0.6716269841269841,
+            "timeInCash": 0.15079365079365079,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.11403142893391327,
+            "totalReturn": -0.11360566164906827,
+            "annualizedVolatility": 0.09588689342799853,
+            "sharpe": -1.2132970863573296,
+            "sortino": -1.321652966250461,
+            "maxDd": -0.13165154616485142,
+            "calmar": -0.8661609548521778,
+            "ulcerIndex": 0.13025320884333408,
+            "exposure": 0.035856573705179286,
+            "timeInCash": 0.9641434262948207,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.17995727401679917,
+            "totalReturn": 0.17840863053275746,
+            "annualizedVolatility": 0.13987211304142413,
+            "sharpe": 1.2530470996686909,
+            "sortino": 2.136956295092217,
+            "maxDd": -0.15012373297639559,
+            "calmar": 1.198726346920073,
+            "ulcerIndex": 0.06647884175751433,
+            "exposure": 0.38,
+            "timeInCash": 0.28,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.14493524207461683,
+            "totalReturn": 0.14493524207461683,
+            "annualizedVolatility": 0.2623692784785472,
+            "sharpe": 0.6475093926127499,
+            "sortino": 0.9812534559496479,
+            "maxDd": -0.1871647157805577,
+            "calmar": 0.7743726774043616,
+            "ulcerIndex": 0.10728037719694754,
+            "exposure": 0.691468253968254,
+            "timeInCash": 0.12301587301587301,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.10093079221232615,
+            "totalReturn": 0.10009094527288087,
+            "annualizedVolatility": 0.22726436959293686,
+            "sharpe": 0.5372494887954226,
+            "sortino": 0.7834055186839262,
+            "maxDd": -0.1867787527851924,
+            "calmar": 0.5403761975453549,
+            "ulcerIndex": 0.08548795325547286,
+            "exposure": 0.597,
+            "timeInCash": 0.288,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": -0.034643121610214656,
+            "totalReturn": -0.02227376979020035,
+            "annualizedVolatility": 0.20824753838474508,
+            "sharpe": -0.06520246848764384,
+            "sortino": -0.09517280393192563,
+            "maxDd": -0.1388013986013985,
+            "calmar": -0.2495876983898461,
+            "ulcerIndex": 0.08156168352352983,
+            "exposure": 0.4813664596273292,
+            "timeInCash": 0.19254658385093168,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.38373958794272434,
+            "totalReturn": -0.12581935611427875,
+            "annualizedVolatility": 0.1969316201858672,
+            "sharpe": -2.354213378225063,
+            "sortino": -2.4824544873531162,
+            "maxDd": -0.1595713708687425,
+            "calmar": -2.4048147600259346,
+            "ulcerIndex": 0.1434211416916984,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.3149777437828105,
+            "totalReturn": -0.13030453790211238,
+            "annualizedVolatility": 0.2034396250393526,
+            "sharpe": -1.7540031429881808,
+            "sortino": -1.911359330825218,
+            "maxDd": -0.17626063829787242,
+            "calmar": -1.7869999043718003,
+            "ulcerIndex": 0.16027909383832636,
+            "exposure": 0.11559139784946236,
+            "timeInCash": 0.7956989247311828,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.1140314289339125,
+            "totalReturn": -0.11360566164906749,
+            "annualizedVolatility": 0.0958868934279985,
+            "sharpe": -1.2132970863573231,
+            "sortino": -1.3216529662504544,
+            "maxDd": -0.13165154616485086,
+            "calmar": -0.8661609548521756,
+            "ulcerIndex": 0.13025320884333375,
+            "exposure": 0.035856573705179286,
+            "timeInCash": 0.9641434262948207,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.16224459787959988,
+            "totalReturn": 0.34920157066183943,
+            "annualizedVolatility": 0.21026430196747686,
+            "sharpe": 0.8207087012138372,
+            "sortino": 1.2586166457105366,
+            "maxDd": -0.18716471578055727,
+            "calmar": 0.8668546162826162,
+            "ulcerIndex": 0.08971282844088872,
+            "exposure": 0.5363545816733067,
+            "timeInCash": 0.20119521912350596,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "VS13_FIXED",
+      "full": {
+        "cagr": 0.22196879568102856,
+        "totalReturn": 6.37627917514384,
+        "annualizedVolatility": 0.2813591267735288,
+        "sharpe": 0.8548230035358598,
+        "sortino": 1.2682482118104836,
+        "maxDd": -0.37049650360533026,
+        "calmar": 0.5991117150122416,
+        "ulcerIndex": 0.15531298081157824,
+        "exposure": 0.6450039808917197,
+        "timeInCash": 0.32404458598726116,
+        "actionDaysPerYear": 7.423566878980892
+      },
+      "oos": {
+        "cagr": 0.23854682276836137,
+        "totalReturn": 3.124397318140872,
+        "annualizedVolatility": 0.30121977109184117,
+        "sharpe": 0.8622213457187471,
+        "sortino": 1.3115409206764326,
+        "maxDd": -0.3704965036053307,
+        "calmar": 0.6438571496547023,
+        "ulcerIndex": 0.1517823438104647,
+        "exposure": 0.6649191132414619,
+        "timeInCash": 0.29778310365488314,
+        "actionDaysPerYear": 8.606351108448173
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.35082439965750134,
+            "totalReturn": 0.35243731919571286,
+            "annualizedVolatility": 0.3013273570620284,
+            "sharpe": 1.152186371042817,
+            "sortino": 1.5744942368512433,
+            "maxDd": -0.20675916898197144,
+            "calmar": 1.6967779537172147,
+            "ulcerIndex": 0.11503557289621082,
+            "exposure": 0.508893280632411,
+            "timeInCash": 0.3715415019762846,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.9219472169097445,
+            "totalReturn": 0.9219472169097445,
+            "annualizedVolatility": 0.37969698036808786,
+            "sharpe": 1.9126335771124556,
+            "sortino": 3.2149863292655074,
+            "maxDd": -0.14792056950168575,
+            "calmar": 6.2327181406588466,
+            "ulcerIndex": 0.047768457219469734,
+            "exposure": 0.9672619047619048,
+            "timeInCash": 0.031746031746031744,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.11221784619824249,
+            "totalReturn": -0.11179841491591436,
+            "annualizedVolatility": 0.1001195134079453,
+            "sharpe": -1.1373606609939433,
+            "sortino": -1.239945202191963,
+            "maxDd": -0.13388005901342626,
+            "calmar": -0.8381968683401061,
+            "ulcerIndex": 0.12474723154438429,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.07574325246224611,
+            "totalReturn": 0.07512008403744574,
+            "annualizedVolatility": 0.30296378646553235,
+            "sharpe": 0.3918556006060191,
+            "sortino": 0.6529457981411796,
+            "maxDd": -0.3456953071762434,
+            "calmar": 0.2191040806453021,
+            "ulcerIndex": 0.16446967196883822,
+            "exposure": 0.746,
+            "timeInCash": 0.2,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.6458946254373477,
+            "totalReturn": 0.6458946254373477,
+            "annualizedVolatility": 0.33937784511234315,
+            "sharpe": 1.6396589295104722,
+            "sortino": 2.6557817808157784,
+            "maxDd": -0.16985537835082176,
+            "calmar": 3.8026150935492167,
+            "ulcerIndex": 0.055129122400933775,
+            "exposure": 0.9275793650793651,
+            "timeInCash": 0.06349206349206349,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": -0.11039721400064795,
+            "totalReturn": -0.1095709103810868,
+            "annualizedVolatility": 0.28786499036826885,
+            "sharpe": -0.2612643263310853,
+            "sortino": -0.3711849719952991,
+            "maxDd": -0.3244551475583414,
+            "calmar": -0.34025416095701505,
+            "ulcerIndex": 0.20036574278928113,
+            "exposure": 0.696,
+            "timeInCash": 0.276,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.2171789892528746,
+            "totalReturn": 0.1337883960694788,
+            "annualizedVolatility": 0.3239198115700458,
+            "sharpe": 0.7689117335416884,
+            "sortino": 1.2023120143832475,
+            "maxDd": -0.15404174029655726,
+            "calmar": 1.409871044268697,
+            "ulcerIndex": 0.08033150938238344,
+            "exposure": 0.8090062111801242,
+            "timeInCash": 0.16770186335403728,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.40538488501096037,
+            "totalReturn": -0.1344587657784011,
+            "annualizedVolatility": 0.2000975924899333,
+            "sharpe": -2.491029932983334,
+            "sortino": -2.605517051737295,
+            "maxDd": -0.1541807092684595,
+            "calmar": -2.629284084464186,
+            "ulcerIndex": 0.1382565104010202,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.21849659660250975,
+            "totalReturn": -0.08696716983074038,
+            "annualizedVolatility": 0.19060983410280907,
+            "sharpe": -1.1933592875899548,
+            "sortino": -1.2838264753456758,
+            "maxDd": -0.1391239422598306,
+            "calmar": -1.5705175762949646,
+            "ulcerIndex": 0.12259232577636066,
+            "exposure": 0.07526881720430108,
+            "timeInCash": 0.8279569892473119,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.11221784619824238,
+            "totalReturn": -0.11179841491591425,
+            "annualizedVolatility": 0.10011951340794525,
+            "sharpe": -1.1373606609939415,
+            "sortino": -1.2399452021919615,
+            "maxDd": -0.13388005901342614,
+            "calmar": -0.838196868340106,
+            "ulcerIndex": 0.12474723154438405,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.3317516514506771,
+            "totalReturn": 0.7695343680169837,
+            "annualizedVolatility": 0.3217340544042569,
+            "sharpe": 1.0519961577870125,
+            "sortino": 1.7265845508005182,
+            "maxDd": -0.34569530717624286,
+            "calmar": 0.9596648972777145,
+            "ulcerIndex": 0.1260037446716346,
+            "exposure": 0.8371513944223108,
+            "timeInCash": 0.13147410358565736,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.20915317321065752,
+            "totalReturn": 2.5178319679013286,
+            "annualizedVolatility": 0.29243820257769265,
+            "sharpe": 0.7969104849837202,
+            "sortino": 1.2074948080359467,
+            "maxDd": -0.3704965036053308,
+            "calmar": 0.5645213144398703,
+            "ulcerIndex": 0.14950298194982223,
+            "exposure": 0.6488915518274416,
+            "timeInCash": 0.31336129418813663,
+            "actionDaysPerYear": 9.36129418813661
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.23854682276836137,
+            "totalReturn": 3.124397318140872,
+            "annualizedVolatility": 0.30121977109184117,
+            "sharpe": 0.8622213457187471,
+            "sortino": 1.3115409206764326,
+            "maxDd": -0.3704965036053307,
+            "calmar": 0.6438571496547023,
+            "ulcerIndex": 0.1517823438104647,
+            "exposure": 0.6649191132414619,
+            "timeInCash": 0.29778310365488314,
+            "actionDaysPerYear": 8.606351108448173
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.22721153171629016,
+            "totalReturn": 2.88074208233233,
+            "annualizedVolatility": 0.3149022696819979,
+            "sharpe": 0.8093567769102121,
+            "sortino": 1.2163883294398439,
+            "maxDd": -0.3200577010462371,
+            "calmar": 0.7099080290008897,
+            "ulcerIndex": 0.1442803966401654,
+            "exposure": 0.6864889155182744,
+            "timeInCash": 0.2756141402037148,
+            "actionDaysPerYear": 7.096464949071301
+          }
+        }
+      ],
+      "stabilityFloor": 0.876780377048885,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "full": {
+        "cagr": 0.22196879568102856,
+        "totalReturn": 6.37627917514384,
+        "annualizedVolatility": 0.2813591267735288,
+        "sharpe": 0.8548230035358598,
+        "sortino": 1.2682482118104836,
+        "maxDd": -0.37049650360533026,
+        "calmar": 0.5991117150122416,
+        "ulcerIndex": 0.15531298081157824,
+        "exposure": 0.6450039808917197,
+        "timeInCash": 0.32404458598726116,
+        "actionDaysPerYear": 7.423566878980892
+      },
+      "oos": {
+        "cagr": 0.23854682276836137,
+        "totalReturn": 3.124397318140872,
+        "annualizedVolatility": 0.30121977109184117,
+        "sharpe": 0.8622213457187471,
+        "sortino": 1.3115409206764326,
+        "maxDd": -0.3704965036053307,
+        "calmar": 0.6438571496547023,
+        "ulcerIndex": 0.1517823438104647,
+        "exposure": 0.6649191132414619,
+        "timeInCash": 0.29778310365488314,
+        "actionDaysPerYear": 8.606351108448173
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.35082439965750134,
+            "totalReturn": 0.35243731919571286,
+            "annualizedVolatility": 0.3013273570620284,
+            "sharpe": 1.152186371042817,
+            "sortino": 1.5744942368512433,
+            "maxDd": -0.20675916898197144,
+            "calmar": 1.6967779537172147,
+            "ulcerIndex": 0.11503557289621082,
+            "exposure": 0.508893280632411,
+            "timeInCash": 0.3715415019762846,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.9219472169097445,
+            "totalReturn": 0.9219472169097445,
+            "annualizedVolatility": 0.37969698036808786,
+            "sharpe": 1.9126335771124556,
+            "sortino": 3.2149863292655074,
+            "maxDd": -0.14792056950168575,
+            "calmar": 6.2327181406588466,
+            "ulcerIndex": 0.047768457219469734,
+            "exposure": 0.9672619047619048,
+            "timeInCash": 0.031746031746031744,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.11221784619824249,
+            "totalReturn": -0.11179841491591436,
+            "annualizedVolatility": 0.1001195134079453,
+            "sharpe": -1.1373606609939433,
+            "sortino": -1.239945202191963,
+            "maxDd": -0.13388005901342626,
+            "calmar": -0.8381968683401061,
+            "ulcerIndex": 0.12474723154438429,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.07574325246224611,
+            "totalReturn": 0.07512008403744574,
+            "annualizedVolatility": 0.30296378646553235,
+            "sharpe": 0.3918556006060191,
+            "sortino": 0.6529457981411796,
+            "maxDd": -0.3456953071762434,
+            "calmar": 0.2191040806453021,
+            "ulcerIndex": 0.16446967196883822,
+            "exposure": 0.746,
+            "timeInCash": 0.2,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.6458946254373477,
+            "totalReturn": 0.6458946254373477,
+            "annualizedVolatility": 0.33937784511234315,
+            "sharpe": 1.6396589295104722,
+            "sortino": 2.6557817808157784,
+            "maxDd": -0.16985537835082176,
+            "calmar": 3.8026150935492167,
+            "ulcerIndex": 0.055129122400933775,
+            "exposure": 0.9275793650793651,
+            "timeInCash": 0.06349206349206349,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": -0.11039721400064795,
+            "totalReturn": -0.1095709103810868,
+            "annualizedVolatility": 0.28786499036826885,
+            "sharpe": -0.2612643263310853,
+            "sortino": -0.3711849719952991,
+            "maxDd": -0.3244551475583414,
+            "calmar": -0.34025416095701505,
+            "ulcerIndex": 0.20036574278928113,
+            "exposure": 0.696,
+            "timeInCash": 0.276,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.2171789892528746,
+            "totalReturn": 0.1337883960694788,
+            "annualizedVolatility": 0.3239198115700458,
+            "sharpe": 0.7689117335416884,
+            "sortino": 1.2023120143832475,
+            "maxDd": -0.15404174029655726,
+            "calmar": 1.409871044268697,
+            "ulcerIndex": 0.08033150938238344,
+            "exposure": 0.8090062111801242,
+            "timeInCash": 0.16770186335403728,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.40538488501096037,
+            "totalReturn": -0.1344587657784011,
+            "annualizedVolatility": 0.2000975924899333,
+            "sharpe": -2.491029932983334,
+            "sortino": -2.605517051737295,
+            "maxDd": -0.1541807092684595,
+            "calmar": -2.629284084464186,
+            "ulcerIndex": 0.1382565104010202,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.21849659660250975,
+            "totalReturn": -0.08696716983074038,
+            "annualizedVolatility": 0.19060983410280907,
+            "sharpe": -1.1933592875899548,
+            "sortino": -1.2838264753456758,
+            "maxDd": -0.1391239422598306,
+            "calmar": -1.5705175762949646,
+            "ulcerIndex": 0.12259232577636066,
+            "exposure": 0.07526881720430108,
+            "timeInCash": 0.8279569892473119,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.11221784619824238,
+            "totalReturn": -0.11179841491591425,
+            "annualizedVolatility": 0.10011951340794525,
+            "sharpe": -1.1373606609939415,
+            "sortino": -1.2399452021919615,
+            "maxDd": -0.13388005901342614,
+            "calmar": -0.838196868340106,
+            "ulcerIndex": 0.12474723154438405,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.3317516514506771,
+            "totalReturn": 0.7695343680169837,
+            "annualizedVolatility": 0.3217340544042569,
+            "sharpe": 1.0519961577870125,
+            "sortino": 1.7265845508005182,
+            "maxDd": -0.34569530717624286,
+            "calmar": 0.9596648972777145,
+            "ulcerIndex": 0.1260037446716346,
+            "exposure": 0.8371513944223108,
+            "timeInCash": 0.13147410358565736,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.20915317321065752,
+            "totalReturn": 2.5178319679013286,
+            "annualizedVolatility": 0.29243820257769265,
+            "sharpe": 0.7969104849837202,
+            "sortino": 1.2074948080359467,
+            "maxDd": -0.3704965036053308,
+            "calmar": 0.5645213144398703,
+            "ulcerIndex": 0.14950298194982223,
+            "exposure": 0.6488915518274416,
+            "timeInCash": 0.31336129418813663,
+            "actionDaysPerYear": 9.36129418813661
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.23854682276836137,
+            "totalReturn": 3.124397318140872,
+            "annualizedVolatility": 0.30121977109184117,
+            "sharpe": 0.8622213457187471,
+            "sortino": 1.3115409206764326,
+            "maxDd": -0.3704965036053307,
+            "calmar": 0.6438571496547023,
+            "ulcerIndex": 0.1517823438104647,
+            "exposure": 0.6649191132414619,
+            "timeInCash": 0.29778310365488314,
+            "actionDaysPerYear": 8.606351108448173
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.22721153171629016,
+            "totalReturn": 2.88074208233233,
+            "annualizedVolatility": 0.3149022696819979,
+            "sharpe": 0.8093567769102121,
+            "sortino": 1.2163883294398439,
+            "maxDd": -0.3200577010462371,
+            "calmar": 0.7099080290008897,
+            "ulcerIndex": 0.1442803966401654,
+            "exposure": 0.6864889155182744,
+            "timeInCash": 0.2756141402037148,
+            "actionDaysPerYear": 7.096464949071301
+          }
+        }
+      ],
+      "stabilityFloor": 0.876780377048885,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "SIMPLE_200DMA",
+      "full": {
+        "cagr": 0.1718249239325047,
+        "totalReturn": 3.8578174521495,
+        "annualizedVolatility": 0.35065231175691364,
+        "sharpe": 0.630270769563309,
+        "sortino": 0.920939277158345,
+        "maxDd": -0.559003868696849,
+        "calmar": 0.30737698530255847,
+        "ulcerIndex": 0.25478582727811167,
+        "exposure": 0.7464171974522293,
+        "timeInCash": 0.2535828025477707,
+        "actionDaysPerYear": 5.9187898089171975
+      },
+      "oos": {
+        "cagr": 0.2000138519211503,
+        "totalReturn": 2.3454292641717913,
+        "annualizedVolatility": 0.37558020557013033,
+        "sharpe": 0.6759496341295302,
+        "sortino": 1.01182033822682,
+        "maxDd": -0.5590038686968495,
+        "calmar": 0.35780405668286847,
+        "ulcerIndex": 0.2790491785389125,
+        "exposure": 0.786698621929299,
+        "timeInCash": 0.21330137807070101,
+        "actionDaysPerYear": 6.3415218693828646
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.13508422103022788,
+            "totalReturn": 0.135655090520719,
+            "annualizedVolatility": 0.5292411542860164,
+            "sharpe": 0.511787117407252,
+            "sortino": 0.7089797470695532,
+            "maxDd": -0.5126304231860025,
+            "calmar": 0.26351190822947707,
+            "ulcerIndex": 0.32620852552139756,
+            "exposure": 0.7549407114624506,
+            "timeInCash": 0.2450592885375494,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.9849076242518904,
+            "totalReturn": 0.9849076242518904,
+            "annualizedVolatility": 0.38689082358554133,
+            "sharpe": 1.96769642379993,
+            "sortino": 3.3395832808084167,
+            "maxDd": -0.15204196328212716,
+            "calmar": 6.477867050587266,
+            "ulcerIndex": 0.04505208597481547,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.4387725216912528,
+            "totalReturn": -0.4374846126672517,
+            "annualizedVolatility": 0.21727744532741627,
+            "sharpe": -2.5444608623453813,
+            "sortino": -2.8598461688937826,
+            "maxDd": -0.44716003677456617,
+            "calmar": -0.9812426997192911,
+            "ulcerIndex": 0.38288767175525157,
+            "exposure": 0.1553784860557769,
+            "timeInCash": 0.8446215139442231,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.14957286190646268,
+            "totalReturn": 0.1483018232107296,
+            "annualizedVolatility": 0.3496463260756789,
+            "sharpe": 0.573129519649497,
+            "sortino": 0.9532909085697993,
+            "maxDd": -0.28638615186293737,
+            "calmar": 0.5222768661595318,
+            "ulcerIndex": 0.13569828922204769,
+            "exposure": 0.892,
+            "timeInCash": 0.108,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.619291194738766,
+            "totalReturn": 0.619291194738766,
+            "annualizedVolatility": 0.37628214437247676,
+            "sharpe": 1.4708593319961083,
+            "sortino": 2.3693468834332703,
+            "maxDd": -0.24411385732692958,
+            "calmar": 2.536894879791195,
+            "ulcerIndex": 0.06249550350982529,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.18667270611384867,
+            "totalReturn": 0.18506187180638545,
+            "annualizedVolatility": 0.3315708834743389,
+            "sharpe": 0.6829287909682235,
+            "sortino": 1.0342887570671824,
+            "maxDd": -0.3061542325997987,
+            "calmar": 0.6097342000751141,
+            "ulcerIndex": 0.1608491060640693,
+            "exposure": 0.832,
+            "timeInCash": 0.168,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.32560322792289087,
+            "totalReturn": 0.1973156490717054,
+            "annualizedVolatility": 0.3620441752783524,
+            "sharpe": 0.9595392657366868,
+            "sortino": 1.5836645566257155,
+            "maxDd": -0.17533096621124,
+            "calmar": 1.8570777025810818,
+            "ulcerIndex": 0.08014042647980853,
+            "exposure": 0.9192546583850931,
+            "timeInCash": 0.08074534161490683,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.7748602971991835,
+            "totalReturn": -0.33911547895950056,
+            "annualizedVolatility": 0.3408632590713045,
+            "sharpe": -4.186302487238995,
+            "sortino": -4.524603578491947,
+            "maxDd": -0.35417418056964034,
+            "calmar": -2.1877944235035076,
+            "ulcerIndex": 0.23913825655406926,
+            "exposure": 0.3142857142857143,
+            "timeInCash": 0.6857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.7723402379388565,
+            "totalReturn": -0.42082736888953953,
+            "annualizedVolatility": 0.618370887669057,
+            "sharpe": -2.0647664170446305,
+            "sortino": -2.522319220069905,
+            "maxDd": -0.5126304231860026,
+            "calmar": -1.5066219307444828,
+            "ulcerIndex": 0.451498837796429,
+            "exposure": 0.3333333333333333,
+            "timeInCash": 0.6666666666666666,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.4387725216912528,
+            "totalReturn": -0.4374846126672517,
+            "annualizedVolatility": 0.21727744532741627,
+            "sharpe": -2.5444608623453813,
+            "sortino": -2.8598461688937826,
+            "maxDd": -0.44716003677456617,
+            "calmar": -0.9812426997192911,
+            "ulcerIndex": 0.38288767175525157,
+            "exposure": 0.1553784860557769,
+            "timeInCash": 0.8446215139442231,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.36529694956256176,
+            "totalReturn": 0.8594350312276051,
+            "annualizedVolatility": 0.3630696814111657,
+            "sharpe": 1.0400997500510627,
+            "sortino": 1.700759771520602,
+            "maxDd": -0.28638615186293737,
+            "calmar": 1.2755398513032523,
+            "ulcerIndex": 0.10640497628215426,
+            "exposure": 0.9462151394422311,
+            "timeInCash": 0.053784860557768925,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "VS13_VOL30",
+      "full": {
+        "cagr": 0.18797671133516802,
+        "totalReturn": 4.568066519073883,
+        "annualizedVolatility": 0.2572298753051075,
+        "sharpe": 0.7998379419610737,
+        "sortino": 1.1716005069409539,
+        "maxDd": -0.31387213941836123,
+        "calmar": 0.5988958168874404,
+        "ulcerIndex": 0.14003977520128225,
+        "exposure": 0.5809116242038217,
+        "timeInCash": 0.32404458598726116,
+        "actionDaysPerYear": 8.627388535031846
+      },
+      "oos": {
+        "cagr": 0.20275494337808264,
+        "totalReturn": 2.3963664387043915,
+        "annualizedVolatility": 0.27655650788574415,
+        "sharpe": 0.8070773359068659,
+        "sortino": 1.2156682364884257,
+        "maxDd": -0.2925378496396158,
+        "calmar": 0.6930896074742505,
+        "ulcerIndex": 0.13435022671853533,
+        "exposure": 0.5960155781905333,
+        "timeInCash": 0.29778310365488314,
+        "actionDaysPerYear": 9.965248651887359
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.24881896991325947,
+            "totalReturn": 0.24992058816235252,
+            "annualizedVolatility": 0.25909157506318214,
+            "sharpe": 0.9907771638684583,
+            "sortino": 1.2917385188483295,
+            "maxDd": -0.19672370922919413,
+            "calmar": 1.26481434743268,
+            "ulcerIndex": 0.12134046125230953,
+            "exposure": 0.4041501976284585,
+            "timeInCash": 0.3715415019762846,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.789050397247246,
+            "totalReturn": 0.789050397247246,
+            "annualizedVolatility": 0.3763687699013409,
+            "sharpe": 1.7353929805251291,
+            "sortino": 2.891940973514801,
+            "maxDd": -0.14792056950168642,
+            "calmar": 5.3342844737915245,
+            "ulcerIndex": 0.05064471803127381,
+            "exposure": 0.9464285714285714,
+            "timeInCash": 0.031746031746031744,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.11221784619824215,
+            "totalReturn": -0.11179841491591402,
+            "annualizedVolatility": 0.1001195134079452,
+            "sharpe": -1.137360660993941,
+            "sortino": -1.2399452021919615,
+            "maxDd": -0.1338800590134257,
+            "calmar": -0.8381968683401071,
+            "ulcerIndex": 0.12474723154438397,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.115274147604846,
+            "totalReturn": 0.11430887759088759,
+            "annualizedVolatility": 0.2638911537419697,
+            "sharpe": 0.5446868507458176,
+            "sortino": 0.9289515810938778,
+            "maxDd": -0.2886783062739783,
+            "calmar": 0.3993169735984311,
+            "ulcerIndex": 0.14397186014299176,
+            "exposure": 0.646,
+            "timeInCash": 0.2,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.49894638256998025,
+            "totalReturn": 0.49894638256998025,
+            "annualizedVolatility": 0.31136628701475716,
+            "sharpe": 1.4570179846584126,
+            "sortino": 2.3176905961604097,
+            "maxDd": -0.15902752595917946,
+            "calmar": 3.1374844044172208,
+            "ulcerIndex": 0.057863532401778266,
+            "exposure": 0.8382936507936508,
+            "timeInCash": 0.06349206349206349,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": -0.038973179834805194,
+            "totalReturn": -0.038669928329033376,
+            "annualizedVolatility": 0.25272213069592314,
+            "sharpe": -0.030329179508342886,
+            "sortino": -0.0440302919979615,
+            "maxDd": -0.24079466323785348,
+            "calmar": -0.1618523405409033,
+            "ulcerIndex": 0.15278792495782054,
+            "exposure": 0.61,
+            "timeInCash": 0.276,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.1035278898438945,
+            "totalReturn": 0.06496119621802476,
+            "annualizedVolatility": 0.3021205948155497,
+            "sharpe": 0.4774900309700386,
+            "sortino": 0.7158825123819504,
+            "maxDd": -0.16889225750269166,
+            "calmar": 0.6129818582254699,
+            "ulcerIndex": 0.08645452846102986,
+            "exposure": 0.7204968944099379,
+            "timeInCash": 0.16770186335403728,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.4053848850109609,
+            "totalReturn": -0.13445876577840132,
+            "annualizedVolatility": 0.20009759248993347,
+            "sharpe": -2.491029932983338,
+            "sortino": -2.6055170517373014,
+            "maxDd": -0.15418070926845995,
+            "calmar": -2.629284084464182,
+            "ulcerIndex": 0.13825651040102063,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.21849659660250997,
+            "totalReturn": -0.08696716983074049,
+            "annualizedVolatility": 0.19060983410280904,
+            "sharpe": -1.1933592875899581,
+            "sortino": -1.28382647534568,
+            "maxDd": -0.1391239422598306,
+            "calmar": -1.5705175762949661,
+            "ulcerIndex": 0.12259232577636077,
+            "exposure": 0.07526881720430108,
+            "timeInCash": 0.8279569892473119,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.11221784619824204,
+            "totalReturn": -0.11179841491591391,
+            "annualizedVolatility": 0.10011951340794531,
+            "sharpe": -1.1373606609939364,
+            "sortino": -1.2399452021919564,
+            "maxDd": -0.1338800590134256,
+            "calmar": -0.838196868340107,
+            "ulcerIndex": 0.12474723154438312,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.2937180950065228,
+            "totalReturn": 0.6702892611304849,
+            "annualizedVolatility": 0.2885783975669491,
+            "sharpe": 1.037220908380708,
+            "sortino": 1.6968769705397928,
+            "maxDd": -0.2886783062739775,
+            "calmar": 1.0174581484753555,
+            "ulcerIndex": 0.11274841368888833,
+            "exposure": 0.7425298804780877,
+            "timeInCash": 0.13147410358565736,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "VS13_FIXED",
+      "full": {
+        "cagr": 0.13580406936253597,
+        "totalReturn": 2.5585947957155772,
+        "annualizedVolatility": 0.20348842796203306,
+        "sharpe": 0.728395820990849,
+        "sortino": 1.0712643305787104,
+        "maxDd": -0.2870487233238366,
+        "calmar": 0.4731045928022728,
+        "ulcerIndex": 0.1288157499597588,
+        "exposure": 0.6830214968152867,
+        "timeInCash": 0.28861464968152867,
+        "actionDaysPerYear": 5.11624203821656
+      },
+      "oos": {
+        "cagr": 0.15090286424636679,
+        "totalReturn": 1.5366472991067983,
+        "annualizedVolatility": 0.21786116008719725,
+        "sharpe": 0.7547991819036628,
+        "sortino": 1.1385991305074843,
+        "maxDd": -0.287048723323835,
+        "calmar": 0.5257047044104947,
+        "ulcerIndex": 0.13133840850341796,
+        "exposure": 0.7152486518873576,
+        "timeInCash": 0.2504493708807669,
+        "actionDaysPerYear": 5.737567405632116
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.15624642619885387,
+            "totalReturn": 0.15691273956757845,
+            "annualizedVolatility": 0.21002096248346316,
+            "sharpe": 0.7978401355387761,
+            "sortino": 1.064364185931236,
+            "maxDd": -0.14814385710837508,
+            "calmar": 1.0546939255439485,
+            "ulcerIndex": 0.10562191102414598,
+            "exposure": 0.5128458498023716,
+            "timeInCash": 0.3675889328063241,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.6022988505747171,
+            "totalReturn": 0.6022988505747171,
+            "annualizedVolatility": 0.2583103382542944,
+            "sharpe": 1.955685921369655,
+            "sortino": 3.3153455084853225,
+            "maxDd": -0.10235037921453727,
+            "calmar": 5.884676297214637,
+            "ulcerIndex": 0.02996590401218204,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.1791734689888269,
+            "totalReturn": -0.17853009456450386,
+            "annualizedVolatility": 0.08660617096897925,
+            "sharpe": -2.234926364179845,
+            "sortino": -2.3444059012475145,
+            "maxDd": -0.1922349180441293,
+            "calmar": -0.9320547526526685,
+            "ulcerIndex": 0.1834389439566806,
+            "exposure": 0.06274900398406374,
+            "timeInCash": 0.9163346613545816,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.18732429536695117,
+            "totalReturn": 0.18570741083782227,
+            "annualizedVolatility": 0.22839400113329475,
+            "sharpe": 0.8658250293862124,
+            "sortino": 1.4481204271724883,
+            "maxDd": -0.216272703442284,
+            "calmar": 0.8661485817924397,
+            "ulcerIndex": 0.08926994234691973,
+            "exposure": 0.85,
+            "timeInCash": 0.108,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.2625410906207437,
+            "totalReturn": 0.2625410906207437,
+            "annualizedVolatility": 0.2411666046772513,
+            "sharpe": 1.087925048673464,
+            "sortino": 1.6946076611595986,
+            "maxDd": -0.1996137434477968,
+            "calmar": 1.3152455641883383,
+            "ulcerIndex": 0.07249713232746284,
+            "exposure": 0.9682539682539683,
+            "timeInCash": 0.031746031746031744,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.02176262299785159,
+            "totalReturn": 0.021588052757706144,
+            "annualizedVolatility": 0.22254864314743317,
+            "sharpe": 0.20852647334241153,
+            "sortino": 0.3008860456703965,
+            "maxDd": -0.270427576436409,
+            "calmar": 0.0804748660792331,
+            "ulcerIndex": 0.15974773250930577,
+            "exposure": 0.782,
+            "timeInCash": 0.188,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.14316623566829545,
+            "totalReturn": 0.08924466830372957,
+            "annualizedVolatility": 0.24034773021635886,
+            "sharpe": 0.6766058901789734,
+            "sortino": 1.0938240196923006,
+            "maxDd": -0.13681757656458138,
+            "calmar": 1.046402364835905,
+            "ulcerIndex": 0.055827709903534556,
+            "exposure": 0.8959627329192547,
+            "timeInCash": 0.08074534161490683,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.29610534452576476,
+            "totalReturn": -0.09292955037510653,
+            "annualizedVolatility": 0.1700242963919486,
+            "sharpe": -1.9777272768631302,
+            "sortino": -2.239145512114269,
+            "maxDd": -0.13657405972868597,
+            "calmar": -2.168093597817909,
+            "ulcerIndex": 0.0962918168406175,
+            "exposure": 0.22857142857142856,
+            "timeInCash": 0.7714285714285715,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.2833585471430605,
+            "totalReturn": -0.11570021353521875,
+            "annualizedVolatility": 0.16008678026336545,
+            "sharpe": -1.9976949491043892,
+            "sortino": -2.093712244958728,
+            "maxDd": -0.1481438571083754,
+            "calmar": -1.9127255943914576,
+            "ulcerIndex": 0.13680747318466707,
+            "exposure": 0.08602150537634409,
+            "timeInCash": 0.8172043010752689,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.17917346898882802,
+            "totalReturn": -0.17853009456450497,
+            "annualizedVolatility": 0.0866061709689793,
+            "sharpe": -2.2349263641798567,
+            "sortino": -2.344405901247524,
+            "maxDd": -0.1922349180441304,
+            "calmar": -0.9320547526526688,
+            "ulcerIndex": 0.18343894395668137,
+            "exposure": 0.06274900398406374,
+            "timeInCash": 0.9163346613545816,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.2245050423385051,
+            "totalReturn": 0.49700432763627855,
+            "annualizedVolatility": 0.23466698250674803,
+            "sharpe": 0.9809174812636204,
+            "sortino": 1.5780299487292,
+            "maxDd": -0.21627270344228322,
+            "calmar": 1.038064622882096,
+            "ulcerIndex": 0.08132912702459397,
+            "exposure": 0.9093625498007968,
+            "timeInCash": 0.0697211155378486,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.15431259157780586,
+            "totalReturn": 1.5868371342473995,
+            "annualizedVolatility": 0.21485341250027276,
+            "sharpe": 0.7760926143052483,
+            "sortino": 1.1719765897860253,
+            "maxDd": -0.254910141927601,
+            "calmar": 0.6053607377521817,
+            "ulcerIndex": 0.10679735448782889,
+            "exposure": 0.7083582983822648,
+            "timeInCash": 0.25644098262432596,
+            "actionDaysPerYear": 6.03954463750749
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.15090286424636679,
+            "totalReturn": 1.5366472991067983,
+            "annualizedVolatility": 0.21786116008719725,
+            "sharpe": 0.7547991819036628,
+            "sortino": 1.1385991305074843,
+            "maxDd": -0.287048723323835,
+            "calmar": 0.5257047044104947,
+            "ulcerIndex": 0.13133840850341796,
+            "exposure": 0.7152486518873576,
+            "timeInCash": 0.2504493708807669,
+            "actionDaysPerYear": 5.737567405632116
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.11655661534898143,
+            "totalReturn": 1.075462833631276,
+            "annualizedVolatility": 0.21935473491969856,
+            "sharpe": 0.6130042700715266,
+            "sortino": 0.9178913551475605,
+            "maxDd": -0.30070344050522535,
+            "calmar": 0.3876131751374351,
+            "ulcerIndex": 0.14398685323639054,
+            "exposure": 0.719592570401438,
+            "timeInCash": 0.2468544038346315,
+            "actionDaysPerYear": 5.737567405632116
+          }
+        }
+      ],
+      "stabilityFloor": 0.7373211080012873,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "full": {
+        "cagr": 0.15633417186740628,
+        "totalReturn": 3.254327844776453,
+        "annualizedVolatility": 0.18773714826215465,
+        "sharpe": 0.8683783256764918,
+        "sortino": 1.2881168959240263,
+        "maxDd": -0.26095002913502896,
+        "calmar": 0.5990962039192221,
+        "ulcerIndex": 0.1035498771808644,
+        "exposure": 0.6446058917197452,
+        "timeInCash": 0.3244426751592357,
+        "actionDaysPerYear": 7.423566878980892
+      },
+      "oos": {
+        "cagr": 0.16965405441629255,
+        "totalReturn": 1.8232246870107147,
+        "annualizedVolatility": 0.2007719659931751,
+        "sharpe": 0.8815798161470809,
+        "sortino": 1.3416994808694271,
+        "maxDd": -0.2609500291350296,
+        "calmar": 0.6501400094824445,
+        "ulcerIndex": 0.10118098377267624,
+        "exposure": 0.664319952067106,
+        "timeInCash": 0.2983822648292391,
+        "actionDaysPerYear": 8.606351108448173
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.23137960203597907,
+            "totalReturn": 0.23239705945946976,
+            "annualizedVolatility": 0.20147751606148348,
+            "sharpe": 1.1353404094383526,
+            "sortino": 1.552395145079935,
+            "maxDd": -0.13986071743171913,
+            "calmar": 1.654357322662384,
+            "ulcerIndex": 0.07688688924659298,
+            "exposure": 0.508893280632411,
+            "timeInCash": 0.3715415019762846,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.5663078683176932,
+            "totalReturn": 0.5663078683176932,
+            "annualizedVolatility": 0.2535791290443701,
+            "sharpe": 1.8976698317796723,
+            "sortino": 3.18483762298427,
+            "maxDd": -0.10024780355936058,
+            "calmar": 5.649080061712879,
+            "ulcerIndex": 0.03193452666469253,
+            "exposure": 0.9672619047619048,
+            "timeInCash": 0.031746031746031744,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.07541984278177905,
+            "totalReturn": -0.07513209388034092,
+            "annualizedVolatility": 0.06565557152628296,
+            "sharpe": -1.1608824213516553,
+            "sortino": -1.263218950418178,
+            "maxDd": -0.09056193654587508,
+            "calmar": -0.8327984764722246,
+            "ulcerIndex": 0.08432936664512167,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.06875644942819714,
+            "totalReturn": 0.06819256816042452,
+            "annualizedVolatility": 0.201399029521126,
+            "sharpe": 0.4304698091487056,
+            "sortino": 0.7154261517058949,
+            "maxDd": -0.24156336509784015,
+            "calmar": 0.2846311128359583,
+            "ulcerIndex": 0.11364595082995053,
+            "exposure": 0.742,
+            "timeInCash": 0.204,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.4282672366605922,
+            "totalReturn": 0.4282672366605922,
+            "annualizedVolatility": 0.22608337520251756,
+            "sharpe": 1.6907683457129772,
+            "sortino": 2.748640069792759,
+            "maxDd": -0.11566835738747427,
+            "calmar": 3.7025444670745298,
+            "ulcerIndex": 0.036767535885330986,
+            "exposure": 0.9275793650793651,
+            "timeInCash": 0.06349206349206349,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": -0.059486075341256606,
+            "totalReturn": -0.05902818126520326,
+            "annualizedVolatility": 0.19209974825805418,
+            "sharpe": -0.22284894041176442,
+            "sortino": -0.31746997531077026,
+            "maxDd": -0.22740614680960602,
+            "calmar": -0.261585168984288,
+            "ulcerIndex": 0.13720662930165792,
+            "exposure": 0.696,
+            "timeInCash": 0.276,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.16343665545621344,
+            "totalReturn": 0.10154516303131111,
+            "annualizedVolatility": 0.215257260518023,
+            "sharpe": 0.8108361805900097,
+            "sortino": 1.2666420452542992,
+            "maxDd": -0.10284271506452936,
+            "calmar": 1.5891903996667534,
+            "ulcerIndex": 0.05227391227497233,
+            "exposure": 0.8090062111801242,
+            "timeInCash": 0.16770186335403728,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.291262067080723,
+            "totalReturn": -0.09120015608478871,
+            "annualizedVolatility": 0.1336472711961973,
+            "sharpe": -2.5058996759621865,
+            "sortino": -2.619874821634904,
+            "maxDd": -0.1051394086624563,
+            "calmar": -2.770246387972395,
+            "ulcerIndex": 0.09426081174242616,
+            "exposure": 0.21428571428571427,
+            "timeInCash": 0.7857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.14948357279002433,
+            "totalReturn": -0.05800289058345609,
+            "annualizedVolatility": 0.12875778444973285,
+            "sharpe": -1.1910897368322564,
+            "sortino": -1.27897998726311,
+            "maxDd": -0.09485879797248398,
+            "calmar": -1.5758535421604811,
+            "ulcerIndex": 0.08216264258641441,
+            "exposure": 0.07526881720430108,
+            "timeInCash": 0.8279569892473119,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.07541984278177982,
+            "totalReturn": -0.0751320938803417,
+            "annualizedVolatility": 0.06565557152628293,
+            "sharpe": -1.1608824213516693,
+            "sortino": -1.263218950418193,
+            "maxDd": -0.09056193654587563,
+            "calmar": -0.8327984764722282,
+            "ulcerIndex": 0.08432936664512257,
+            "exposure": 0.05079681274900399,
+            "timeInCash": 0.9282868525896414,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.23621773348646125,
+            "totalReturn": 0.5256644475478687,
+            "annualizedVolatility": 0.21413554993301667,
+            "sharpe": 1.0977353825365088,
+            "sortino": 1.8033842965983073,
+            "maxDd": -0.24156336509784015,
+            "calmar": 0.9778706857754951,
+            "ulcerIndex": 0.0862292980581613,
+            "exposure": 0.8351593625498008,
+            "timeInCash": 0.13346613545816732,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [
+        {
+          "label": "-10%",
+          "metrics": {
+            "cagr": 0.15215907457149358,
+            "totalReturn": 1.5550411436583187,
+            "annualizedVolatility": 0.19527994665758105,
+            "sharpe": 0.8235498352993568,
+            "sortino": 1.2492105049921696,
+            "maxDd": -0.26095002913502774,
+            "calmar": 0.5830965992832267,
+            "ulcerIndex": 0.09963211956952107,
+            "exposure": 0.6487417615338527,
+            "timeInCash": 0.31336129418813663,
+            "actionDaysPerYear": 9.512282804074296
+          }
+        },
+        {
+          "label": "BASE",
+          "metrics": {
+            "cagr": 0.16965405441629255,
+            "totalReturn": 1.8232246870107147,
+            "annualizedVolatility": 0.2007719659931751,
+            "sharpe": 0.8815798161470809,
+            "sortino": 1.3416994808694271,
+            "maxDd": -0.2609500291350296,
+            "calmar": 0.6501400094824445,
+            "ulcerIndex": 0.10118098377267624,
+            "exposure": 0.664319952067106,
+            "timeInCash": 0.2983822648292391,
+            "actionDaysPerYear": 8.606351108448173
+          }
+        },
+        {
+          "label": "+10%",
+          "metrics": {
+            "cagr": 0.14486482267235257,
+            "totalReturn": 1.4497968645658812,
+            "annualizedVolatility": 0.20935919849216242,
+            "sharpe": 0.7516373864860509,
+            "sortino": 1.1273756605482974,
+            "maxDd": -0.27273954178550186,
+            "calmar": 0.5311471219904104,
+            "ulcerIndex": 0.10243049312602039,
+            "exposure": 0.6821449970041942,
+            "timeInCash": 0.280407429598562,
+            "actionDaysPerYear": 7.398442180946675
+          }
+        }
+      ],
+      "stabilityFloor": 0.8169734430176654,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "SIMPLE_200DMA",
+      "full": {
+        "cagr": 0.1312415093542385,
+        "totalReturn": 2.4186383213775393,
+        "annualizedVolatility": 0.2337927176113765,
+        "sharpe": 0.645565719211618,
+        "sortino": 0.943871483675153,
+        "maxDd": -0.4164397720337174,
+        "calmar": 0.3151512371484355,
+        "ulcerIndex": 0.1771216151491437,
+        "exposure": 0.7464171974522293,
+        "timeInCash": 0.2535828025477707,
+        "actionDaysPerYear": 5.9187898089171975
+      },
+      "oos": {
+        "cagr": 0.15389015566254827,
+        "totalReturn": 1.5805736576813643,
+        "annualizedVolatility": 0.25043586809158785,
+        "sharpe": 0.6979625786514291,
+        "sortino": 1.0457066509665651,
+        "maxDd": -0.4164397720337164,
+        "calmar": 0.3695376042278901,
+        "ulcerIndex": 0.19530531597952377,
+        "exposure": 0.786698621929299,
+        "timeInCash": 0.21330137807070101,
+        "actionDaysPerYear": 6.3415218693828646
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.11775406488344098,
+            "totalReturn": 0.11824794347289846,
+            "annualizedVolatility": 0.3525075315340883,
+            "sharpe": 0.4951050835546056,
+            "sortino": 0.685882407915485,
+            "maxDd": -0.37351621106394706,
+            "calmar": 0.3152582442085255,
+            "ulcerIndex": 0.22987601207618527,
+            "exposure": 0.7549407114624506,
+            "timeInCash": 0.2450592885375494,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.6022988505747164,
+            "totalReturn": 0.6022988505747164,
+            "annualizedVolatility": 0.2583103382542945,
+            "sharpe": 1.9556859213696502,
+            "sortino": 3.3153455084853145,
+            "maxDd": -0.10235037921453771,
+            "calmar": 5.884676297214605,
+            "ulcerIndex": 0.02996590401218211,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.3178442069042582,
+            "totalReturn": -0.3168080132169441,
+            "annualizedVolatility": 0.14475381233215684,
+            "sharpe": -2.567090010898221,
+            "sortino": -2.883453843295933,
+            "maxDd": -0.324788581327239,
+            "calmar": -0.9786187851968108,
+            "ulcerIndex": 0.27448101634290384,
+            "exposure": 0.1553784860557769,
+            "timeInCash": 0.8446215139442231,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.13130309959744313,
+            "totalReturn": 0.13019595093317626,
+            "annualizedVolatility": 0.2337410149558097,
+            "sharpe": 0.6444082124491076,
+            "sortino": 1.075559558164951,
+            "maxDd": -0.1944373394925134,
+            "calmar": 0.6752977588571603,
+            "ulcerIndex": 0.08916504195155418,
+            "exposure": 0.892,
+            "timeInCash": 0.108,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.4216997080067615,
+            "totalReturn": 0.4216997080067615,
+            "annualizedVolatility": 0.25059838682624186,
+            "sharpe": 1.530359415140898,
+            "sortino": 2.474126802675414,
+            "maxDd": -0.16700473292765416,
+            "calmar": 2.5250763892388624,
+            "ulcerIndex": 0.040955736849126755,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.1463491181841612,
+            "totalReturn": 0.14510716525359002,
+            "annualizedVolatility": 0.22162281170686937,
+            "sharpe": 0.7274259050576045,
+            "sortino": 1.1041100819754288,
+            "maxDd": -0.21400524247354813,
+            "calmar": 0.6838576312084995,
+            "ulcerIndex": 0.11005913942022068,
+            "exposure": 0.832,
+            "timeInCash": 0.168,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.23731273076572057,
+            "totalReturn": 0.14573482317948017,
+            "annualizedVolatility": 0.24061372864025438,
+            "sharpe": 1.005210407858341,
+            "sortino": 1.6555833012871781,
+            "maxDd": -0.11572130492676502,
+            "calmar": 2.0507263629277728,
+            "ulcerIndex": 0.05189215766447949,
+            "exposure": 0.9192546583850931,
+            "timeInCash": 0.08074534161490683,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.6242722817293547,
+            "totalReturn": -0.2380802486805904,
+            "annualizedVolatility": 0.22888415334014867,
+            "sharpe": -4.15264827023042,
+            "sortino": -4.506977164901521,
+            "maxDd": -0.2497666413760382,
+            "calmar": -2.4994221737941236,
+            "ulcerIndex": 0.16635609929974343,
+            "exposure": 0.3142857142857143,
+            "timeInCash": 0.6857142857142857,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.61472237122205,
+            "totalReturn": -0.2967158912241088,
+            "annualizedVolatility": 0.4100644664250378,
+            "sharpe": -2.1121051589088236,
+            "sortino": -2.5708217970289917,
+            "maxDd": -0.3735162110639473,
+            "calmar": -1.6457715970908886,
+            "ulcerIndex": 0.3269896037268228,
+            "exposure": 0.3333333333333333,
+            "timeInCash": 0.6666666666666666,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.3178442069042582,
+            "totalReturn": -0.3168080132169441,
+            "annualizedVolatility": 0.14475381233215684,
+            "sharpe": -2.567090010898221,
+            "sortino": -2.883453843295933,
+            "maxDd": -0.324788581327239,
+            "calmar": -0.9786187851968108,
+            "ulcerIndex": 0.27448101634290384,
+            "exposure": 0.1553784860557769,
+            "timeInCash": 0.8446215139442231,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.26879393136656815,
+            "totalReturn": 0.6067992534321218,
+            "annualizedVolatility": 0.24221934936216166,
+            "sharpe": 1.1044907113430682,
+            "sortino": 1.8125522257452098,
+            "maxDd": -0.1944373394925134,
+            "calmar": 1.3824193031447942,
+            "ulcerIndex": 0.06967800429635833,
+            "exposure": 0.9462151394422311,
+            "timeInCash": 0.053784860557768925,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "VS13_VOL30",
+      "full": {
+        "cagr": 0.13392047488967274,
+        "totalReturn": 2.5002026731711195,
+        "annualizedVolatility": 0.19121619163935932,
+        "sharpe": 0.7536836146200094,
+        "sortino": 1.108287576749306,
+        "maxDd": -0.23718488183284436,
+        "calmar": 0.5646248355072351,
+        "ulcerIndex": 0.11774786761572406,
+        "exposure": 0.63953025477707,
+        "timeInCash": 0.28861464968152867,
+        "actionDaysPerYear": 5.718152866242038
+      },
+      "oos": {
+        "cagr": 0.1465345808270886,
+        "totalReturn": 1.473557957582643,
+        "annualizedVolatility": 0.20400988680409782,
+        "sharpe": 0.7729554805216108,
+        "sortino": 1.1670226547284943,
+        "maxDd": -0.23718488183284603,
+        "calmar": 0.6178074238743326,
+        "ulcerIndex": 0.12261615605418968,
+        "exposure": 0.6641701617735171,
+        "timeInCash": 0.2504493708807669,
+        "actionDaysPerYear": 6.3415218693828646
+      },
+      "yearly": [
+        {
+          "year": 2020,
+          "metrics": {
+            "cagr": 0.09496215202939573,
+            "totalReturn": 0.09535640848953175,
+            "annualizedVolatility": 0.18302934731323559,
+            "sharpe": 0.5888099874493484,
+            "sortino": 0.7473490382998715,
+            "maxDd": -0.14814385710837508,
+            "calmar": 0.641013092833987,
+            "ulcerIndex": 0.1094613295763773,
+            "exposure": 0.40810276679841895,
+            "timeInCash": 0.3675889328063241,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2021,
+          "metrics": {
+            "cagr": 0.6022988505747131,
+            "totalReturn": 0.6022988505747131,
+            "annualizedVolatility": 0.25831033825429445,
+            "sharpe": 1.9556859213696463,
+            "sortino": 3.315345508485308,
+            "maxDd": -0.10235037921453771,
+            "calmar": 5.884676297214572,
+            "ulcerIndex": 0.029965904012182056,
+            "exposure": 1,
+            "timeInCash": 0,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2022,
+          "metrics": {
+            "cagr": -0.17917346898882736,
+            "totalReturn": -0.1785300945645042,
+            "annualizedVolatility": 0.08660617096897924,
+            "sharpe": -2.234926364179851,
+            "sortino": -2.3444059012475194,
+            "maxDd": -0.19223491804412962,
+            "calmar": -0.9320547526526691,
+            "ulcerIndex": 0.18343894395668098,
+            "exposure": 0.06274900398406374,
+            "timeInCash": 0.9163346613545816,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2023,
+          "metrics": {
+            "cagr": 0.24692064290636262,
+            "totalReturn": 0.24473869119301206,
+            "annualizedVolatility": 0.19678269122573536,
+            "sharpe": 1.2198302542467905,
+            "sortino": 2.1179454902064156,
+            "maxDd": -0.19025336961613637,
+            "calmar": 1.2978516144263865,
+            "ulcerIndex": 0.06763351540244165,
+            "exposure": 0.747,
+            "timeInCash": 0.108,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2024,
+          "metrics": {
+            "cagr": 0.21111276525650613,
+            "totalReturn": 0.21111276525650613,
+            "annualizedVolatility": 0.22834480300508223,
+            "sharpe": 0.953535114492507,
+            "sortino": 1.4687422253579085,
+            "maxDd": -0.1865804913983624,
+            "calmar": 1.1314835954942664,
+            "ulcerIndex": 0.08543130402331284,
+            "exposure": 0.8948412698412699,
+            "timeInCash": 0.031746031746031744,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2025,
+          "metrics": {
+            "cagr": 0.07781888052158026,
+            "totalReturn": 0.07717803026133474,
+            "annualizedVolatility": 0.20471382698306342,
+            "sharpe": 0.46857791426197604,
+            "sortino": 0.7057104598940872,
+            "maxDd": -0.20704060955871417,
+            "calmar": 0.3758628835543096,
+            "ulcerIndex": 0.12150381622309368,
+            "exposure": 0.744,
+            "timeInCash": 0.188,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "year": 2026,
+          "metrics": {
+            "cagr": 0.08988147325972928,
+            "totalReturn": 0.056528460260903746,
+            "annualizedVolatility": 0.2362628910888886,
+            "sharpe": 0.4821076991853003,
+            "sortino": 0.7677387091291245,
+            "maxDd": -0.13681757656458005,
+            "calmar": 0.6569439067450797,
+            "ulcerIndex": 0.05867156507061063,
+            "exposure": 0.8649068322981367,
+            "timeInCash": 0.08074534161490683,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "regimes": [
+        {
+          "id": "2018_Q4",
+          "start": "2018-09-20",
+          "end": "2018-12-31",
+          "metrics": {
+            "cagr": -0.296105344525766,
+            "totalReturn": -0.09292955037510697,
+            "annualizedVolatility": 0.17002429639194874,
+            "sharpe": -1.9777272768631404,
+            "sortino": -2.2391455121142796,
+            "maxDd": -0.1365740597286862,
+            "calmar": -2.1680935978179146,
+            "ulcerIndex": 0.09629181684061767,
+            "exposure": 0.22857142857142856,
+            "timeInCash": 0.7714285714285715,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "COVID",
+          "start": "2020-02-19",
+          "end": "2020-06-30",
+          "metrics": {
+            "cagr": -0.28335854714306197,
+            "totalReturn": -0.11570021353521942,
+            "annualizedVolatility": 0.16008678026336523,
+            "sharpe": -1.9976949491044016,
+            "sortino": -2.09371224495874,
+            "maxDd": -0.14814385710837552,
+            "calmar": -1.912725594391466,
+            "ulcerIndex": 0.13680747318466716,
+            "exposure": 0.08602150537634409,
+            "timeInCash": 0.8172043010752689,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2022_BEAR",
+          "start": "2022-01-03",
+          "end": "2022-12-30",
+          "metrics": {
+            "cagr": -0.1791734689888269,
+            "totalReturn": -0.17853009456450375,
+            "annualizedVolatility": 0.08660617096897913,
+            "sharpe": -2.2349263641798482,
+            "sortino": -2.3444059012475167,
+            "maxDd": -0.1922349180441293,
+            "calmar": -0.9320547526526685,
+            "ulcerIndex": 0.18343894395668056,
+            "exposure": 0.06274900398406374,
+            "timeInCash": 0.9163346613545816,
+            "actionDaysPerYear": 0
+          }
+        },
+        {
+          "id": "2023_2024_BULL",
+          "start": "2023-01-03",
+          "end": "2024-12-31",
+          "metrics": {
+            "cagr": 0.22881496177366478,
+            "totalReturn": 0.5075189183125377,
+            "annualizedVolatility": 0.212999957272831,
+            "sharpe": 1.0743837762272375,
+            "sortino": 1.7340487727029275,
+            "maxDd": -0.1902533696161357,
+            "calmar": 1.2026854622093306,
+            "ulcerIndex": 0.07713092919528683,
+            "exposure": 0.8212151394422311,
+            "timeInCash": 0.0697211155378486,
+            "actionDaysPerYear": 0
+          }
+        }
+      ],
+      "parameterNeighborhood": [],
+      "stabilityFloor": null,
+      "operationalCapPassed": true
+    }
+  ],
+  "summary": [
+    {
+      "ticker": "TQQQ",
+      "rows": [
+        {
+          "family": "VS13_FIXED",
+          "oos": {
+            "cagr": 0.2732759298059557,
+            "totalReturn": 3.953402012440133,
+            "annualizedVolatility": 0.3777401327484529,
+            "sharpe": 0.8315273874715563,
+            "sortino": 1.2195951841662318,
+            "maxDd": -0.3815846420370025,
+            "calmar": 0.716160714296924,
+            "ulcerIndex": 0.20889228903682872,
+            "exposure": 0.5724985020970641,
+            "timeInCash": 0.39125224685440385,
+            "actionDaysPerYear": 11.173157579388857
+          },
+          "stabilityFloor": 0.9247289887230821,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_LEVERAGE_SCALED_STOP",
+          "oos": {
+            "cagr": 0.2732759298059557,
+            "totalReturn": 3.953402012440133,
+            "annualizedVolatility": 0.3777401327484529,
+            "sharpe": 0.8315273874715563,
+            "sortino": 1.2195951841662318,
+            "maxDd": -0.3815846420370025,
+            "calmar": 0.716160714296924,
+            "ulcerIndex": 0.20889228903682872,
+            "exposure": 0.5724985020970641,
+            "timeInCash": 0.39125224685440385,
+            "actionDaysPerYear": 11.173157579388857
+          },
+          "stabilityFloor": 0.9247289887230821,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "SIMPLE_200DMA",
+          "oos": {
+            "cagr": 0.4310298075940606,
+            "totalReturn": 9.73652347754713,
+            "annualizedVolatility": 0.5364733908018927,
+            "sharpe": 0.9403969328611713,
+            "sortino": 1.4508167024552066,
+            "maxDd": -0.5778140864442047,
+            "calmar": 0.7459662505747547,
+            "ulcerIndex": 0.24451805374298763,
+            "exposure": 0.8010784901138406,
+            "timeInCash": 0.19892150988615936,
+            "actionDaysPerYear": 3.3217495506291193
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_VOL30",
+          "oos": {
+            "cagr": 0.22281490344376587,
+            "totalReturn": 2.7895832867638646,
+            "annualizedVolatility": 0.271076125175609,
+            "sharpe": 0.8791540512071478,
+            "sortino": 1.2882811470016577,
+            "maxDd": -0.2928893594599642,
+            "calmar": 0.7607476893479389,
+            "ulcerIndex": 0.14698613163095703,
+            "exposure": 0.4071300179748352,
+            "timeInCash": 0.39125224685440385,
+            "actionDaysPerYear": 11.324146195326543
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        }
+      ]
+    },
+    {
+      "ticker": "QLD",
+      "rows": [
+        {
+          "family": "VS13_FIXED",
+          "oos": {
+            "cagr": 0.12697869066434997,
+            "totalReturn": 1.2071839721397106,
+            "annualizedVolatility": 0.2679105943826738,
+            "sharpe": 0.581588141351616,
+            "sortino": 0.844727898773606,
+            "maxDd": -0.2834119976338364,
+            "calmar": 0.4480356926470139,
+            "ulcerIndex": 0.1458124730391968,
+            "exposure": 0.6088975434391851,
+            "timeInCash": 0.36129418813660874,
+            "actionDaysPerYear": 8.75733972438586
+          },
+          "stabilityFloor": 1,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_LEVERAGE_SCALED_STOP",
+          "oos": {
+            "cagr": 0.20511583866404992,
+            "totalReturn": 2.440764836413738,
+            "annualizedVolatility": 0.2518788977125259,
+            "sharpe": 0.8680241625116094,
+            "sortino": 1.2821509502787252,
+            "maxDd": -0.2705467765507906,
+            "calmar": 0.7581529570563664,
+            "ulcerIndex": 0.14084347669817227,
+            "exposure": 0.5713001797483523,
+            "timeInCash": 0.39245056920311566,
+            "actionDaysPerYear": 11.173157579388857
+          },
+          "stabilityFloor": 1,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "SIMPLE_200DMA",
+          "oos": {
+            "cagr": 0.32594816478126454,
+            "totalReturn": 5.478810280732584,
+            "annualizedVolatility": 0.36070606930710475,
+            "sharpe": 0.964393358651831,
+            "sortino": 1.4903364997373005,
+            "maxDd": -0.4254447154244172,
+            "calmar": 0.7661351827019484,
+            "ulcerIndex": 0.16790692863579024,
+            "exposure": 0.8010784901138406,
+            "timeInCash": 0.19892150988615936,
+            "actionDaysPerYear": 3.3217495506291193
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_VOL30",
+          "oos": {
+            "cagr": 0.08163936422963758,
+            "totalReturn": 0.6816237560937908,
+            "annualizedVolatility": 0.20599183705421273,
+            "sharpe": 0.48475241743690334,
+            "sortino": 0.6967216825470552,
+            "maxDd": -0.24342567489944567,
+            "calmar": 0.3353769657344534,
+            "ulcerIndex": 0.13264781610435902,
+            "exposure": 0.45326542840023964,
+            "timeInCash": 0.36129418813660874,
+            "actionDaysPerYear": 9.210305572198923
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        }
+      ]
+    },
+    {
+      "ticker": "UPRO",
+      "rows": [
+        {
+          "family": "VS13_FIXED",
+          "oos": {
+            "cagr": 0.23854682276836137,
+            "totalReturn": 3.124397318140872,
+            "annualizedVolatility": 0.30121977109184117,
+            "sharpe": 0.8622213457187471,
+            "sortino": 1.3115409206764326,
+            "maxDd": -0.3704965036053307,
+            "calmar": 0.6438571496547023,
+            "ulcerIndex": 0.1517823438104647,
+            "exposure": 0.6649191132414619,
+            "timeInCash": 0.29778310365488314,
+            "actionDaysPerYear": 8.606351108448173
+          },
+          "stabilityFloor": 0.876780377048885,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_LEVERAGE_SCALED_STOP",
+          "oos": {
+            "cagr": 0.23854682276836137,
+            "totalReturn": 3.124397318140872,
+            "annualizedVolatility": 0.30121977109184117,
+            "sharpe": 0.8622213457187471,
+            "sortino": 1.3115409206764326,
+            "maxDd": -0.3704965036053307,
+            "calmar": 0.6438571496547023,
+            "ulcerIndex": 0.1517823438104647,
+            "exposure": 0.6649191132414619,
+            "timeInCash": 0.29778310365488314,
+            "actionDaysPerYear": 8.606351108448173
+          },
+          "stabilityFloor": 0.876780377048885,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "SIMPLE_200DMA",
+          "oos": {
+            "cagr": 0.2000138519211503,
+            "totalReturn": 2.3454292641717913,
+            "annualizedVolatility": 0.37558020557013033,
+            "sharpe": 0.6759496341295302,
+            "sortino": 1.01182033822682,
+            "maxDd": -0.5590038686968495,
+            "calmar": 0.35780405668286847,
+            "ulcerIndex": 0.2790491785389125,
+            "exposure": 0.786698621929299,
+            "timeInCash": 0.21330137807070101,
+            "actionDaysPerYear": 6.3415218693828646
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_VOL30",
+          "oos": {
+            "cagr": 0.20275494337808264,
+            "totalReturn": 2.3963664387043915,
+            "annualizedVolatility": 0.27655650788574415,
+            "sharpe": 0.8070773359068659,
+            "sortino": 1.2156682364884257,
+            "maxDd": -0.2925378496396158,
+            "calmar": 0.6930896074742505,
+            "ulcerIndex": 0.13435022671853533,
+            "exposure": 0.5960155781905333,
+            "timeInCash": 0.29778310365488314,
+            "actionDaysPerYear": 9.965248651887359
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        }
+      ]
+    },
+    {
+      "ticker": "SSO",
+      "rows": [
+        {
+          "family": "VS13_FIXED",
+          "oos": {
+            "cagr": 0.15090286424636679,
+            "totalReturn": 1.5366472991067983,
+            "annualizedVolatility": 0.21786116008719725,
+            "sharpe": 0.7547991819036628,
+            "sortino": 1.1385991305074843,
+            "maxDd": -0.287048723323835,
+            "calmar": 0.5257047044104947,
+            "ulcerIndex": 0.13133840850341796,
+            "exposure": 0.7152486518873576,
+            "timeInCash": 0.2504493708807669,
+            "actionDaysPerYear": 5.737567405632116
+          },
+          "stabilityFloor": 0.7373211080012873,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_LEVERAGE_SCALED_STOP",
+          "oos": {
+            "cagr": 0.16965405441629255,
+            "totalReturn": 1.8232246870107147,
+            "annualizedVolatility": 0.2007719659931751,
+            "sharpe": 0.8815798161470809,
+            "sortino": 1.3416994808694271,
+            "maxDd": -0.2609500291350296,
+            "calmar": 0.6501400094824445,
+            "ulcerIndex": 0.10118098377267624,
+            "exposure": 0.664319952067106,
+            "timeInCash": 0.2983822648292391,
+            "actionDaysPerYear": 8.606351108448173
+          },
+          "stabilityFloor": 0.8169734430176654,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "SIMPLE_200DMA",
+          "oos": {
+            "cagr": 0.15389015566254827,
+            "totalReturn": 1.5805736576813643,
+            "annualizedVolatility": 0.25043586809158785,
+            "sharpe": 0.6979625786514291,
+            "sortino": 1.0457066509665651,
+            "maxDd": -0.4164397720337164,
+            "calmar": 0.3695376042278901,
+            "ulcerIndex": 0.19530531597952377,
+            "exposure": 0.786698621929299,
+            "timeInCash": 0.21330137807070101,
+            "actionDaysPerYear": 6.3415218693828646
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        },
+        {
+          "family": "VS13_VOL30",
+          "oos": {
+            "cagr": 0.1465345808270886,
+            "totalReturn": 1.473557957582643,
+            "annualizedVolatility": 0.20400988680409782,
+            "sharpe": 0.7729554805216108,
+            "sortino": 1.1670226547284943,
+            "maxDd": -0.23718488183284603,
+            "calmar": 0.6178074238743326,
+            "ulcerIndex": 0.12261615605418968,
+            "exposure": 0.6641701617735171,
+            "timeInCash": 0.2504493708807669,
+            "actionDaysPerYear": 6.3415218693828646
+          },
+          "stabilityFloor": null,
+          "operationalCapPassed": true
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Historical data is already inspected; this is robustness evidence, not pristine holdout evidence.",
+    "Parameter neighborhoods apply only to production-oriented primary families and are fragility diagnostics, not parameter selection.",
+    "No Forward or Production promotion is performed here."
+  ]
+}
