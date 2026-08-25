@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T12:19:59.836Z",
+  "generatedAt": "2026-08-25T12:26:33.310Z",
   "dataDate": "2026-08-24",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
@@ -126,7 +126,9 @@
   },
   "warnings": [
     "VIX: 他銘柄と一致しない2209営業日を除外しました",
-    "TQQQ・QQQ・SPYはNasdaq公式HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
+    "TQQQ・QQQ・SPYおよびPhase-1 cross-ticker候補はNasdaq HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
+    "Phase 1ではQLD/SSO/ROM/USDを実ETF価格で追加し、Synthetic leveraged historyは使用しません。",
+    "USDとSOXLは異なる半導体指数を追跡するため、純粋な2x対3x倍率比較として扱いません。",
     "VIXはCboe公式VIX Historyを使用しています。",
     "外部データ取得時刻と各銘柄の最終日をデータ管理画面で確認してください。"
   ]
