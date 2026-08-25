@@ -14,6 +14,7 @@
     "test:core": "node --experimental-strip-types --test tests/engine.test.ts tests/paper.test.ts tests/forward.test.ts tests/leverage-screening.test.ts",
     "generate:daily": "node --experimental-strip-types scripts/generate-daily.ts",
     "generate:research": "node --experimental-strip-types scripts/generate-research.ts",
+    "generate:phase1": "node --experimental-strip-types scripts/generate-phase1-screening.ts",
     "generate:native": "node --experimental-strip-types scripts/generate-native.ts",
     "generate:ticker-forward": "node --experimental-strip-types scripts/generate-ticker-forward.ts",
     "generate:forward:init": "node --experimental-strip-types scripts/initialize-forward.ts",
