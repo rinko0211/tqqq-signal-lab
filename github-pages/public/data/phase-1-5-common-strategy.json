@@ -1,0 +1,489 @@
+{
+  "schemaVersion": 1,
+  "phase": "PHASE_1_5_LEVERAGE_NEUTRAL_COMMON_STRATEGY_CHECK",
+  "generatedAt": "2026-08-25T13:11:13.615Z",
+  "commonPeriod": {
+    "start": "2016-08-22",
+    "end": "2026-08-24"
+  },
+  "policy": "Diagnostic only. Four pre-registered common families across TQQQ/QLD/UPRO/SSO. No Native tuning, parameter search, Forward enrollment or Production promotion.",
+  "families": [
+    {
+      "id": "VS13_FIXED",
+      "definition": "Frozen existing Volatility Shield / VS13, fixed 13% trailing stop."
+    },
+    {
+      "id": "SIMPLE_200DMA",
+      "definition": "Underlying proxy close above 200DMA => 100% risk ETF, else Cash; t close decision, t+1 open execution, 8bps turnover cost."
+    },
+    {
+      "id": "VS13_VOL30",
+      "definition": "Frozen VS13 signal framework with existing 30% annualized portfolio volatility target sizing."
+    },
+    {
+      "id": "VS13_LEVERAGE_SCALED_STOP",
+      "definition": "Frozen VS13 with stop = 13% × leverage/3; 3x=13%, 2x=8.6667%. Mechanical scaling only, no fitted stop."
+    }
+  ],
+  "rows": [
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "VS13_FIXED",
+      "metrics": {
+        "cagr": 0.23040701956765042,
+        "totalReturn": 6.900040348701364,
+        "annualizedVolatility": 0.3532056567135187,
+        "sharpe": 0.7666000883538114,
+        "sortino": 1.1117744787703794,
+        "maxDd": -0.3815846420370027,
+        "calmar": 0.6038162813305982,
+        "ulcerIndex": 0.1976039942099811,
+        "exposure": 0.5691679936305732,
+        "timeInCash": 0.3996815286624204,
+        "actionDaysPerYear": 9.730891719745223
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "SIMPLE_200DMA",
+      "metrics": {
+        "cagr": 0.3629585469324019,
+        "totalReturn": 20.9057024114223,
+        "annualizedVolatility": 0.49247747773685946,
+        "sharpe": 0.8788617713952052,
+        "sortino": 1.3340595426991673,
+        "maxDd": -0.5778140864442047,
+        "calmar": 0.6281580104182007,
+        "ulcerIndex": 0.22925568701348242,
+        "exposure": 0.7563694267515924,
+        "timeInCash": 0.24363057324840764,
+        "actionDaysPerYear": 3.511146496815287
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "VS13_VOL30",
+      "metrics": {
+        "cagr": 0.19097905023302442,
+        "totalReturn": 4.709940290527077,
+        "annualizedVolatility": 0.26997542219066506,
+        "sharpe": 0.7842933940657437,
+        "sortino": 1.126990412646101,
+        "maxDd": -0.3347873205948446,
+        "calmar": 0.5704488745084371,
+        "ulcerIndex": 0.1558918897342294,
+        "exposure": 0.4330214968152866,
+        "timeInCash": 0.3996815286624204,
+        "actionDaysPerYear": 10.43312101910828
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "TQQQ",
+      "underlying": "Nasdaq-100",
+      "leverage": "3x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "metrics": {
+        "cagr": 0.23040701956765042,
+        "totalReturn": 6.900040348701364,
+        "annualizedVolatility": 0.3532056567135187,
+        "sharpe": 0.7666000883538114,
+        "sortino": 1.1117744787703794,
+        "maxDd": -0.3815846420370027,
+        "calmar": 0.6038162813305982,
+        "ulcerIndex": 0.1976039942099811,
+        "exposure": 0.5691679936305732,
+        "timeInCash": 0.3996815286624204,
+        "actionDaysPerYear": 9.730891719745223
+      },
+      "actionCapPassed": true,
+      "notes": "Mechanical stop 13.00%; not optimized."
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "VS13_FIXED",
+      "metrics": {
+        "cagr": 0.13902788657752763,
+        "totalReturn": 2.6605709426957294,
+        "annualizedVolatility": 0.2497207908609217,
+        "sharpe": 0.647561108324144,
+        "sortino": 0.9343719637112654,
+        "maxDd": -0.2834119976338346,
+        "calmar": 0.49055046271241565,
+        "ulcerIndex": 0.13317753915072697,
+        "exposure": 0.5999203821656051,
+        "timeInCash": 0.3730095541401274,
+        "actionDaysPerYear": 7.724522292993631
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "SIMPLE_200DMA",
+      "metrics": {
+        "cagr": 0.27354816400808746,
+        "totalReturn": 10.138325863293284,
+        "annualizedVolatility": 0.33094888573366565,
+        "sharpe": 0.8978935383478783,
+        "sortino": 1.3638440243920793,
+        "maxDd": -0.4254447154244174,
+        "calmar": 0.6429699420174954,
+        "ulcerIndex": 0.15655669617094456,
+        "exposure": 0.7563694267515924,
+        "timeInCash": 0.24363057324840764,
+        "actionDaysPerYear": 3.511146496815287
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "VS13_VOL30",
+      "metrics": {
+        "cagr": 0.0975273156386196,
+        "totalReturn": 1.5285430525240455,
+        "annualizedVolatility": 0.19976105701885818,
+        "sharpe": 0.5666758446346339,
+        "sortino": 0.8072397068752325,
+        "maxDd": -0.24342567489944567,
+        "calmar": 0.4006451483760134,
+        "ulcerIndex": 0.12405046377905057,
+        "exposure": 0.4707404458598726,
+        "timeInCash": 0.3730095541401274,
+        "actionDaysPerYear": 8.527070063694268
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "QLD",
+      "underlying": "Nasdaq-100",
+      "leverage": "2x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "metrics": {
+        "cagr": 0.172508850557479,
+        "totalReturn": 3.88615380442831,
+        "annualizedVolatility": 0.23595978850824909,
+        "sharpe": 0.7937528913440203,
+        "sortino": 1.1564058580556267,
+        "maxDd": -0.27054677655079096,
+        "calmar": 0.6376304044601808,
+        "ulcerIndex": 0.132614404490439,
+        "exposure": 0.5683718152866242,
+        "timeInCash": 0.4004777070063694,
+        "actionDaysPerYear": 9.730891719745223
+      },
+      "actionCapPassed": true,
+      "notes": "Mechanical stop 8.67%; not optimized."
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "VS13_FIXED",
+      "metrics": {
+        "cagr": 0.22196879568102856,
+        "totalReturn": 6.37627917514384,
+        "annualizedVolatility": 0.2813591267735288,
+        "sharpe": 0.8548230035358598,
+        "sortino": 1.2682482118104836,
+        "maxDd": -0.37049650360533026,
+        "calmar": 0.5991117150122416,
+        "ulcerIndex": 0.15531298081157824,
+        "exposure": 0.6450039808917197,
+        "timeInCash": 0.32404458598726116,
+        "actionDaysPerYear": 7.423566878980892
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "SIMPLE_200DMA",
+      "metrics": {
+        "cagr": 0.1718249239325047,
+        "totalReturn": 3.8578174521495,
+        "annualizedVolatility": 0.35065231175691364,
+        "sharpe": 0.630270769563309,
+        "sortino": 0.920939277158345,
+        "maxDd": -0.559003868696849,
+        "calmar": 0.30737698530255847,
+        "ulcerIndex": 0.25478582727811167,
+        "exposure": 0.7464171974522293,
+        "timeInCash": 0.2535828025477707,
+        "actionDaysPerYear": 5.9187898089171975
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "VS13_VOL30",
+      "metrics": {
+        "cagr": 0.18797671133516802,
+        "totalReturn": 4.568066519073883,
+        "annualizedVolatility": 0.2572298753051075,
+        "sharpe": 0.7998379419610737,
+        "sortino": 1.1716005069409539,
+        "maxDd": -0.31387213941836123,
+        "calmar": 0.5988958168874404,
+        "ulcerIndex": 0.14003977520128225,
+        "exposure": 0.5809116242038217,
+        "timeInCash": 0.32404458598726116,
+        "actionDaysPerYear": 8.627388535031846
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "UPRO",
+      "underlying": "S&P 500",
+      "leverage": "3x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "metrics": {
+        "cagr": 0.22196879568102856,
+        "totalReturn": 6.37627917514384,
+        "annualizedVolatility": 0.2813591267735288,
+        "sharpe": 0.8548230035358598,
+        "sortino": 1.2682482118104836,
+        "maxDd": -0.37049650360533026,
+        "calmar": 0.5991117150122416,
+        "ulcerIndex": 0.15531298081157824,
+        "exposure": 0.6450039808917197,
+        "timeInCash": 0.32404458598726116,
+        "actionDaysPerYear": 7.423566878980892
+      },
+      "actionCapPassed": true,
+      "notes": "Mechanical stop 13.00%; not optimized."
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "VS13_FIXED",
+      "metrics": {
+        "cagr": 0.13580406936253597,
+        "totalReturn": 2.5585947957155772,
+        "annualizedVolatility": 0.20348842796203306,
+        "sharpe": 0.728395820990849,
+        "sortino": 1.0712643305787104,
+        "maxDd": -0.2870487233238366,
+        "calmar": 0.4731045928022728,
+        "ulcerIndex": 0.1288157499597588,
+        "exposure": 0.6830214968152867,
+        "timeInCash": 0.28861464968152867,
+        "actionDaysPerYear": 5.11624203821656
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "SIMPLE_200DMA",
+      "metrics": {
+        "cagr": 0.1312415093542385,
+        "totalReturn": 2.4186383213775393,
+        "annualizedVolatility": 0.2337927176113765,
+        "sharpe": 0.645565719211618,
+        "sortino": 0.943871483675153,
+        "maxDd": -0.4164397720337174,
+        "calmar": 0.3151512371484355,
+        "ulcerIndex": 0.1771216151491437,
+        "exposure": 0.7464171974522293,
+        "timeInCash": 0.2535828025477707,
+        "actionDaysPerYear": 5.9187898089171975
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "VS13_VOL30",
+      "metrics": {
+        "cagr": 0.13392047488967274,
+        "totalReturn": 2.5002026731711195,
+        "annualizedVolatility": 0.19121619163935932,
+        "sharpe": 0.7536836146200094,
+        "sortino": 1.108287576749306,
+        "maxDd": -0.23718488183284436,
+        "calmar": 0.5646248355072351,
+        "ulcerIndex": 0.11774786761572406,
+        "exposure": 0.63953025477707,
+        "timeInCash": 0.28861464968152867,
+        "actionDaysPerYear": 5.718152866242038
+      },
+      "actionCapPassed": true,
+      "notes": "Pre-registered common rule; no ticker-specific tuning."
+    },
+    {
+      "ticker": "SSO",
+      "underlying": "S&P 500",
+      "leverage": "2x daily",
+      "family": "VS13_LEVERAGE_SCALED_STOP",
+      "metrics": {
+        "cagr": 0.15633417186740628,
+        "totalReturn": 3.254327844776453,
+        "annualizedVolatility": 0.18773714826215465,
+        "sharpe": 0.8683783256764918,
+        "sortino": 1.2881168959240263,
+        "maxDd": -0.26095002913502896,
+        "calmar": 0.5990962039192221,
+        "ulcerIndex": 0.1035498771808644,
+        "exposure": 0.6446058917197452,
+        "timeInCash": 0.3244426751592357,
+        "actionDaysPerYear": 7.423566878980892
+      },
+      "actionCapPassed": true,
+      "notes": "Mechanical stop 8.67%; not optimized."
+    }
+  ],
+  "pairSummary": [
+    {
+      "underlying": "Nasdaq-100",
+      "twoX": "QLD",
+      "threeX": "TQQQ",
+      "families": [
+        {
+          "family": "VS13_FIXED",
+          "twoXCagr": 0.13902788657752763,
+          "threeXCagr": 0.23040701956765042,
+          "twoXMaxDd": -0.2834119976338346,
+          "threeXMaxDd": -0.3815846420370027,
+          "twoXCalmar": 0.49055046271241565,
+          "threeXCalmar": 0.6038162813305982,
+          "twoXSortino": 0.9343719637112654,
+          "threeXSortino": 1.1117744787703794,
+          "twoXWinsRiskAdjusted": false
+        },
+        {
+          "family": "SIMPLE_200DMA",
+          "twoXCagr": 0.27354816400808746,
+          "threeXCagr": 0.3629585469324019,
+          "twoXMaxDd": -0.4254447154244174,
+          "threeXMaxDd": -0.5778140864442047,
+          "twoXCalmar": 0.6429699420174954,
+          "threeXCalmar": 0.6281580104182007,
+          "twoXSortino": 1.3638440243920793,
+          "threeXSortino": 1.3340595426991673,
+          "twoXWinsRiskAdjusted": true
+        },
+        {
+          "family": "VS13_VOL30",
+          "twoXCagr": 0.0975273156386196,
+          "threeXCagr": 0.19097905023302442,
+          "twoXMaxDd": -0.24342567489944567,
+          "threeXMaxDd": -0.3347873205948446,
+          "twoXCalmar": 0.4006451483760134,
+          "threeXCalmar": 0.5704488745084371,
+          "twoXSortino": 0.8072397068752325,
+          "threeXSortino": 1.126990412646101,
+          "twoXWinsRiskAdjusted": false
+        },
+        {
+          "family": "VS13_LEVERAGE_SCALED_STOP",
+          "twoXCagr": 0.172508850557479,
+          "threeXCagr": 0.23040701956765042,
+          "twoXMaxDd": -0.27054677655079096,
+          "threeXMaxDd": -0.3815846420370027,
+          "twoXCalmar": 0.6376304044601808,
+          "threeXCalmar": 0.6038162813305982,
+          "twoXSortino": 1.1564058580556267,
+          "threeXSortino": 1.1117744787703794,
+          "twoXWinsRiskAdjusted": true
+        }
+      ],
+      "twoXRiskAdjustedWins": 2,
+      "totalFamilies": 4
+    },
+    {
+      "underlying": "S&P 500",
+      "twoX": "SSO",
+      "threeX": "UPRO",
+      "families": [
+        {
+          "family": "VS13_FIXED",
+          "twoXCagr": 0.13580406936253597,
+          "threeXCagr": 0.22196879568102856,
+          "twoXMaxDd": -0.2870487233238366,
+          "threeXMaxDd": -0.37049650360533026,
+          "twoXCalmar": 0.4731045928022728,
+          "threeXCalmar": 0.5991117150122416,
+          "twoXSortino": 1.0712643305787104,
+          "threeXSortino": 1.2682482118104836,
+          "twoXWinsRiskAdjusted": false
+        },
+        {
+          "family": "SIMPLE_200DMA",
+          "twoXCagr": 0.1312415093542385,
+          "threeXCagr": 0.1718249239325047,
+          "twoXMaxDd": -0.4164397720337174,
+          "threeXMaxDd": -0.559003868696849,
+          "twoXCalmar": 0.3151512371484355,
+          "threeXCalmar": 0.30737698530255847,
+          "twoXSortino": 0.943871483675153,
+          "threeXSortino": 0.920939277158345,
+          "twoXWinsRiskAdjusted": true
+        },
+        {
+          "family": "VS13_VOL30",
+          "twoXCagr": 0.13392047488967274,
+          "threeXCagr": 0.18797671133516802,
+          "twoXMaxDd": -0.23718488183284436,
+          "threeXMaxDd": -0.31387213941836123,
+          "twoXCalmar": 0.5646248355072351,
+          "threeXCalmar": 0.5988958168874404,
+          "twoXSortino": 1.108287576749306,
+          "threeXSortino": 1.1716005069409539,
+          "twoXWinsRiskAdjusted": false
+        },
+        {
+          "family": "VS13_LEVERAGE_SCALED_STOP",
+          "twoXCagr": 0.15633417186740628,
+          "threeXCagr": 0.22196879568102856,
+          "twoXMaxDd": -0.26095002913502896,
+          "threeXMaxDd": -0.37049650360533026,
+          "twoXCalmar": 0.5990962039192221,
+          "threeXCalmar": 0.5991117150122416,
+          "twoXSortino": 1.2881168959240263,
+          "threeXSortino": 1.2682482118104836,
+          "twoXWinsRiskAdjusted": false
+        }
+      ],
+      "twoXRiskAdjustedWins": 1,
+      "totalFamilies": 4
+    }
+  ],
+  "limitations": [
+    "Phase 1.5 was motivated after observing Phase 1, so it is not untouched confirmatory evidence.",
+    "The common sample is still historically dominated by the post-2016 U.S. equity regime and cannot prove future leverage superiority.",
+    "SIMPLE_200DMA is deliberately simple and binary; it tests strategy-family dependence rather than seeking optimal performance.",
+    "VS13_VOL30 and leverage-scaled stop remain related to VS13; only SIMPLE_200DMA is structurally independent of the score framework.",
+    "Price returns rather than dividend-reinvested total returns are used, consistent with the current project data model."
+  ]
+}
