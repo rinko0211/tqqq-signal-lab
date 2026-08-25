@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { crossTickerBundle } from "../lib/cross-ticker.ts";
+import { phase1ScreeningBundle } from "../lib/phase1-screening.ts";
 import { fetchOfficialData } from "../lib/official-data.ts";
 
 const pagesRoot = new URL("../github-pages/public/data/", import.meta.url);
@@ -9,7 +9,7 @@ const roots = process.env.GITHUB_ACTIONS === "true"
 await Promise.all(roots.map((x) => mkdir(x, { recursive: true })));
 
 const payload = await fetchOfficialData(true);
-const screening = crossTickerBundle(payload);
+const screening = phase1ScreeningBundle(payload);
 
 await Promise.all(
   roots.map((x) =>
@@ -21,5 +21,5 @@ await Promise.all(
 );
 
 console.log(
-  `Phase 1 screening generated: ${screening.results.length} candidates, common start ${screening.commonStart || "n/a"}`,
+  `Phase 1 screening generated: ${screening.results.length} candidates, common period ${screening.commonPeriod.start} to ${screening.commonPeriod.end || "n/a"}`,
 );
