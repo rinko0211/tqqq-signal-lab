@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "phase": "PHASE_3_BOUNDED_NATIVE_RESEARCH",
   "group": "NASDAQ",
-  "generatedAt": "2026-08-25T15:06:19.352Z",
+  "generatedAt": "2026-08-25T15:44:58.248Z",
   "oosStart": "2020-01-02",
   "policy": "Underlying-level Native families only; leverage-specific difference limited to mechanical stop scaling; <=40 Action Days/year required both overall and in each yearly slice; max one Native candidate per ticker; NO NATIVE CANDIDATE is valid; no Forward or Production promotion.",
   "families": [
