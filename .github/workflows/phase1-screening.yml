@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/generate-phase1-screening.ts"
+      - "lib/phase1-screening.ts"
       - "lib/cross-ticker.ts"
       - "lib/official-data.ts"
       - "tests/leverage-screening.test.ts"
@@ -14,11 +15,11 @@ permissions:
   contents: write
 concurrency:
   group: phase1-leverage-screening
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   screen:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,7 +29,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Generate Phase 1 only
+      - name: Generate bounded Phase 1 only
         run: npm run generate:phase1
       - name: Run core calculation tests
         run: npm run test:core
