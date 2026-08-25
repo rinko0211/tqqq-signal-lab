@@ -12,7 +12,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: phase2-robustness-v1
+  group: phase2-robustness-v2
   cancel-in-progress: true
 jobs:
   validate:
