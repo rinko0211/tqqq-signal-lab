@@ -1,9 +1,10 @@
 import { metricSet, nextExecutionDate, signals, STRATEGIES, type Bar, type Dataset, type Metrics, type Signal, type StrategyConfig } from "./engine.ts";
+import { earliestLegalExecutionDate } from "./execution-integrity.ts";
 
 export const PHASE5_FORWARD_SCHEMA = 1;
 export const PHASE5_FORWARD_START = "2026-08-25";
 export const PHASE5_INITIAL_CAPITAL = 1_000_000;
-export const PHASE5_BUILD = "phase5-forward-1.0.0";
+export const PHASE5_BUILD = "phase5-forward-1.0.1";
 
 export type Phase5Id = "UPRO_SPBT" | "SSO_SPBT_SCALED" | "QLD_VS13_SCALED";
 export type Phase5Ticker = "UPRO" | "SSO" | "QLD";
@@ -127,7 +128,7 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
     const record:Phase5Record={
       key:keyOf(freeze.version,day.date),marketDataDate:day.date,recordedAt:generatedAt,recordMode:isLatest?"LIVE":"BACKFILLED_OBSERVATION",strategyId:freeze.id,ticker:freeze.ticker,
       strategyName:freeze.name,strategyVersion:freeze.version,score:sig.score,components:sig.components,regime:sig.regime,targetExposure,previousExposure,
-      signal:targetExposure===actualExposure?"HOLD":targetExposure>actualExposure?"INCREASE":"REDUCE",tradeReason:sig.reason,intendedExecutionDate:nextExecutionDate(day.date),execution,
+      signal:targetExposure===actualExposure?"HOLD":targetExposure>actualExposure?"INCREASE":"REDUCE",tradeReason:sig.reason,intendedExecutionDate:isLatest?earliestLegalExecutionDate(day.date,generatedAt):nextExecutionDate(day.date),execution,
       assetClose:asset.close,position:actualExposure,quantity:asset.close?equity*actualExposure/asset.close:0,cash:equity*(1-actualExposure),equity,
       dailyReturn:previous?equity/previous.equity-1:0,currentDrawdown,cumulativeCosts,dataSource:source,dataStatus:isLatest?"VALID":"BACKFILLED_NO_SIGNAL",buildVersion:PHASE5_BUILD,
     };

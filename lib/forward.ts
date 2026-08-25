@@ -8,11 +8,12 @@ import {
   type Signal,
   type StrategyConfig,
 } from "./engine.ts";
+import { earliestLegalExecutionDate } from "./execution-integrity.ts";
 
 export const FORWARD_SCHEMA_VERSION = 1;
 export const FORWARD_START_DATE = "2026-08-21";
 export const FORWARD_INITIAL_CAPITAL = 1_000_000;
-export const FORWARD_BUILD_VERSION = "forward-1.0.0";
+export const FORWARD_BUILD_VERSION = "forward-1.0.1";
 
 export type ForwardCategory = "Growth" | "Balanced" | "Defensive" | "Benchmark";
 export type EvidenceLevel = "Insufficient" | "Low" | "Moderate" | "Strong";
@@ -218,7 +219,7 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
       recordMode: isLatest ? "LIVE" : "BACKFILLED_OBSERVATION", strategyId: freeze.id, strategyName: freeze.name,
       strategyVersion: freeze.version, score: signal.score, components: signal.components, regime: signal.regime,
       targetExposure, previousExposure, signal: targetExposure === previousExposure ? "HOLD" : targetExposure > previousExposure ? "INCREASE" : "REDUCE",
-      tradeReason: signal.reason, intendedExecutionDate: nextExecutionDate(day.date), execution, assetClose: assetBar.close,
+      tradeReason: signal.reason, intendedExecutionDate: isLatest ? earliestLegalExecutionDate(day.date, generatedAt) : nextExecutionDate(day.date), execution, assetClose: assetBar.close,
       position: actualExposure, quantity: assetBar.close ? equity * actualExposure / assetBar.close : 0, cash: equity * (1-actualExposure),
       equity, dailyReturn: previous ? equity / previous.equity - 1 : 0, currentDrawdown, cumulativeCosts,
       dataSource: source, dataStatus: isLatest ? "VALID" : "BACKFILLED_NO_SIGNAL", buildVersion: FORWARD_BUILD_VERSION,
