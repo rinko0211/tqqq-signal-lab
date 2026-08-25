@@ -1,38 +1,38 @@
 {
-  "generatedAt": "2026-08-24T23:08:14.385Z",
-  "dataDate": "2026-08-21",
+  "generatedAt": "2026-08-25T04:24:12.208Z",
+  "dataDate": "2026-08-24",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
   "assetTicker": "TQQQ",
-  "assetClose": 71.17,
-  "tqqqClose": 71.17,
+  "assetClose": 69.01,
+  "tqqqClose": 69.01,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
-  "state": "not_updated",
+  "state": "latest",
   "signal": {
-    "date": "2026-08-21",
-    "score": 81,
+    "date": "2026-08-24",
+    "score": 78,
     "components": {
       "trend": 100,
-      "momentum": 59.71546934262644,
-      "volatility": 69.43928290331915,
-      "market": 92.47738043946575
+      "momentum": 47.029015803997005,
+      "volatility": 68.2529739318403,
+      "market": 91.91298750067057
     },
     "regime": "弱い上昇",
     "target": 0.75,
     "previousTarget": 0.75,
-    "reason": "弱い上昇・総合81点のため75%を維持",
+    "reason": "弱い上昇・総合78点のため75%を維持",
     "nextChange": "総合48点未満、危機判定、または13%トレーリングストップ",
     "indicators": {
-      "sma50": 713.4416000000002,
-      "sma200": 652.7799000000001,
-      "rsi": 58.03389015743299,
-      "momentum63": -0.0014975297756503192,
-      "realizedVol": 23.021206343060456,
-      "atrPct": 1.7130183776253887,
-      "vix": 15.13
+      "sma50": 713.2256000000001,
+      "sma200": 653.2152500000002,
+      "rsi": 36.8294515401954,
+      "momentum63": -0.01563675892633154,
+      "realizedVol": 23.04066649837779,
+      "atrPct": 1.6691626421566335,
+      "vix": 15.85
     },
-    "executionDate": "2026-08-24"
+    "executionDate": "2026-08-25"
   },
   "suggestion": "75%を維持。売買なし。",
   "validation": {
@@ -95,14 +95,14 @@
       "ordersPerYear": 8.012718600953894
     },
     "holdout": {
-      "cagr": 0.194570713417755,
-      "totalReturn": 0.33543414364951984,
-      "annualizedVolatility": 0.41562088616227094,
-      "sharpe": 0.6384014702257231,
-      "sortino": 0.9453889624278493,
-      "downsideDeviation": 0.2806601254377999,
-      "maxDd": -0.3572266010023366,
-      "calmar": 0.5446702817534081,
+      "cagr": 0.171702013493642,
+      "totalReturn": 0.29490389564779207,
+      "annualizedVolatility": 0.41584136310031944,
+      "sharpe": 0.5917610663573604,
+      "sortino": 0.8761472442718327,
+      "downsideDeviation": 0.28086458077975207,
+      "maxDd": -0.3706329133821119,
+      "calmar": 0.463267042116743,
       "winRate": 0,
       "profitFactor": 0,
       "avgWin": 0,
@@ -110,9 +110,9 @@
       "avgHold": 0,
       "medianHold": 0,
       "expectancy": 0,
-      "ulcerIndex": 0.15680887339317215,
-      "exposure": 0.7024390243902439,
-      "timeInCash": 0.2975609756097561,
+      "ulcerIndex": 0.15768140670309153,
+      "exposure": 0.7031630170316302,
+      "timeInCash": 0.29683698296836986,
       "recoveryDays": null,
       "maxLossStreak": 0,
       "entries": 8,
@@ -120,12 +120,12 @@
       "roundTrips": 0,
       "rebalanceOrders": 0,
       "changeDays": 15,
-      "annualTurnover": 9.21951219512195,
-      "ordersPerYear": 9.21951219512195
+      "annualTurnover": 9.197080291970803,
+      "ordersPerYear": 9.197080291970803
     }
   },
   "warnings": [
-    "VIX: 他銘柄と一致しない2207営業日を除外しました",
+    "VIX: 他銘柄と一致しない2209営業日を除外しました",
     "TQQQ・QQQ・SPYはNasdaq公式HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
     "VIXはCboe公式VIX Historyを使用しています。",
     "外部データ取得時刻と各銘柄の最終日をデータ管理画面で確認してください。"
