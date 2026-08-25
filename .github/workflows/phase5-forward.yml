@@ -10,18 +10,26 @@ on:
       - "lib/official-data.ts"
       - "scripts/generate-phase5-forward.ts"
       - "tests/phase5-forward.test.ts"
+      - "tests/phase5-paper.test.ts"
       - "research/phase-5-forward-gate-2026-08-26.md"
       - ".github/workflows/phase5-forward.yml"
       - "package.json"
 permissions:
   contents: write
+  pages: write
+  id-token: write
 concurrency:
-  group: phase5-forward-gate
+  # Serialize with the existing Daily Signal Pages deployment so one workflow
+  # cannot publish an older site over a newer one.
+  group: daily-signal-pages
   cancel-in-progress: false
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,8 +39,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Run Phase 5 integrity tests
-        run: node --experimental-strip-types --test tests/phase5-forward.test.ts
+      - name: Run Phase 5 integrity and paper tests
+        id: integrity
+        run: node --experimental-strip-types --test tests/phase5-forward.test.ts tests/phase5-paper.test.ts
       - name: Update true Forward ledger
         id: generate
         continue-on-error: true
@@ -48,6 +57,26 @@ jobs:
             git pull --rebase origin main
             git push
           fi
-      - name: Enforce generation success
+      - name: Refresh latest main before Pages build
         if: always()
-        run: test "${{ steps.generate.outcome }}" = "success"
+        run: git pull --rebase origin main
+      - name: Build integrated PWA
+        id: pages_build
+        if: always()
+        continue-on-error: true
+        run: npm run build:pages
+      - uses: actions/configure-pages@v5
+        if: always() && steps.pages_build.outcome == 'success'
+      - uses: actions/upload-pages-artifact@v3
+        if: always() && steps.pages_build.outcome == 'success'
+        with:
+          path: dist-pages
+      - name: Deploy integrated Pages
+        id: deployment
+        if: always() && steps.pages_build.outcome == 'success'
+        uses: actions/deploy-pages@v4
+      - name: Enforce Phase 5 generation and build success
+        if: always()
+        run: |
+          test "${{ steps.generate.outcome }}" = "success"
+          test "${{ steps.pages_build.outcome }}" = "success"
