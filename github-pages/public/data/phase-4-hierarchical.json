@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "phase": "PHASE_4_HIERARCHICAL_WINNER_CASH",
-  "generatedAt": "2026-08-25T15:03:03.228Z",
+  "generatedAt": "2026-08-25T15:37:09.113Z",
   "oosStart": "2020-01-02",
   "allocator": {
     "vix3x": 22,
