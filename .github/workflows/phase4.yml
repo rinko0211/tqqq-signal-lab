@@ -1,0 +1,44 @@
+name: Phase 4 Hierarchical Allocation
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/phase4.ts"
+      - "scripts/generate-phase4.ts"
+      - "tests/phase4.test.ts"
+      - "research/phase-4-charter-2026-08-25.md"
+      - ".github/workflows/phase4.yml"
+      - "package.json"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: phase4-hierarchical
+  cancel-in-progress: true
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run bounded Phase 4 test
+        run: node --experimental-strip-types --test tests/phase4.test.ts
+      - name: Generate Phase 4 result
+        run: npm run generate:phase4
+      - name: Save Phase 4 result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add github-pages/public/data/phase-4-hierarchical.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Save Phase 4 hierarchical allocation result"
+            git pull --rebase origin main
+            git push
+          fi
