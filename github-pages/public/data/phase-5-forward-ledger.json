@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-08-25T15:36:16.466Z",
+  "updatedAt": "2026-08-25T15:36:16.466Z",
+  "appendOnly": true,
+  "freezes": [
+    {
+      "id": "UPRO_SPBT",
+      "ticker": "UPRO",
+      "proxy": "SPY",
+      "name": "UPRO + S&P Broad Trend",
+      "version": "UPRO-SPBT-v1.0",
+      "role": "PRIMARY_CHALLENGER",
+      "frozenAt": "2026-08-25T15:15:00.000Z",
+      "startDate": "2026-08-25",
+      "initialCapital": 1000000,
+      "config": {
+        "key": "defensive",
+        "name": "Volatility Shield",
+        "weights": {
+          "trend": 0.36,
+          "momentum": 0.16,
+          "volatility": 0.28,
+          "market": 0.2
+        },
+        "entry": 70,
+        "exit": 48,
+        "strong": 82,
+        "confirmDays": 3,
+        "minHold": 8,
+        "cooldown": 8,
+        "trailStop": 0.13,
+        "mode": "five",
+        "ablation": "none"
+      },
+      "assumptions": {
+        "signal": "market close t",
+        "execution": "next available US market open t+1",
+        "commissionBps": 3,
+        "slippageBps": 5,
+        "currency": "JPY-normalized; FX return excluded"
+      }
+    },
+    {
+      "id": "SSO_SPBT_SCALED",
+      "ticker": "SSO",
+      "proxy": "SPY",
+      "name": "SSO + S&P Broad Trend + scaled stop",
+      "version": "SSO-SPBT-Scaled-v1.0",
+      "role": "S&P_LEVERAGE_CONTROL",
+      "frozenAt": "2026-08-25T15:15:00.000Z",
+      "startDate": "2026-08-25",
+      "initialCapital": 1000000,
+      "config": {
+        "key": "defensive",
+        "name": "Volatility Shield",
+        "weights": {
+          "trend": 0.36,
+          "momentum": 0.16,
+          "volatility": 0.28,
+          "market": 0.2
+        },
+        "entry": 70,
+        "exit": 48,
+        "strong": 82,
+        "confirmDays": 3,
+        "minHold": 8,
+        "cooldown": 8,
+        "trailStop": 0.08666666666666667,
+        "mode": "five",
+        "ablation": "none"
+      },
+      "assumptions": {
+        "signal": "market close t",
+        "execution": "next available US market open t+1",
+        "commissionBps": 3,
+        "slippageBps": 5,
+        "currency": "JPY-normalized; FX return excluded"
+      }
+    },
+    {
+      "id": "QLD_VS13_SCALED",
+      "ticker": "QLD",
+      "proxy": "QQQ",
+      "name": "QLD + Common VS13 + scaled stop",
+      "version": "QLD-VS13-Scaled-v1.0",
+      "role": "NASDAQ_BALANCED_CONTROL",
+      "frozenAt": "2026-08-25T15:15:00.000Z",
+      "startDate": "2026-08-25",
+      "initialCapital": 1000000,
+      "config": {
+        "key": "defensive",
+        "name": "Volatility Shield",
+        "weights": {
+          "trend": 0.27,
+          "momentum": 0.16,
+          "volatility": 0.37,
+          "market": 0.2
+        },
+        "entry": 70,
+        "exit": 48,
+        "strong": 82,
+        "confirmDays": 2,
+        "minHold": 6,
+        "cooldown": 8,
+        "trailStop": 0.08666666666666667,
+        "mode": "five",
+        "ablation": "none"
+      },
+      "assumptions": {
+        "signal": "market close t",
+        "execution": "next available US market open t+1",
+        "commissionBps": 3,
+        "slippageBps": 5,
+        "currency": "JPY-normalized; FX return excluded"
+      }
+    }
+  ],
+  "records": [],
+  "reviewSchedule": {
+    "interim": "2027-02-25",
+    "formal": "2027-08-25",
+    "stronger": "2028-08-25"
+  },
+  "promotionPolicy": "Human approval only. No promotion before 12 months. Require true Forward observations, >=6 executed non-zero-turnover trades/actions where naturally generated, multiple regimes, missing/invalid <=1%, <=40 Action Days/year, no integrity/execution defect, and no unexplained drawdown materially outside historical stress expectations. Phase 6 uses Pareto evidence; Forward robustness outranks historical CAGR."
+}
