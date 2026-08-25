@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "phase": "PHASE_3_BOUNDED_NATIVE_RESEARCH",
   "group": "SP500",
-  "generatedAt": "2026-08-25T14:12:18.300Z",
+  "generatedAt": "2026-08-25T14:29:10.196Z",
   "oosStart": "2020-01-02",
-  "policy": "Underlying-level Native families only; leverage-specific difference limited to mechanical stop scaling; max one Native candidate per ticker; NO NATIVE CANDIDATE is valid; no Forward or Production promotion.",
+  "policy": "Underlying-level Native families only; leverage-specific difference limited to mechanical stop scaling; <=40 Action Days/year required both overall and in each yearly slice; max one Native candidate per ticker; NO NATIVE CANDIDATE is valid; no Forward or Production promotion.",
   "families": [
     {
       "id": "COMMON",
@@ -129,7 +129,7 @@
             "ulcerIndex": 0.11503557289621082,
             "exposure": 0.508893280632411,
             "timeInCash": 0.3715415019762846,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.952569169960475
           }
         },
         {
@@ -145,7 +145,7 @@
             "ulcerIndex": 0.047768457219469734,
             "exposure": 0.9672619047619048,
             "timeInCash": 0.031746031746031744,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3
           }
         },
         {
@@ -161,7 +161,7 @@
             "ulcerIndex": 0.12474723154438429,
             "exposure": 0.05079681274900399,
             "timeInCash": 0.9282868525896414,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -177,7 +177,7 @@
             "ulcerIndex": 0.16446967196883822,
             "exposure": 0.746,
             "timeInCash": 0.2,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 16.128
           }
         },
         {
@@ -193,7 +193,7 @@
             "ulcerIndex": 0.055129122400933775,
             "exposure": 0.9275793650793651,
             "timeInCash": 0.06349206349206349,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -209,7 +209,7 @@
             "ulcerIndex": 0.20036574278928113,
             "exposure": 0.696,
             "timeInCash": 0.276,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.088
           }
         },
         {
@@ -225,10 +225,11 @@
             "ulcerIndex": 0.08033150938238344,
             "exposure": 0.8090062111801242,
             "timeInCash": 0.16770186335403728,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 9.391304347826088
           }
         }
       ],
+      "maxYearActionDays": 16.128,
       "regimes": [
         {
           "id": "COVID",
@@ -245,7 +246,7 @@
             "ulcerIndex": 0.12259232577636069,
             "exposure": 0.07526881720430108,
             "timeInCash": 0.8279569892473119,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 5.419354838709677
           }
         },
         {
@@ -263,7 +264,7 @@
             "ulcerIndex": 0.12474723154438429,
             "exposure": 0.05079681274900399,
             "timeInCash": 0.9282868525896414,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -281,7 +282,7 @@
             "ulcerIndex": 0.1260037446716347,
             "exposure": 0.8371513944223108,
             "timeInCash": 0.13147410358565736,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.043824701195218
           }
         }
       ],
@@ -388,7 +389,7 @@
             "ulcerIndex": 0.11754412131728928,
             "exposure": 0.525691699604743,
             "timeInCash": 0.43478260869565216,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.956521739130435
           }
         },
         {
@@ -404,7 +405,7 @@
             "ulcerIndex": 0.047768457219469665,
             "exposure": 0.9672619047619048,
             "timeInCash": 0.031746031746031744,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3
           }
         },
         {
@@ -420,7 +421,7 @@
             "ulcerIndex": 0.15856322261395958,
             "exposure": 0.06573705179282868,
             "timeInCash": 0.9123505976095617,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -436,7 +437,7 @@
             "ulcerIndex": 0.1573715430219455,
             "exposure": 0.747,
             "timeInCash": 0.192,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 16.128
           }
         },
         {
@@ -452,7 +453,7 @@
             "ulcerIndex": 0.054939764227304094,
             "exposure": 0.9295634920634921,
             "timeInCash": 0.06349206349206349,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -468,7 +469,7 @@
             "ulcerIndex": 0.1444059662694419,
             "exposure": 0.679,
             "timeInCash": 0.312,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 8.064
           }
         },
         {
@@ -484,10 +485,11 @@
             "ulcerIndex": 0.07801509506751432,
             "exposure": 0.8214285714285714,
             "timeInCash": 0.17391304347826086,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 7.82608695652174
           }
         }
       ],
+      "maxYearActionDays": 16.128,
       "regimes": [
         {
           "id": "COVID",
@@ -504,7 +506,7 @@
             "ulcerIndex": 0.12565036082527306,
             "exposure": 0.043010752688172046,
             "timeInCash": 0.956989247311828,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 2.7096774193548385
           }
         },
         {
@@ -522,7 +524,7 @@
             "ulcerIndex": 0.15856322261395958,
             "exposure": 0.06573705179282868,
             "timeInCash": 0.9123505976095617,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -540,7 +542,7 @@
             "ulcerIndex": 0.12136225297230131,
             "exposure": 0.8386454183266933,
             "timeInCash": 0.12749003984063745,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.043824701195218
           }
         }
       ],
@@ -647,7 +649,7 @@
             "ulcerIndex": 0.11228739820968593,
             "exposure": 0.5128458498023716,
             "timeInCash": 0.3715415019762846,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.952569169960475
           }
         },
         {
@@ -663,7 +665,7 @@
             "ulcerIndex": 0.04776845721946978,
             "exposure": 0.9672619047619048,
             "timeInCash": 0.031746031746031744,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3
           }
         },
         {
@@ -679,7 +681,7 @@
             "ulcerIndex": 0.14161170299047393,
             "exposure": 0.05976095617529881,
             "timeInCash": 0.9243027888446215,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -695,7 +697,7 @@
             "ulcerIndex": 0.1644696719688384,
             "exposure": 0.746,
             "timeInCash": 0.2,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 16.128
           }
         },
         {
@@ -711,7 +713,7 @@
             "ulcerIndex": 0.055129122400933664,
             "exposure": 0.9275793650793651,
             "timeInCash": 0.06349206349206349,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -727,7 +729,7 @@
             "ulcerIndex": 0.19142666380321144,
             "exposure": 0.699,
             "timeInCash": 0.272,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.08
           }
         },
         {
@@ -743,10 +745,11 @@
             "ulcerIndex": 0.07871939299683786,
             "exposure": 0.8136645962732919,
             "timeInCash": 0.16770186335403728,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 9.391304347826088
           }
         }
       ],
+      "maxYearActionDays": 16.128,
       "regimes": [
         {
           "id": "COVID",
@@ -763,7 +766,7 @@
             "ulcerIndex": 0.12259232577636069,
             "exposure": 0.07526881720430108,
             "timeInCash": 0.8279569892473119,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 5.419354838709677
           }
         },
         {
@@ -781,7 +784,7 @@
             "ulcerIndex": 0.14161170299047393,
             "exposure": 0.05976095617529881,
             "timeInCash": 0.9243027888446215,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -799,7 +802,7 @@
             "ulcerIndex": 0.12600374467163483,
             "exposure": 0.8371513944223108,
             "timeInCash": 0.13147410358565736,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.043824701195218
           }
         }
       ],
@@ -906,7 +909,7 @@
             "ulcerIndex": 0.12654290977986118,
             "exposure": 0.4782608695652174,
             "timeInCash": 0.466403162055336,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.956521739130435
           }
         },
         {
@@ -922,7 +925,7 @@
             "ulcerIndex": 0.05133859643086593,
             "exposure": 0.9603174603174603,
             "timeInCash": 0.03968253968253968,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 2
           }
         },
         {
@@ -938,7 +941,7 @@
             "ulcerIndex": 0.12081716999489849,
             "exposure": 0.043824701195219126,
             "timeInCash": 0.9561752988047809,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 1.00398406374502
           }
         },
         {
@@ -954,7 +957,7 @@
             "ulcerIndex": 0.17257611878059606,
             "exposure": 0.724,
             "timeInCash": 0.224,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 14.112
           }
         },
         {
@@ -970,7 +973,7 @@
             "ulcerIndex": 0.05258784443572614,
             "exposure": 0.9156746031746031,
             "timeInCash": 0.07936507936507936,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -986,7 +989,7 @@
             "ulcerIndex": 0.1205425082372125,
             "exposure": 0.663,
             "timeInCash": 0.328,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 8.064
           }
         },
         {
@@ -1002,10 +1005,11 @@
             "ulcerIndex": 0.07538245705308749,
             "exposure": 0.7934782608695652,
             "timeInCash": 0.18633540372670807,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 9.391304347826088
           }
         }
       ],
+      "maxYearActionDays": 14.112,
       "regimes": [
         {
           "id": "COVID",
@@ -1022,7 +1026,7 @@
             "ulcerIndex": 0.12565036082527306,
             "exposure": 0.043010752688172046,
             "timeInCash": 0.956989247311828,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 2.7096774193548385
           }
         },
         {
@@ -1040,7 +1044,7 @@
             "ulcerIndex": 0.12081716999489849,
             "exposure": 0.043824701195219126,
             "timeInCash": 0.9561752988047809,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 1.00398406374502
           }
         },
         {
@@ -1058,7 +1062,7 @@
             "ulcerIndex": 0.13407826012855883,
             "exposure": 0.8202191235059761,
             "timeInCash": 0.15139442231075698,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.0398406374502
           }
         }
       ],
@@ -1165,7 +1169,7 @@
             "ulcerIndex": 0.07688688924659298,
             "exposure": 0.508893280632411,
             "timeInCash": 0.3715415019762846,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.952569169960475
           }
         },
         {
@@ -1181,7 +1185,7 @@
             "ulcerIndex": 0.03193452666469253,
             "exposure": 0.9672619047619048,
             "timeInCash": 0.031746031746031744,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3
           }
         },
         {
@@ -1197,7 +1201,7 @@
             "ulcerIndex": 0.08432936664512167,
             "exposure": 0.05079681274900399,
             "timeInCash": 0.9282868525896414,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -1213,7 +1217,7 @@
             "ulcerIndex": 0.11364595082995053,
             "exposure": 0.742,
             "timeInCash": 0.204,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 16.128
           }
         },
         {
@@ -1229,7 +1233,7 @@
             "ulcerIndex": 0.036767535885330986,
             "exposure": 0.9275793650793651,
             "timeInCash": 0.06349206349206349,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -1245,7 +1249,7 @@
             "ulcerIndex": 0.13720662930165792,
             "exposure": 0.696,
             "timeInCash": 0.276,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.088
           }
         },
         {
@@ -1261,10 +1265,11 @@
             "ulcerIndex": 0.05227391227497233,
             "exposure": 0.8090062111801242,
             "timeInCash": 0.16770186335403728,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 9.391304347826088
           }
         }
       ],
+      "maxYearActionDays": 16.128,
       "regimes": [
         {
           "id": "COVID",
@@ -1281,7 +1286,7 @@
             "ulcerIndex": 0.08216264258641391,
             "exposure": 0.07526881720430108,
             "timeInCash": 0.8279569892473119,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 5.419354838709677
           }
         },
         {
@@ -1299,7 +1304,7 @@
             "ulcerIndex": 0.08432936664512167,
             "exposure": 0.05079681274900399,
             "timeInCash": 0.9282868525896414,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -1317,7 +1322,7 @@
             "ulcerIndex": 0.08622929805816118,
             "exposure": 0.8351593625498008,
             "timeInCash": 0.13346613545816732,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.043824701195218
           }
         }
       ],
@@ -1424,7 +1429,7 @@
             "ulcerIndex": 0.07841529303965729,
             "exposure": 0.525691699604743,
             "timeInCash": 0.43478260869565216,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.956521739130435
           }
         },
         {
@@ -1440,7 +1445,7 @@
             "ulcerIndex": 0.03193452666469248,
             "exposure": 0.9672619047619048,
             "timeInCash": 0.031746031746031744,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3
           }
         },
         {
@@ -1456,7 +1461,7 @@
             "ulcerIndex": 0.10784404658382372,
             "exposure": 0.06573705179282868,
             "timeInCash": 0.9123505976095617,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -1472,7 +1477,7 @@
             "ulcerIndex": 0.10825019273678098,
             "exposure": 0.743,
             "timeInCash": 0.196,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 16.128
           }
         },
         {
@@ -1488,7 +1493,7 @@
             "ulcerIndex": 0.03664166096480766,
             "exposure": 0.9295634920634921,
             "timeInCash": 0.06349206349206349,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -1504,7 +1509,7 @@
             "ulcerIndex": 0.09772513091912051,
             "exposure": 0.679,
             "timeInCash": 0.312,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 8.064
           }
         },
         {
@@ -1520,10 +1525,11 @@
             "ulcerIndex": 0.050894160021807335,
             "exposure": 0.8214285714285714,
             "timeInCash": 0.17391304347826086,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 7.82608695652174
           }
         }
       ],
+      "maxYearActionDays": 16.128,
       "regimes": [
         {
           "id": "COVID",
@@ -1540,7 +1546,7 @@
             "ulcerIndex": 0.08423014950910444,
             "exposure": 0.043010752688172046,
             "timeInCash": 0.956989247311828,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 2.7096774193548385
           }
         },
         {
@@ -1558,7 +1564,7 @@
             "ulcerIndex": 0.10784404658382372,
             "exposure": 0.06573705179282868,
             "timeInCash": 0.9123505976095617,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -1576,7 +1582,7 @@
             "ulcerIndex": 0.08267157520831683,
             "exposure": 0.8366533864541833,
             "timeInCash": 0.1294820717131474,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.043824701195218
           }
         }
       ],
@@ -1683,7 +1689,7 @@
             "ulcerIndex": 0.07495180442779083,
             "exposure": 0.5128458498023716,
             "timeInCash": 0.3715415019762846,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.952569169960475
           }
         },
         {
@@ -1699,7 +1705,7 @@
             "ulcerIndex": 0.03193452666469262,
             "exposure": 0.9672619047619048,
             "timeInCash": 0.031746031746031744,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3
           }
         },
         {
@@ -1715,7 +1721,7 @@
             "ulcerIndex": 0.09601324265228148,
             "exposure": 0.05976095617529881,
             "timeInCash": 0.9243027888446215,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -1731,7 +1737,7 @@
             "ulcerIndex": 0.11364595082995071,
             "exposure": 0.742,
             "timeInCash": 0.204,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 16.128
           }
         },
         {
@@ -1747,7 +1753,7 @@
             "ulcerIndex": 0.03676753588533102,
             "exposure": 0.9275793650793651,
             "timeInCash": 0.06349206349206349,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -1763,7 +1769,7 @@
             "ulcerIndex": 0.13113945573925892,
             "exposure": 0.699,
             "timeInCash": 0.272,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.08
           }
         },
         {
@@ -1779,10 +1785,11 @@
             "ulcerIndex": 0.051290920445753015,
             "exposure": 0.8136645962732919,
             "timeInCash": 0.16770186335403728,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 9.391304347826088
           }
         }
       ],
+      "maxYearActionDays": 16.128,
       "regimes": [
         {
           "id": "COVID",
@@ -1799,7 +1806,7 @@
             "ulcerIndex": 0.08216264258641391,
             "exposure": 0.07526881720430108,
             "timeInCash": 0.8279569892473119,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 5.419354838709677
           }
         },
         {
@@ -1817,7 +1824,7 @@
             "ulcerIndex": 0.09601324265228148,
             "exposure": 0.05976095617529881,
             "timeInCash": 0.9243027888446215,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 3.0119521912350598
           }
         },
         {
@@ -1835,7 +1842,7 @@
             "ulcerIndex": 0.08622929805816132,
             "exposure": 0.8351593625498008,
             "timeInCash": 0.13346613545816732,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 11.043824701195218
           }
         }
       ],
@@ -1942,7 +1949,7 @@
             "ulcerIndex": 0.08489636193940396,
             "exposure": 0.4782608695652174,
             "timeInCash": 0.466403162055336,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.956521739130435
           }
         },
         {
@@ -1958,7 +1965,7 @@
             "ulcerIndex": 0.03436581867369889,
             "exposure": 0.9603174603174603,
             "timeInCash": 0.03968253968253968,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 2
           }
         },
         {
@@ -1974,7 +1981,7 @@
             "ulcerIndex": 0.081457023468772,
             "exposure": 0.043824701195219126,
             "timeInCash": 0.9561752988047809,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 1.00398406374502
           }
         },
         {
@@ -1990,7 +1997,7 @@
             "ulcerIndex": 0.11955168974897082,
             "exposure": 0.721,
             "timeInCash": 0.224,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 15.12
           }
         },
         {
@@ -2006,7 +2013,7 @@
             "ulcerIndex": 0.03507904719325451,
             "exposure": 0.9156746031746031,
             "timeInCash": 0.07936507936507936,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 6
           }
         },
         {
@@ -2022,7 +2029,7 @@
             "ulcerIndex": 0.08113409692048992,
             "exposure": 0.663,
             "timeInCash": 0.328,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 8.064
           }
         },
         {
@@ -2038,10 +2045,11 @@
             "ulcerIndex": 0.04886754244660861,
             "exposure": 0.7934782608695652,
             "timeInCash": 0.18633540372670807,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 9.391304347826088
           }
         }
       ],
+      "maxYearActionDays": 15.12,
       "regimes": [
         {
           "id": "COVID",
@@ -2058,7 +2066,7 @@
             "ulcerIndex": 0.08423014950910444,
             "exposure": 0.043010752688172046,
             "timeInCash": 0.956989247311828,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 2.7096774193548385
           }
         },
         {
@@ -2076,7 +2084,7 @@
             "ulcerIndex": 0.081457023468772,
             "exposure": 0.043824701195219126,
             "timeInCash": 0.9561752988047809,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 1.00398406374502
           }
         },
         {
@@ -2094,7 +2102,7 @@
             "ulcerIndex": 0.0918309646360795,
             "exposure": 0.8187250996015937,
             "timeInCash": 0.15139442231075698,
-            "actionDaysPerYear": 0
+            "actionDaysPerYear": 10.541832669322709
           }
         }
       ],
@@ -2112,7 +2120,7 @@
       "incumbent": "COMMON",
       "candidate": "SP_BROAD_TREND",
       "candidateName": "S&P Broad Trend",
-      "reason": "Passed absolute robustness, no-regression and pre-registered material-value hurdles; highest robustness-first bounded score among passing Native families.",
+      "reason": "Passed absolute robustness, no-regression, yearly operational-cap and pre-registered material-value hurdles; highest robustness-first bounded score among passing Native families.",
       "incumbentMetrics": {
         "cagr": 0.23854682276836137,
         "totalReturn": 3.124397318140872,
@@ -2138,7 +2146,8 @@
         "exposure": 0.6688136608747753,
         "timeInCash": 0.3097663271420012,
         "actionDaysPerYear": 7.851408028759737
-      }
+      },
+      "candidateMaxYearActionDays": 16.128
     },
     {
       "ticker": "SSO",
@@ -2146,7 +2155,7 @@
       "incumbent": "COMMON",
       "candidate": "SP_BROAD_TREND",
       "candidateName": "S&P Broad Trend",
-      "reason": "Passed absolute robustness, no-regression and pre-registered material-value hurdles; highest robustness-first bounded score among passing Native families.",
+      "reason": "Passed absolute robustness, no-regression, yearly operational-cap and pre-registered material-value hurdles; highest robustness-first bounded score among passing Native families.",
       "incumbentMetrics": {
         "cagr": 0.16965405441629255,
         "totalReturn": 1.8232246870107147,
@@ -2172,13 +2181,15 @@
         "exposure": 0.6682144997004195,
         "timeInCash": 0.3103654883163571,
         "actionDaysPerYear": 7.851408028759737
-      }
+      },
+      "candidateMaxYearActionDays": 16.128
     }
   ],
   "limitations": [
     "Historical data is already inspected and cannot serve as pristine confirmatory evidence.",
     "Native families are deliberately few but were motivated by known market structure; Forward evidence remains required.",
     "Selection score only orders families that already pass hard gates; it cannot rescue a failed family.",
+    "Yearly Action Days are reconstructed from executed daily position changes and are used only as an operational-cap diagnostic.",
     "No ticker-specific fine tuning, optimization grid, inverse ETF, hierarchical switching or automatic promotion is allowed in Phase 3."
   ]
 }
