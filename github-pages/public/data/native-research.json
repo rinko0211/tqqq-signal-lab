@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "buildVersion": "native-research-1.1.0",
-  "generatedAt": "2026-08-25T14:31:16.060Z",
+  "generatedAt": "2026-08-25T15:48:46.365Z",
   "source": "Nasdaq Historical + Cboe VIX History",
   "track": "B2",
   "policy": "Hypothesis-first; 3 families/ticker; one frozen candidate maximum; OOS multi-objective score with complexity penalty; parameter plateau, year stability, 25bps cost stress and T+2 execution delay required; no holdout-driven retuning.",
