@@ -36,11 +36,15 @@ jobs:
         run: npm run test:core
       - name: Build GitHub Pages product
         run: npm run build:pages
-      - name: Persist tested integration
+      - name: Persist tested UI integration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/page.tsx app/globals.css package.json .github/workflows/phase5-forward.yml
+          # The Actions token cannot update workflow files. The Phase 5 workflow is
+          # applied separately through the authorized GitHub connector after this
+          # tested UI commit succeeds.
+          git restore .github/workflows/phase5-forward.yml
+          git add app/page.tsx app/globals.css package.json
           git commit -m "Integrate Phase 5 forward and paper UI"
           git pull --rebase origin main
           git push
