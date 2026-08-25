@@ -41,20 +41,25 @@ function simple200Run(ds: Dataset, dma = 200, costBps = 8, delay = 1, activeFrom
     const due=scheduled.get(i);
     if(due!==undefined && due!==position){
       equity*=1-Math.abs(due-position)*(costBps/10000);
-      position=due;changes++;
+      position=due;
+      if(!activeFrom||day.date>=activeFrom)changes++;
     }
     equity*=1+position*(day.tqqq.close/day.tqqq.open-1);
     const include=!activeFrom||day.date>=activeFrom;
     if(include){returns.push(equity/startEq-1);positions.push(position);dates.push(day.date)}
     if(i>=dma-1){
       let sum=0;for(let j=i-dma+1;j<=i;j++)sum+=under[j];
-      const target=(!activeFrom||day.date>=activeFrom) && under[i]>sum/dma?1:0;
+      const target=under[i]>sum/dma?1:0;
       scheduled.set(i+delay,target);
     } else scheduled.set(i+delay,0);
-    if(activeFrom && day.date<activeFrom) position=0;
   }
   const m=metricSet(returns,[],[],dates,positions),years=Math.max(returns.length/252,1/252);
   return{metrics:subMetrics(m,changes/years),daily:dates.map((date,i)=>({date,dailyReturn:returns[i],position:positions[i]}))};
+}
+
+function metricsFromDaily(daily:{date:string;dailyReturn:number;position:number}[], actionDaysPerYear=0):Phase2Metrics{
+  const m=metricSet(daily.map(x=>x.dailyReturn),[],[],daily.map(x=>x.date),daily.map(x=>x.position));
+  return subMetrics(m,actionDaysPerYear);
 }
 
 function engineRun(ds: Dataset, family: Phase15Family, row: ScreeningRow, opts?:{costBps?:number;delay?:number;activeFrom?:string;perturb?:number}):SeriesRun{
@@ -62,16 +67,15 @@ function engineRun(ds: Dataset, family: Phase15Family, row: ScreeningRow, opts?:
   if(opts?.activeFrom)cfg.activeFrom=opts.activeFrom;
   const total=opts?.costBps??8;
   const bt=runBacktest(ds,cfg,{commissionBps:3,slippageBps:Math.max(0,total-3),delay:opts?.delay??1});
-  return{metrics:subMetrics(bt.metrics),daily:bt.daily.filter(d=>!opts?.activeFrom||d.date>=opts.activeFrom).map(d=>({date:d.date,dailyReturn:d.dailyReturn,position:d.position}))};
+  const daily=bt.daily.filter(d=>!opts?.activeFrom||d.date>=opts.activeFrom).map(d=>({date:d.date,dailyReturn:d.dailyReturn,position:d.position}));
+  const years=Math.max(daily.length/252,1/252);
+  const relevantOrders=bt.orders.filter(o=>!opts?.activeFrom||o.executionDate>=opts.activeFrom);
+  const actionDaysPerYear=new Set(relevantOrders.map(o=>o.executionDate)).size/years;
+  return{metrics:metricsFromDaily(daily,actionDaysPerYear),daily};
 }
 
 function runFamily(ds:Dataset,family:Phase15Family,row:ScreeningRow,opts?:{costBps?:number;delay?:number;activeFrom?:string;perturb?:number;dma?:number}):SeriesRun{
   return family==="SIMPLE_200DMA"?simple200Run(ds,opts?.dma??200,opts?.costBps??8,opts?.delay??1,opts?.activeFrom):engineRun(ds,family,row,opts);
-}
-
-function metricsFromDaily(daily:{date:string;dailyReturn:number;position:number}[]):Phase2Metrics{
-  const m=metricSet(daily.map(x=>x.dailyReturn),[],[],daily.map(x=>x.date),daily.map(x=>x.position));
-  return subMetrics(m,0);
 }
 
 const windows=[
@@ -91,8 +95,7 @@ export function phase2Bundle(payload:Payload){
       const years=[] as any[];
       for(let year=2020;year<=2026;year++){
         const start=`${year}-01-01`,end=`${year}-12-31`;
-        const r=runFamily(ds,family,row,{activeFrom:start});
-        const d=r.daily.filter(x=>x.date>=start&&x.date<=end);
+        const d=oos.daily.filter(x=>x.date>=start&&x.date<=end);
         if(d.length>=20)years.push({year,metrics:metricsFromDaily(d)});
       }
       const costStress=[8,15,25,50].map(costBps=>({costBps,metrics:runFamily(ds,family,row,{costBps,activeFrom:OOS_START}).metrics}));
@@ -115,5 +118,5 @@ export function phase2Bundle(payload:Payload){
     const bestPrimary=[...primary].sort((a,b)=>b.oos.calmar-a.oos.calmar)[0];
     return{ticker,robustFamilies,bestPrimaryFamily:bestPrimary?.family||null,bestPrimaryOos:bestPrimary?.oos||null,allOperational:x.every(r=>r.operationalCapPassed)};
   });
-  return{schemaVersion:1,phase:"PHASE_2_ROBUSTNESS_VALIDATION",generatedAt:new Date().toISOString(),commonStart:PHASE1_COMMON_START,oosStart:OOS_START,policy:"Robustness validation only; no Native tuning, no parameter selection from perturbations, no Forward/Production promotion.",families:FAMILIES,rows,summary,limitations:["Historical evidence is already inspected and is not a pristine holdout.","Rolling yearly tests use fixed rules; the prior three-year context is for chronology/indicator history, not parameter optimization.","Parameter neighborhoods diagnose fragility only and cannot replace pre-registered baseline parameters.","Price returns exclude dividend reinvestment, consistent with current project data model.","Forward evidence remains decisive for any Production change."]};
+  return{schemaVersion:1,phase:"PHASE_2_ROBUSTNESS_VALIDATION",generatedAt:new Date().toISOString(),commonStart:PHASE1_COMMON_START,oosStart:OOS_START,policy:"Robustness validation only; no Native tuning, no parameter selection from perturbations, no Forward/Production promotion.",families:FAMILIES,rows,summary,limitations:["Historical evidence is already inspected and is not a pristine holdout.","Rolling yearly tests use fixed rules; the prior context is for chronology/indicator history, not parameter optimization.","Parameter neighborhoods diagnose fragility only and cannot replace pre-registered baseline parameters.","Price returns exclude dividend reinvestment, consistent with current project data model.","Forward evidence remains decisive for any Production change."]};
 }
