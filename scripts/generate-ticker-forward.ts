@@ -12,6 +12,9 @@ try { prior = JSON.parse(await readFile(new URL("ticker-forward-ledger.json", ro
 catch { prior = emptyTickerForwardLedger(generatedAt); }
 if (!prior.freezes.some(x => x.version === "UPRO-VS13-v1.0")) prior = emptyTickerForwardLedger(generatedAt);
 if (!prior.freezes.some(x=>x.version===UPRO_NATIVE_FREEZE.version)) prior.freezes.push(UPRO_NATIVE_FREEZE);
+// Track B compares Native against its own Common baseline. This metadata migration
+// does not alter or recalculate any append-only Forward record.
+prior.championId = "UPRO_VS13";
 
 try {
   const payload = await fetchUproForwardData();

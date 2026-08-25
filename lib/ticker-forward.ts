@@ -32,6 +32,7 @@ export type TickerForwardLedger = ForwardLedger & {
 export function emptyTickerForwardLedger(now = new Date().toISOString()): TickerForwardLedger {
   return {
     ...emptyForwardLedger(now),
+    championId: "UPRO_VS13",
     track: "Track B",
     candidateTicker: "UPRO",
     freezes: [UPRO_FREEZE,UPRO_NATIVE_FREEZE],

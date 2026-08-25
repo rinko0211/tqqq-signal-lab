@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { demoDataset } from "../lib/engine.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger } from "../lib/forward.ts";
 import { DEFAULT_PRODUCTION_CONFIG, assessHealth, resolveProductionSystem, transitionMode } from "../lib/production.ts";
+import { emptyTickerForwardLedger } from "../lib/ticker-forward.ts";
 
 function forwardDataset(extra=0){
   const base=demoDataset(),days=base.days.slice(0,201+extra).map((d,i)=>({...d,date:new Date(Date.UTC(2025,0,1+i)).toISOString().slice(0,10)}));
@@ -50,6 +51,14 @@ test("失敗日を後日補完しても過去Signalを後知恵生成しない",
 test("Evidenceは短いForward期間をStrongと誤表示しない",()=>{
   const ledger=updateForwardLedger(forwardDataset(),null,"test","2026-08-24T00:00:00Z");
   assert.ok(summarizeForward(ledger).every(x=>x.evidence==="Insufficient"));
+});
+
+test("UPRO ForwardはCommon VS13をTrack B固有の比較基準にする",()=>{
+  const ledger=emptyTickerForwardLedger("2026-08-24T00:00:00Z");
+  const rows=summarizeForward(ledger);
+  assert.equal(ledger.championId,"UPRO_VS13");
+  assert.equal(rows.find(x=>x.id==="UPRO_VS13")?.status,"KEEP CHAMPION");
+  assert.equal(rows.find(x=>x.id==="UPRO_NATIVE")?.status,"INSUFFICIENT EVIDENCE");
 });
 
 test("データSource変更後も以前のForward Recordを書き換えない",()=>{

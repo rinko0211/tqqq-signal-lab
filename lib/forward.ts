@@ -100,7 +100,7 @@ export type ForwardLedger = {
   createdAt: string;
   updatedAt: string;
   appendOnly: true;
-  championId: "VS13";
+  championId: StrategyFreeze["id"];
   freezes: StrategyFreeze[];
   promotionRule: string;
   reviewSchedule: { sixMonth: string; twelveMonth: string; twentyFourMonth: string };
@@ -263,10 +263,10 @@ export function summarizeForward(ledger: ForwardLedger): ForwardSummary[] {
       orders,transactionCosts:rows.at(-1)?.cumulativeCosts??0,observations,missing,regimes,evidence,status:"INSUFFICIENT EVIDENCE" as ForwardStatus,
       bestMonth:monthReturns.length?Math.max(...monthReturns):0,worstMonth:monthReturns.length?Math.min(...monthReturns):0};
   });
-  const championSummary=summaries.find(x=>x.id==="VS13")!;
+  const championSummary=summaries.find(x=>x.id===ledger.championId)??summaries[0];
   for(const s of summaries){
     if(s.role==="benchmark"){s.status="BENCHMARK";continue}
-    if(s.id==="VS13"){s.status="KEEP CHAMPION";continue}
+    if(s.id===ledger.championId){s.status="KEEP CHAMPION";continue}
     if(s.evidence!=="Strong"){s.status="INSUFFICIENT EVIDENCE";continue}
     const pass=(s.metrics.sortino>=championSummary.metrics.sortino*1.10||s.metrics.calmar>=championSummary.metrics.calmar*1.10)&&s.totalReturn>=championSummary.totalReturn*.90&&s.metrics.maxDd>=championSummary.metrics.maxDd-.03&&s.orders<=Math.max(1,championSummary.orders)*1.5&&s.missing===0;
     s.status=pass?"PROMOTION CANDIDATE":"KEEP CHAMPION";
