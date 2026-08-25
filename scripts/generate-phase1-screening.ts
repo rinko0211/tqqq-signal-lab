@@ -14,12 +14,12 @@ const screening = phase1ScreeningBundle(payload);
 await Promise.all(
   roots.map((x) =>
     writeFile(
-      new URL("phase-1-screening.json", x),
+      new URL("phase-1-bounded-screening.json", x),
       JSON.stringify(screening, null, 2) + "\n",
     ),
   ),
 );
 
 console.log(
-  `Phase 1 screening generated: ${screening.results.length} candidates, common period ${screening.commonPeriod.start} to ${screening.commonPeriod.end || "n/a"}`,
+  `Bounded Phase 1 screening generated: ${screening.results.length} candidates, common period ${screening.commonPeriod.start} to ${screening.commonPeriod.end || "n/a"}`,
 );
