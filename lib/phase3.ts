@@ -20,6 +20,12 @@ const normalize=(w:StrategyConfig["weights"])=>{const s=w.trend+w.momentum+w.vol
 const tilt=(w:StrategyConfig["weights"],k:keyof StrategyConfig["weights"],factor:number)=>normalize({...w,[k]:w[k]*factor});
 const out=(m:Metrics,a:number):M=>({cagr:m.cagr,totalReturn:m.totalReturn,annualizedVolatility:m.annualizedVolatility,sharpe:m.sharpe,sortino:m.sortino,maxDd:m.maxDd,calmar:m.calmar,ulcerIndex:m.ulcerIndex,exposure:m.exposure,timeInCash:m.timeInCash,actionDaysPerYear:a});
 const fromDaily=(d:D[],a=0)=>out(metricSet(d.map(x=>x.dailyReturn),[],[],d.map(x=>x.date),d.map(x=>x.position)),a);
+const sliceMetrics=(full:D[],start:string,end:string):M=>{
+  const selected:D[]=[];let changes=0;
+  for(let i=0;i<full.length;i++)if(full[i].date>=start&&full[i].date<=end){selected.push(full[i]);if(i>0&&full[i].position!==full[i-1].position)changes++;}
+  const years=Math.max(selected.length/252,1/252);
+  return fromDaily(selected,changes/years);
+};
 const baseConfig=(r:ScreeningRow):StrategyConfig=>({...STRATEGIES.defensive,trailStop:stopFor(r)});
 const mk=(r:ScreeningRow,weights:StrategyConfig["weights"],patch:Partial<StrategyConfig>={}):StrategyConfig=>({...baseConfig(r),weights,...patch});
 
@@ -80,18 +86,19 @@ export function phase3Bundle(payload:Payload,group:Phase3Group){
       const r=run(ds,f.config(row)),stress25=run(ds,f.config(row),25,1),delay2=run(ds,f.config(row),8,2);
       const neigh=f.neighbors(row).map((c,i)=>({label:i===0?"LOW":"HIGH",metrics:run(ds,c).metrics}));
       const stabilityFloor=Math.min(...neigh.map(x=>x.metrics.calmar))/Math.max(Math.abs(r.metrics.calmar),1e-9);
-      const yearly=[] as any[];for(let y=2020;y<=2026;y++){const a=`${y}-01-01`,b=`${y}-12-31`,d=r.daily.filter(x=>x.date>=a&&x.date<=b);if(d.length>=20)yearly.push({year:y,metrics:fromDaily(d)});}
-      const regimes=windows.map(w=>({id:w.id,start:w.start,end:w.end,metrics:fromDaily(r.daily.filter(x=>x.date>=w.start&&x.date<=w.end))}));
-      const absolute=r.metrics.cagr>0&&r.metrics.calmar>0&&stress25.metrics.cagr>0&&delay2.metrics.cagr>0&&r.metrics.actionDaysPerYear<=40&&stabilityFloor>=.75;
+      const yearly=[] as any[];for(let y=2020;y<=2026;y++){const a=`${y}-01-01`,b=`${y}-12-31`,m=sliceMetrics(r.daily,a,b);const n=r.daily.filter(x=>x.date>=a&&x.date<=b).length;if(n>=20)yearly.push({year:y,metrics:m});}
+      const maxYearActionDays=Math.max(0,...yearly.map(x=>x.metrics.actionDaysPerYear));
+      const regimes=windows.map(w=>({id:w.id,start:w.start,end:w.end,metrics:sliceMetrics(r.daily,w.start,w.end)}));
+      const absolute=r.metrics.cagr>0&&r.metrics.calmar>0&&stress25.metrics.cagr>0&&delay2.metrics.cagr>0&&r.metrics.actionDaysPerYear<=40&&maxYearActionDays<=40&&stabilityFloor>=.75;
       const regression=f.id==="COMMON"?true:noRegression(r.metrics,common);
       const materialValue=f.id==="COMMON"?false:material(r.metrics,common);
       const gatePassed=f.id!=="COMMON"&&absolute&&regression&&materialValue;
-      rows.push({ticker,underlying:row.underlying,leverage:row.leverage,family:f.id,name:f.name,hypothesis:f.hypothesis,complexity:f.complexity,incumbent:f.id==="COMMON",oos:r.metrics,stress25:stress25.metrics,delay2:delay2.metrics,parameterNeighborhood:neigh,stabilityFloor,yearly,regimes,absoluteRobustness:absolute,noSevereRegression:regression,materialValue,gatePassed,score:score(r.metrics,stabilityFloor,f.complexity)});
+      rows.push({ticker,underlying:row.underlying,leverage:row.leverage,family:f.id,name:f.name,hypothesis:f.hypothesis,complexity:f.complexity,incumbent:f.id==="COMMON",oos:r.metrics,stress25:stress25.metrics,delay2:delay2.metrics,parameterNeighborhood:neigh,stabilityFloor,yearly,maxYearActionDays,regimes,absoluteRobustness:absolute,noSevereRegression:regression,materialValue,gatePassed,score:score(r.metrics,stabilityFloor,f.complexity)});
     }
   }
   const decisions=tickers.map(ticker=>{
     const x=rows.filter(r=>r.ticker===ticker),common=x.find(r=>r.family==="COMMON"),eligible=x.filter(r=>r.gatePassed).sort((a,b)=>b.score-a.score),winner=eligible[0];
-    return{ticker,status:winner?"NATIVE CANDIDATE":"NO NATIVE CANDIDATE",incumbent:"COMMON",candidate:winner?.family??null,candidateName:winner?.name??null,reason:winner?"Passed absolute robustness, no-regression and pre-registered material-value hurdles; highest robustness-first bounded score among passing Native families.":"No Native family cleared all pre-registered robustness and material-value hurdles; retain Phase 2 Common incumbent.",incumbentMetrics:common?.oos??null,candidateMetrics:winner?.oos??null};
+    return{ticker,status:winner?"NATIVE CANDIDATE":"NO NATIVE CANDIDATE",incumbent:"COMMON",candidate:winner?.family??null,candidateName:winner?.name??null,reason:winner?"Passed absolute robustness, no-regression, yearly operational-cap and pre-registered material-value hurdles; highest robustness-first bounded score among passing Native families.":"No Native family cleared all pre-registered robustness, yearly operational-cap and material-value hurdles; retain Phase 2 Common incumbent.",incumbentMetrics:common?.oos??null,candidateMetrics:winner?.oos??null,candidateMaxYearActionDays:winner?.maxYearActionDays??null};
   });
-  return{schemaVersion:1,phase:"PHASE_3_BOUNDED_NATIVE_RESEARCH",group,generatedAt:new Date().toISOString(),oosStart:OOS_START,policy:"Underlying-level Native families only; leverage-specific difference limited to mechanical stop scaling; max one Native candidate per ticker; NO NATIVE CANDIDATE is valid; no Forward or Production promotion.",families:defs.map(x=>({id:x.id,name:x.name,hypothesis:x.hypothesis,complexity:x.complexity})),rows,decisions,limitations:["Historical data is already inspected and cannot serve as pristine confirmatory evidence.","Native families are deliberately few but were motivated by known market structure; Forward evidence remains required.","Selection score only orders families that already pass hard gates; it cannot rescue a failed family.","No ticker-specific fine tuning, optimization grid, inverse ETF, hierarchical switching or automatic promotion is allowed in Phase 3."]};
+  return{schemaVersion:1,phase:"PHASE_3_BOUNDED_NATIVE_RESEARCH",group,generatedAt:new Date().toISOString(),oosStart:OOS_START,policy:"Underlying-level Native families only; leverage-specific difference limited to mechanical stop scaling; <=40 Action Days/year required both overall and in each yearly slice; max one Native candidate per ticker; NO NATIVE CANDIDATE is valid; no Forward or Production promotion.",families:defs.map(x=>({id:x.id,name:x.name,hypothesis:x.hypothesis,complexity:x.complexity})),rows,decisions,limitations:["Historical data is already inspected and cannot serve as pristine confirmatory evidence.","Native families are deliberately few but were motivated by known market structure; Forward evidence remains required.","Selection score only orders families that already pass hard gates; it cannot rescue a failed family.","Yearly Action Days are reconstructed from executed daily position changes and are used only as an operational-cap diagnostic.","No ticker-specific fine tuning, optimization grid, inverse ETF, hierarchical switching or automatic promotion is allowed in Phase 3."]};
 }
