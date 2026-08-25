@@ -7,10 +7,12 @@ on:
     branches: [main]
     paths:
       - "lib/phase5-forward.ts"
+      - "lib/execution-integrity.ts"
       - "lib/official-data.ts"
       - "scripts/generate-phase5-forward.ts"
       - "tests/phase5-forward.test.ts"
       - "tests/phase5-paper.test.ts"
+      - "tests/execution-integrity.test.ts"
       - "research/phase-5-forward-gate-2026-08-26.md"
       - ".github/workflows/phase5-forward.yml"
       - "package.json"
@@ -39,9 +41,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Run Phase 5 integrity and paper tests
+      - name: Run Phase 5 integrity, causality and paper tests
         id: integrity
-        run: node --experimental-strip-types --test tests/phase5-forward.test.ts tests/phase5-paper.test.ts
+        run: node --experimental-strip-types --test tests/execution-integrity.test.ts tests/phase5-forward.test.ts tests/phase5-paper.test.ts
       - name: Update true Forward ledger
         id: generate
         continue-on-error: true
