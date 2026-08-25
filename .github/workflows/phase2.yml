@@ -4,40 +4,75 @@ on:
   push:
     branches: [main]
     paths:
-      - "lib/phase2.ts"
-      - "scripts/generate-phase2.ts"
+      - "lib/phase2-core.ts"
+      - "lib/phase2-stress.ts"
+      - "scripts/generate-phase2-core.ts"
+      - "scripts/generate-phase2-stress.ts"
       - "tests/phase2.test.ts"
       - "package.json"
       - ".github/workflows/phase2.yml"
 permissions:
   contents: write
 concurrency:
-  group: phase2-robustness-v2
+  group: phase2-robustness-v3
   cancel-in-progress: true
 jobs:
-  validate:
+  core:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
+        with: { ref: main }
       - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+        with: { node-version: 22, cache: npm }
       - run: npm ci
-      - name: Generate Phase 2 only
-        run: npm run generate:phase2
-      - name: Run core tests
-        run: npm run test:core
-      - name: Save Phase 2 result
+      - run: npm run generate:phase2-core
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase2-core
+          path: github-pages/public/data/phase-2a-core.json
+  stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run generate:phase2-stress
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase2-stress
+          path: github-pages/public/data/phase-2b-stress.json
+  verify-and-save:
+    needs: [core, stress]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run test:core
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase2-core
+          path: /tmp/phase2-core
+      - uses: actions/download-artifact@v4
+        with:
+          name: phase2-stress
+          path: /tmp/phase2-stress
+      - name: Save Phase 2 results
         run: |
+          cp /tmp/phase2-core/phase-2a-core.json github-pages/public/data/phase-2a-core.json
+          cp /tmp/phase2-stress/phase-2b-stress.json github-pages/public/data/phase-2b-stress.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/phase-2-robustness.json
+          git add github-pages/public/data/phase-2a-core.json github-pages/public/data/phase-2b-stress.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update Phase 2 robustness result"
+            git commit -m "Update Phase 2 split robustness results"
             git pull --rebase origin main
             git push
           fi
