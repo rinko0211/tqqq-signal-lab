@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fetchOfficialPayload } from "../lib/official-data.ts";
+import { fetchOfficialData } from "../lib/official-data.ts";
 import { phase3Bundle, type Phase3Group } from "../lib/phase3.ts";
 
 const arg=(process.argv[2]||"").toUpperCase();
 if(!["NASDAQ","SP500"].includes(arg))throw new Error("usage: generate-phase3.ts NASDAQ|SP500");
 const group=arg as Phase3Group;
-const payload=await fetchOfficialPayload();
+const payload=await fetchOfficialData(true);
 const bundle=phase3Bundle(payload as any,group);
 const outDir=path.join(process.cwd(),"github-pages/public/data");
 fs.mkdirSync(outDir,{recursive:true});
