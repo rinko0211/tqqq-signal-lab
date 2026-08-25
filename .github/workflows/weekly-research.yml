@@ -4,6 +4,14 @@ on:
   schedule:
     - cron: "30 3 * * 0"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "lib/cross-ticker.ts"
+      - "lib/official-data.ts"
+      - "tests/leverage-screening.test.ts"
+      - "package.json"
+      - ".github/workflows/weekly-research.yml"
 permissions:
   contents: write
 concurrency:
@@ -15,6 +23,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
