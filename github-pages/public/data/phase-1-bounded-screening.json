@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "phase": "PHASE_1_UNDERLYING_LEVERAGE_SCREEN",
-  "generatedAt": "2026-08-25T12:42:27.836Z",
+  "generatedAt": "2026-08-25T13:10:06.245Z",
   "commonPeriod": {
     "start": "2016-08-22",
     "end": "2026-08-24"
