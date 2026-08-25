@@ -1,0 +1,53 @@
+name: Phase 5 Forward Gate
+on:
+  schedule:
+    - cron: "45 22 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "lib/phase5-forward.ts"
+      - "lib/official-data.ts"
+      - "scripts/generate-phase5-forward.ts"
+      - "tests/phase5-forward.test.ts"
+      - "research/phase-5-forward-gate-2026-08-26.md"
+      - ".github/workflows/phase5-forward.yml"
+      - "package.json"
+permissions:
+  contents: write
+concurrency:
+  group: phase5-forward-gate
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run Phase 5 integrity tests
+        run: node --experimental-strip-types --test tests/phase5-forward.test.ts
+      - name: Update true Forward ledger
+        id: generate
+        continue-on-error: true
+        run: npm run generate:phase5-forward
+      - name: Persist append-only Phase 5 ledger/status
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add github-pages/public/data/phase-5-forward-ledger.json github-pages/public/data/phase-5-forward-status.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Phase 5 true Forward ledger"
+            git pull --rebase origin main
+            git push
+          fi
+      - name: Enforce generation success
+        if: always()
+        run: test "${{ steps.generate.outcome }}" = "success"
