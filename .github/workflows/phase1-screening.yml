@@ -14,7 +14,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: phase1-leverage-screening
+  group: phase1-bounded-screen-v2
   cancel-in-progress: true
 jobs:
   screen:
@@ -37,9 +37,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/phase-1-screening.json
+          git add github-pages/public/data/phase-1-bounded-screening.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update Phase 1 leverage screening"
+            git commit -m "Update bounded Phase 1 leverage screening"
             git pull --rebase origin main
             git push
           fi
