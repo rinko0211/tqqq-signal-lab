@@ -148,3 +148,24 @@ export async function fetchUproForwardData() {
     ],
   };
 }
+
+export async function fetchPhase5ForwardData() {
+  const [UPRO, SSO, QLD, SPY, QQQ, VIX] = await Promise.all([
+    fetchNasdaq("UPRO"),
+    fetchNasdaq("SSO"),
+    fetchNasdaq("QLD"),
+    fetchNasdaq("SPY"),
+    fetchNasdaq("QQQ"),
+    fetchVix(),
+  ]);
+  return {
+    source: "Nasdaq Historical + Cboe VIX History · Phase 5 Forward Gate",
+    retrievedAt: new Date().toISOString(),
+    series: { UPRO, SSO, QLD, SPY, QQQ, VIX },
+    warnings: [
+      "Phase 5 Forward Gate is isolated from the main Daily TQQQ workflow and legacy UPRO Track B.",
+      "Actual ETF OHLC only; synthetic leveraged history is not used.",
+      "No Phase 5 record may predate the frozen 2026-08-25 Forward start date.",
+    ],
+  };
+}
