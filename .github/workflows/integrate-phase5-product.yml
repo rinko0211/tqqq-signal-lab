@@ -24,7 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Apply guarded integration migration
-        run: node scripts/integrate-phase5-product-v2.mjs
+        run: node scripts/integrate-phase5-product-v3.mjs
       - name: Audit intended file boundary
         run: |
           git diff --check
