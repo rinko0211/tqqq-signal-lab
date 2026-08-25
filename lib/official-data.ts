@@ -107,8 +107,14 @@ export async function fetchOfficialData(includeCross = false) {
   ]);
   let crossSeries:Record<string,Bar[]>|undefined;
   if(includeCross){
-    const crossTickers = ["TQQQ","QQQ","UPRO","SOXL","SOXX","TECL","XLK","TNA","IWM","SPY"] as const;
-    const crossRows = await Promise.all(crossTickers.map(symbol => fetchNasdaq(symbol, "2008-01-01", 1000)));
+    const crossTickers = [
+      "TQQQ","QLD","QQQ",
+      "UPRO","SSO","SPY",
+      "SOXL","USD","SOXX",
+      "TECL","ROM","XLK",
+      "TNA","IWM",
+    ] as const;
+    const crossRows = await Promise.all(crossTickers.map(symbol => fetchNasdaq(symbol, "2006-01-01", 1000)));
     crossSeries = Object.fromEntries(crossTickers.map((symbol,i)=>[symbol,crossRows[i]]));
   }
   return {
@@ -117,7 +123,9 @@ export async function fetchOfficialData(includeCross = false) {
     series: { TQQQ, QQQ, SPY, VIX },
     ...(crossSeries?{crossSeries:{...crossSeries,VIX}}:{}),
     warnings: [
-      "TQQQ・QQQ・SPYはNasdaq公式HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
+      "TQQQ・QQQ・SPYおよびPhase-1 cross-ticker候補はNasdaq HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
+      "Phase 1ではQLD/SSO/ROM/USDを実ETF価格で追加し、Synthetic leveraged historyは使用しません。",
+      "USDとSOXLは異なる半導体指数を追跡するため、純粋な2x対3x倍率比較として扱いません。",
       "VIXはCboe公式VIX Historyを使用しています。",
       "外部データ取得時刻と各銘柄の最終日をデータ管理画面で確認してください。",
     ],
