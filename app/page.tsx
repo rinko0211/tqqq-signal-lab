@@ -24,6 +24,8 @@ import type {CrossBundle} from "../lib/cross-ticker";
 import type {TickerForwardLedger} from "../lib/ticker-forward";
 import type {NativeResearchBundle} from "../lib/native-research";
 import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,type ProductionConfig} from "../lib/production";
+import type {Phase5Ledger} from "../lib/phase5-forward";
+import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -37,6 +39,7 @@ const pct = (v: number, d = 1) =>
   usd = (v: number) => (Number.isFinite(v) ? `$${v.toFixed(2)}` : "—");
 const TABS = [
   ["signal", "今日のシグナル"],
+  ["dashboard", "運用ダッシュボード"],
   ["forward", "Forward Test"],
   ["compare", "戦略比較"],
   ["walk", "Walk-Forward"],
@@ -210,6 +213,8 @@ export default function Home() {
     [tickerForward,setTickerForward]=useState<TickerForwardLedger|null>(null),
     [nativeResearch,setNativeResearch]=useState<NativeResearchBundle|null>(null),
     [productionConfig,setProductionConfig]=useState<ProductionConfig|null>(null),
+    [phase5Ledger,setPhase5Ledger]=useState<Phase5Ledger|null>(null),
+    [phase5Status,setPhase5Status]=useState<Phase5StatusFile|null>(null),
     [tickerForwardStatus,setTickerForwardStatus]=useState<{status:string;marketDataDate:string|null;records:number;version:string;errors:string[]}|null>(null);
   const [deepResearch,setDeepResearch]=useState<DeepResearchBundle|null>(null),[deepLoading,setDeepLoading]=useState(false);
   const fileRef = useRef<HTMLInputElement>(null),marketRequested=useRef(false),deepRequested=useRef(false),analysisWorker=useRef<Worker|null>(null),analysisRequest=useRef(0);
@@ -229,6 +234,8 @@ export default function Home() {
       fetchJson(new URL("live-history.json",staticData)).then(setLiveHistory),
       fetchJson(new URL("forward-ledger.json",staticData)).then(setForwardLedger),
       fetchJson(new URL("production-config.json",staticData)).then(setProductionConfig),
+      fetchJson(new URL("phase-5-forward-ledger.json",staticData)).then(setPhase5Ledger),
+      fetchJson(new URL("phase-5-forward-status.json",staticData)).then(setPhase5Status),
     ]).then((results)=>{
       if(results[0].status==="rejected")setMessage("最新Signalを取得できません。System Statusを確認してください。");
       setLoading(false);
@@ -534,7 +541,8 @@ export default function Home() {
             ticker={dailySignal?.assetTicker||"TQQQ"}
           />
         </>)}
-        {tab==="forward" && (forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>)}
+        {tab==="dashboard" && <IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status}/>}
+        {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status}/></>}
         {compareAnalysis && tab === "compare" && (
           <CompareView
             analysis={compareAnalysis}
@@ -569,20 +577,20 @@ export default function Home() {
             openFiles={() => fileRef.current?.click()}
           />
         )}
-        {tab === "paper" && <PaperView
+        {tab === "paper" && <><PaperView
           history={liveHistory.filter(x=>(x.assetTicker||"TQQQ")===(dailySignal?.assetTicker||"TQQQ")&&(x.strategyVersion||"VS13-v1.0")===(dailySignal?.strategyVersion||"VS13-v1.0"))}
           latestDate={latestDate}
           source={dataset?.source||(dailySignal?"auto":undefined)}
           ticker={dailySignal?.assetTicker||"TQQQ"}
-        />}
-        {tab === "status" && <SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/>}
+        /><Phase5PaperPanel ledger={phase5Ledger}/></>}
+        {tab === "status" && <><SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/><Phase5SystemStatus ledger={phase5Ledger} status={phase5Status}/></>}
         {tab === "guide" && <><GuideView/><LifecycleGuide/><RecoveryPromptPack/></>}
         {tab === "roadmap" && <RoadmapV2/>}
         {tab === "glossary" && <GlossaryView/>}
         {tab === "spec" && <SpecView />}
       </section>
       <footer>
-        <b>TQQQ Signal Lab v2</b>
+        <b>TQQQ Signal Lab v3 · Integrated Forward Gate</b>
         <span>
           研究・検証用途。投資助言ではなく、将来の収益を保証しません。
         </span>
@@ -1304,7 +1312,7 @@ function ProductionView({config}:{config:ProductionConfig|null}){const c=config;
 function PaperView({history,latestDate,source,ticker}:{history:LiveSnapshot[];latestDate?:string;source?:Dataset["source"];ticker:string}){
   const [draft,setDraft]=useState<PaperConfig>({initialJpy:1_000_000,startDate:latestDate||"",fxRate:150}),[config,setConfig]=useState<PaperConfig|null>(null);
   useEffect(()=>{queueMicrotask(()=>{try{const saved=JSON.parse(localStorage.getItem("tqqq-paper-v1")||"null");if(saved){setConfig(saved);setDraft(saved)}}catch{}})},[]);
-  const effectiveDraft={...draft,startDate:draft.startDate||latestDate||""},result=useMemo(()=>config?simulatePaper(history,config):null,[history,config]),start=()=>{if(!effectiveDraft.startDate||effectiveDraft.initialJpy<=0||effectiveDraft.fxRate<=0)return;localStorage.setItem("tqqq-paper-v1",JSON.stringify(effectiveDraft));setConfig(effectiveDraft)},reset=()=>{if(!window.confirm("この端末のPaper Trading設定を初期化しますか？"))return;localStorage.removeItem("tqqq-paper-v1");setConfig(null)};
+  const effectiveDraft={...draft,startDate:draft.startDate||latestDate||""},result=useMemo(()=>config?simulatePaper(history,config):null,[history,config]),start=()=>{if(!effectiveDraft.startDate||effectiveDraft.initialJpy<=0||effectiveDraft.fxRate<=0)return;localStorage.setItem("tqqq-paper-v1",JSON.stringify(effectiveDraft));setConfig(effectiveDraft);window.dispatchEvent(new Event("paper-config-changed"))},reset=()=>{if(!window.confirm("この端末のPaper Trading設定を初期化しますか？"))return;localStorage.removeItem("tqqq-paper-v1");setConfig(null);window.dispatchEvent(new Event("paper-config-changed"))};
   return <>
     <article className="panel paperIntro">
       <div><em>LIVE PAPER TRADING · DEVICE LOCAL</em><h2>実際に公開された日次Signalだけで追跡</h2><p>Historical Backtestとは完全に別です。設定はこの端末だけに保存され、公開履歴の各Signalを翌営業日始値で再現します。固定USD/JPYは為替損益を混ぜないための換算仮定です。</p></div>
@@ -1513,6 +1521,6 @@ const GLOSSARY=[
 ] as const;
 function GlossaryView(){return <><article className="guideHero"><em>BEGINNER GLOSSARY</em><h2>用語集</h2><p>各指標は単独で良し悪しを決めず、OOS・DD・コスト・Live成績と組み合わせて見ます。</p></article><section className="glossaryGrid">{GLOSSARY.map(([term,body])=><article className="panel" key={term}><em>{term}</em><h2>{term}</h2><p className="note">{body}</p></article>)}</section></>}
 
-function RoadmapV2(){const phases=[["Phase 1","Core TQQQ Research","COMPLETE","VS13をBalanced Championとして固定"],["Phase 2","TQQQ Forward Validation","ACTIVE","6・12・24か月の未来記録を蓄積"],["Phase 3","Cross-Ticker Common Research","ACTIVE","同一Framework・共通期間で比較"],["Phase 4","Ticker-Native Strategy Research","ACTIVE","各Ticker最大3系統、候補1本"],["Phase 5","Native Forward Validation","NEXT","承認したNative候補だけVersion固定"],["Phase 6","Final Candidate Selection","WAIT","十分なForward Evidence"],["Phase 7","Production Champion Approval","WAIT","Human Approval必須"],["Phase 8","Production Signal Operation","READY","選定1本の日次Signal"],["Phase 9","Health Review / Revalidation","READY","日次・四半期・年次・Event駆動"]];return <><article className="guideHero"><em>ROBUST LEVERAGED ETF PLATFORM</em><h2>Research → Decision → Production</h2><p>十分な証拠が揃えば1つのProduction Systemへ人間の承認で移行します。</p></article><article className="panel"><Table heads={["段階","テーマ","状態","完了条件"]} rows={phases}/></article><article className="panel formula"><em>RESEARCH BOUNDARY</em><h2>現在地</h2><code>Track A: TQQQ Strategy · Track B1: Common Ticker · Track B2: Native Strategy · Mode: RESEARCH</code><p>Production移行後もResearch ArchiveとRejected Experimentは削除しません。</p></article></>}
+function RoadmapV2(){const phases=[["Phase 0","Freeze / Audit / Charter","COMPLETE","既存Production・Forwardを保護して研究境界を固定"],["Phase 1","Underlying × Leverage Screening","COMPLETE","Core 4本を選抜"],["Phase 1.5","Leverage-Neutral Check","COMPLETE","2x Stopを13%×2/3へ機械換算"],["Phase 2","Common Robustness","COMPLETE","TQQQ/QLD/UPRO/SSOのFrontierを確認"],["Phase 3","Native Research","COMPLETE","S&P Broad Trend採用・NasdaqはCommon維持"],["Phase 4","Winner + Cash Allocator","REJECTED","Ticker swing v1は単体UPRO Nativeを上回らず"],["Phase 5","True Forward Gate","ACTIVE","UPRO/SSO/QLDを2026-08-25から凍結観測"],["Phase 6","Final Decision / Production","WAIT","12か月以上のForward Evidence＋Human Approval"]];return <><article className="guideHero"><em>INTEGRATED PRODUCT ROADMAP</em><h2>Research → Forward → Production</h2><p>Historical探索はPhase 4で停止しました。現在はProduction TQQQを維持しながら、Phase 5候補を別台帳で未来観測しています。</p></article><article className="panel"><Table heads={["段階","テーマ","状態","結論 / 完了条件"]} rows={phases}/></article><article className="panel formula"><em>CURRENT OPERATING BOUNDARY</em><h2>現在地</h2><code>OPERATE: TQQQ VS13 · VALIDATE: UPRO SPBT / SSO SPBT / QLD scaled · RESEARCH: frozen archive</code><p>Phase 5候補はPaper/Forward比較には表示しますが、Phase 6承認までは「今日のシグナル」へ昇格しません。</p></article></>}
 
 function RoadmapView(){const phases=[["Phase 1","TQQQ strategy stabilization","進行中","現行Championの監査・計測・Pseudo-Live蓄積"],["Phase 2","Leveraged ETF market screening","調査準備","公式情報でAUM・流動性・費用・構造を確認"],["Phase 3","Shortlist 4–8 tickers","未着手","大量総当たりを避け候補を限定"],["Phase 4","Parallel robust backtesting","未着手","共通FrameworkでOOS比較"],["Phase 5","Ticker selection","未着手","CAGRだけでなくDD・流動性・再現性で選択"],["Phase 6","Optional rotation research","保留","単一Ticker研究が安定してから検討"],["Phase 7","Live Paper Trading","稼働中","未来情報なしの日次記録"],["Phase 8","Real-capital decision","未判断","十分なLive期間と運用者判断が必要"]];return <><article className="guideHero"><em>ROBUST LEVERAGED ETF PLATFORM</em><h2>Research Roadmap</h2><p>現在はTQQQ戦略の安定化が最優先です。マルチTickerは先入観なく、公式情報で候補を絞ってから検証します。</p></article><article className="panel"><Table heads={["段階","テーマ","状態","完了条件"]} rows={phases}/></article><article className="panel formula"><em>SHORTLIST POLICY</em><h2>将来の候補カテゴリー</h2><code>NASDAQ-100 / S&amp;P 500 / Semiconductor / Technology / Small Cap — 4〜8銘柄へ限定</code><p>TQQQ、UPRO、SOXL、TECLは調査対象候補であり採用決定ではありません。いずれも日次目標商品で、長期成績は指数×3と一致しません。</p><p><a href="https://www.proshares.com/our-etfs/leveraged-and-inverse/tqqq" target="_blank" rel="noreferrer">TQQQ公式</a> · <a href="https://www.proshares.com/our-etfs/leveraged-and-inverse/upro" target="_blank" rel="noreferrer">UPRO公式</a> · <a href="https://www.direxion.com/product/daily-semiconductor-bull-bear-3x-etfs" target="_blank" rel="noreferrer">SOXL公式</a> · <a href="https://www.direxion.com/product/daily-technology-bull-bear-3x-etfs" target="_blank" rel="noreferrer">TECL公式</a></p><p className="note">2026-08-24調査。次段階でAUM、平均出来高、spread、運用年数、費用、tracking、split、閉鎖リスクを同一基準で確認し、4〜8銘柄へ限定します。</p></article></>}
