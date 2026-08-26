@@ -1,0 +1,40 @@
+name: Wire Final Operations UI
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/wire-final-ops.mjs"
+      - ".github/workflows/wire-final-ops.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: node scripts/wire-final-ops.mjs
+      - name: Audit change boundary
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(app/page.tsx|package.json)$' || true)"
+          test -z "$unexpected" || { echo "Unexpected modified files:"; echo "$unexpected"; exit 1; }
+      - name: Run full core acceptance suite
+        run: npm run test:core
+      - name: Build Pages
+        run: npm run build:pages
+      - name: Persist tested wiring
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx package.json
+          git commit -m "Wire autonomous lifecycle review UI"
+          git pull --rebase origin main
+          git push
