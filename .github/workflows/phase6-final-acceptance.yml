@@ -1,0 +1,46 @@
+name: Phase 6 Executive Acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/phase6-final-acceptance.yml"
+permissions:
+  contents: read
+concurrency:
+  group: phase6-executive-acceptance
+  cancel-in-progress: true
+jobs:
+  accept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Full quantitative and control-plane regression
+        run: npm run test:core
+      - name: Verify current non-promoted operational state
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const j=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+          const status=j('github-pages/public/data/status.json');
+          const p5=j('github-pages/public/data/phase-5-forward-status.json');
+          const life=j('github-pages/public/data/lifecycle-review.json');
+          const prod=j('github-pages/public/data/production-config.json');
+          if(status.actionStatus!=='success') throw Error('Daily operational status is not success');
+          if(p5.status!=='success'||p5.errors?.length) throw Error('Phase 5 Forward status is not clean');
+          if(prod.mode!=='RESEARCH'||prod.approvedByHuman!==false) throw Error('Unexpected Production promotion during acceptance');
+          if(life.current.stage!=='ACCUMULATING'||life.current.userAction!=='NONE') throw Error('Unexpected lifecycle action during acceptance');
+          if(life.current.candidateReviews.some(x=>x.promotionSelectable)) throw Error('A candidate became Production-selectable before Formal gate');
+          console.log('Current state: RESEARCH / ACCUMULATING / NONE / no selectable candidate');
+          NODE
+      - name: Full application build
+        run: npm run build
+      - name: Rendered and deployment contracts
+        run: node --test tests/rendered-html.test.mjs tests/deployment.test.mjs
+      - name: Integrated Pages build
+        run: npm run build:pages
