@@ -2,43 +2,44 @@
 import { useEffect, useState } from "react";
 import type { LifecycleLedger } from "../lib/lifecycle-review";
 import type { ProductionConfig } from "../lib/production";
+import type { ProductionHealthLedger } from "../lib/production-health-review";
 
 const label:Record<string,string>={ACCUMULATING:"Forward蓄積中",INTERIM:"6か月レビュー",FORMAL:"12か月正式レビュー",STRONGER:"24か月強化レビュー",NONE:"操作不要",CHECK_DATA_AND_ACTIONS:"データ/実行確認が必要",RUN_PHASE6_HUMAN_REVIEW:"Phase 6 人間判断が必要",REVALIDATE_PRODUCTION:"Production再検証が必要",URGENT_INTEGRITY_REVIEW:"緊急Integrity確認"};
 const strategy:Record<string,string>={"VS13-v1.0":"Volatility Shield 13%","UPRO-SPBT-v1.0":"UPRO + S&P Broad Trend","SSO-SPBT-Scaled-v1.0":"SSO + S&P Broad Trend + scaled stop","QLD-VS13-Scaled-v1.0":"QLD + Common VS13 + scaled stop"};
 const tone=(a:string)=>a==="NONE"?"ok":a.includes("URGENT")||a.includes("REVALIDATE")||a.includes("CHECK")?"bad":"warn";
 
 function useLifecycle(){
-  const [review,setReview]=useState<LifecycleLedger|null>(null),[production,setProduction]=useState<ProductionConfig|null>(null),[loaded,setLoaded]=useState(false);
+  const [review,setReview]=useState<LifecycleLedger|null>(null),[production,setProduction]=useState<ProductionConfig|null>(null),[health,setHealth]=useState<ProductionHealthLedger|null>(null),[loaded,setLoaded]=useState(false);
   useEffect(()=>{let alive=true;Promise.all([
     fetch("./data/lifecycle-review.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),
     fetch("./data/production-config.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),
-  ]).then(([a,b])=>{if(alive){setReview(a);setProduction(b);setLoaded(true)}});return()=>{alive=false}},[]);
-  return{review,production,loaded};
+    fetch("./data/production-health-review.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),
+  ]).then(([a,b,h])=>{if(alive){setReview(a);setProduction(b);setHealth(h);setLoaded(true)}});return()=>{alive=false}},[]);
+  return{review,production,health,loaded};
 }
 
 export function LifecycleGlobalBanner(){
-  const{review,loaded}=useLifecycle();
-  if(!loaded)return null;
+  const{review,health,loaded}=useLifecycle();if(!loaded)return null;
   if(!review)return <section className="issueBlock"><b>LIFECYCLE REVIEW UNAVAILABLE</b><p>Review判定を取得できません。Production変更は禁止し、System Status / GitHub Actionsを確認してください。</p></section>;
-  const c=review.current;if(c.userAction==="NONE")return null;
-  return <section className="issueBlock"><b>{label[c.userAction]||c.userAction}</b><p>{c.message} 「Review / 次のAction」タブを開いて手順を確認してください。</p></section>;
+  const action=health?.current.userAction!=="NONE"?health!.current.userAction:review.current.userAction;if(action==="NONE")return null;
+  const message=health?.current.userAction!=="NONE"?health!.current.message:review.current.message;return <section className="issueBlock"><b>{label[action]||action}</b><p>{message} 「Review / 次のAction」タブを開いて手順を確認してください。</p></section>;
 }
 
 export function LifecycleActionCenter(){
-  const{review,production,loaded}=useLifecycle();
+  const{review,production,health,loaded}=useLifecycle();
   if(!loaded)return <article className="emptyState"><span>AUTONOMOUS REVIEW</span><h2>Review状態を確認中</h2></article>;
   if(!review)return <article className="panel"><em>AUTONOMOUS REVIEW</em><h2>Lifecycle Reviewを読み込めません</h2><p className="warningNote">日次Signalは継続できますが、Review判定が見えないためProduction変更は禁止です。System StatusでLifecycle Review workflowを確認してください。</p></article>;
-  const c=review.current,eligible=c.candidateReviews.filter(x=>x.eligible);
+  const c=review.current,eligible=c.candidateReviews.filter(x=>x.eligible),effectiveAction=health?.current.userAction!=="NONE"?health!.current.userAction:c.userAction;
   return <>
-    <article className={`systemHero ${c.userAction==="NONE"?"ok":""}`}><em>AUTONOMOUS LIFECYCLE CONTROL</em><h2>{label[c.userAction]||c.userAction}</h2><p>{c.message}</p><div className="contextBadges"><span className={`status ${tone(c.userAction)}`}>{label[c.stage]||c.stage}</span><span className="status neutral">判定日 {c.asOf}</span><span className="status neutral">次回 {c.nextReview||"定期Review完了"}</span></div></article>
+    <article className={`systemHero ${effectiveAction==="NONE"?"ok":""}`}><em>AUTONOMOUS LIFECYCLE CONTROL</em><h2>{label[effectiveAction]||effectiveAction}</h2><p>{health?.current.userAction!=="NONE"?health!.current.message:c.message}</p><div className="contextBadges"><span className={`status ${tone(effectiveAction)}`}>{label[c.stage]||c.stage}</span><span className="status neutral">判定日 {c.asOf}</span><span className="status neutral">Forward次回 {c.nextReview||"定期Review完了"}</span></div></article>
     <article className="panel"><div className="panelHead"><div><em>WHAT TO DO NEXT</em><h2>今ユーザーがすること</h2></div><span>自動判定はしても自動売買戦略変更はしません。</span></div>
-      {c.userAction==="NONE"&&<div className="opsNext"><span>USER ACTION</span><strong>何もしなくて大丈夫です。Forwardとレビューは自動継続します。</strong></div>}
-      {c.userAction==="CHECK_DATA_AND_ACTIONS"&&<><div className="opsNext"><span>USER ACTION</span><strong>System Status → Phase 5 Forwardを確認。データ/実行異常が解消するまでProduction変更を行わない。</strong></div><p className="warningNote">パラメータを変更して救済しないでください。データ障害なら復旧後の新しいLIVE観測から継続します。</p></>}
-      {c.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&<><div className="opsNext"><span>STEP 1</span><strong>GitHub Actions → Human Production Approval → mode = DECISION を実行</strong></div><div className="opsNext"><span>STEP 2</span><strong>下のEligible候補から現行TQQQ維持を含め1本だけ選択</strong></div><div className="opsNext"><span>STEP 3</span><strong>同WorkflowをPRODUCTIONで実行し、Ticker / Strategy / Versionを下記どおり入力、confirmationに APPROVE PRODUCTION</strong></div></>}
-      {c.userAction==="REVALIDATE_PRODUCTION"&&<div className="opsNext"><span>USER ACTION</span><strong>新規リスク追加を停止し、Production Healthの理由を確認。自動Strategy置換はしない。</strong></div>}
-      {c.userAction==="URGENT_INTEGRITY_REVIEW"&&<div className="opsNext"><span>USER ACTION</span><strong>Integrity問題です。新規リスク追加を行わず、System Status / Actionsを最優先で確認してください。</strong></div>}
+      {effectiveAction==="NONE"&&<div className="opsNext"><span>USER ACTION</span><strong>何もしなくて大丈夫です。Forward・レビュー・Production Healthは自動継続します。</strong></div>}
+      {effectiveAction==="CHECK_DATA_AND_ACTIONS"&&<><div className="opsNext"><span>USER ACTION</span><strong>System Status → Phase 5 Forwardを確認。データ/実行異常が解消するまでProduction変更を行わない。</strong></div><p className="warningNote">パラメータを変更して救済しないでください。データ障害なら復旧後の新しいLIVE観測から継続します。</p></>}
+      {effectiveAction==="RUN_PHASE6_HUMAN_REVIEW"&&<><div className="opsNext"><span>STEP 1</span><strong>GitHub Actions → Human Production Approval → mode = DECISION を実行</strong></div><div className="opsNext"><span>STEP 2</span><strong>下のEligible候補から現行TQQQ維持を含め1本だけ選択</strong></div><div className="opsNext"><span>STEP 3</span><strong>同WorkflowをPRODUCTIONで実行し、Ticker / Strategy / Versionを下記どおり入力、confirmationに APPROVE PRODUCTION</strong></div></>}
+      {effectiveAction==="REVALIDATE_PRODUCTION"&&<div className="opsNext"><span>USER ACTION</span><strong>新規リスク追加を停止し、Production Healthの理由を確認。自動Strategy置換はしない。</strong></div>}
+      {effectiveAction==="URGENT_INTEGRITY_REVIEW"&&<div className="opsNext"><span>USER ACTION</span><strong>Integrity問題です。新規リスク追加を行わず、System Status / Actionsを最優先で確認してください。</strong></div>}
     </article>
     <article className="panel"><div className="panelHead"><div><em>REVIEW GATE</em><h2>4つのFrontierの自動判定</h2></div><span>EligibleでもHuman ApprovalまではResearchです。</span></div><div className="table"><table><thead><tr><th>System</th><th>Decision</th><th>Live obs</th><th>Executions</th><th>Regimes</th><th>Action/y</th><th>Max DD</th></tr></thead><tbody>{c.candidateReviews.map(x=><tr key={x.version}><td>{x.ticker}{x.incumbent?" · incumbent":""}<br/><small>{x.version}</small></td><td><span className={`status ${x.eligible?"ok":x.decision.includes("REVIEW")?"bad":"neutral"}`}>{x.decision}</span></td><td>{x.liveObservations}</td><td>{x.executions}</td><td>{x.regimes}</td><td>{Number.isFinite(x.actionDaysPerYear)?x.actionDaysPerYear.toFixed(1):"—"}</td><td>{(x.maxDd*100).toFixed(1)}%</td></tr>)}</tbody></table></div>{eligible.length>0&&<div className="formula"><p>Production入力候補:</p>{eligible.map(x=><code key={x.version}>Ticker: {x.ticker} / Strategy: {strategy[x.version]} / Version: {x.version}</code>)}</div>}</article>
-    <article className="panel"><div className="panelHead"><div><em>PRODUCTION STATE</em><h2>正式運用への状態遷移</h2></div><span>Research → Decision → Human Approval → Production</span></div><div className="opsMiniGrid"><div><span>Platform mode</span><b>{production?.mode||"RESEARCH"}</b></div><div><span>Human approved</span><b>{production?.approvedByHuman?"YES":"NO"}</b></div><div><span>Production Health</span><b>{c.productionHealth.state}</b></div></div><p className="note">現在のTQQQ日次SignalはOperational Baselineです。正式なProduction modeはHuman Approval後だけ有効になります。</p></article>
+    <article className="panel"><div className="panelHead"><div><em>PRODUCTION STATE</em><h2>正式運用とHealth Review</h2></div><span>Research → Decision → Human Approval → Production → Quarterly Health</span></div><div className="opsMiniGrid"><div><span>Platform mode</span><b>{production?.mode||"RESEARCH"}</b></div><div><span>Human approved</span><b>{production?.approvedByHuman?"YES":"NO"}</b></div><div><span>Production Health</span><b>{health?.current.state||c.productionHealth.state}</b></div><div><span>Last Health Review</span><b>{health?.current.lastReview||"—"}</b></div><div><span>Next Health Review</span><b>{health?.current.nextReview||production?.nextHealthReview||"Production開始後"}</b></div><div><span>Health events</span><b>{health?.events.length??0}</b></div></div><p className="note">現在のTQQQ日次SignalはOperational Baselineです。正式なProduction modeはHuman Approval後だけ有効です。Production後は四半期Reviewをappend-onlyで記録します。</p></article>
   </>;
 }
