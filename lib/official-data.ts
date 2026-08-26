@@ -132,6 +132,31 @@ export async function fetchOfficialData(includeCross = false) {
   };
 }
 
+/**
+ * Bounded data surface for a single human-approved non-TQQQ Production system.
+ * Unlike Phase-1 research this deliberately does not fetch the rest of the research universe.
+ */
+export async function fetchProductionData(ticker:"UPRO"|"SSO"|"QLD",proxy:"SPY"|"QQQ") {
+  const requested=[ticker,proxy,"SPY"] as const;
+  const symbols=[...new Set(requested)] as string[];
+  const [rows,VIX]=await Promise.all([
+    Promise.all(symbols.map(symbol=>fetchNasdaq(symbol,"2006-01-01",1000))),
+    fetchVix(),
+  ]);
+  const crossSeries:Record<string,Bar[]>=Object.fromEntries(symbols.map((symbol,i)=>[symbol,rows[i]]));
+  crossSeries.VIX=VIX;
+  return{
+    source:`Nasdaq Historical + Cboe VIX History · Production ${ticker}`,
+    retrievedAt:new Date().toISOString(),
+    series:{TQQQ:crossSeries[ticker],QQQ:crossSeries[proxy],SPY:crossSeries.SPY,VIX},
+    crossSeries,
+    warnings:[
+      `Formal Production data is bounded to ${ticker}, ${proxy}, SPY and VIX; closed research-universe tickers are not fetched.`,
+      "Actual ETF OHLC only. FX, tax and broker-specific realized friction are outside this market-data payload.",
+    ],
+  };
+}
+
 export async function fetchUproForwardData() {
   const [UPRO, SPY, VIX] = await Promise.all([
     fetchNasdaq("UPRO"),
