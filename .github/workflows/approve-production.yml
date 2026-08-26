@@ -35,6 +35,8 @@ jobs:
       group: daily-signal-pages
       cancel-in-progress: false
       queue: max
+    outputs:
+      persisted_sha: ${{ steps.persist.outputs.persisted_sha }}
     steps:
       - uses: actions/checkout@v7
         with: {ref: main}
@@ -60,6 +62,7 @@ jobs:
           npm run test:ops
           npm run build:pages
       - name: Atomically persist decision and validated live state
+        id: persist
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -71,10 +74,12 @@ jobs:
           fi
           git commit -m "Record human control decision with validated live state"
           git push origin HEAD:main
+          echo "persisted_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   deploy-validated-state:
     needs: approve
     uses: ./.github/workflows/daily-signal.yml
     with:
       deploy_persisted_only: true
+      expected_sha: ${{ needs.approve.outputs.persisted_sha }}
     secrets: inherit
