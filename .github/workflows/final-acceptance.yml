@@ -1,0 +1,70 @@
+name: Final Operational Acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/final-acceptance.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Full core acceptance suite
+        run: npm run test:core
+      - name: Build integrated Pages
+        run: npm run build:pages
+      - name: Generate current lifecycle and health state locally
+        run: |
+          npm run generate:lifecycle-review
+          npm run generate:production-health-review
+      - name: Validate current autonomous state
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const root='github-pages/public/data/';
+          const lifecycle=JSON.parse(fs.readFileSync(root+'lifecycle-review.json','utf8'));
+          const health=JSON.parse(fs.readFileSync(root+'production-health-review.json','utf8'));
+          const production=JSON.parse(fs.readFileSync(root+'production-config.json','utf8'));
+          if(lifecycle.current.stage!=='ACCUMULATING') throw Error('Current lifecycle must be ACCUMULATING before 2027-02-25');
+          if(lifecycle.current.userAction!=='NONE') throw Error('Current lifecycle unexpectedly requires user action');
+          if(lifecycle.current.nextReview!=='2027-02-25') throw Error('Next review date drift');
+          if(production.mode!=='RESEARCH'||production.approvedByHuman!==false) throw Error('Production must not be enabled automatically');
+          if(health.current.state!=='NOT_ACTIVE') throw Error('Production health ledger must be inactive before Human Production approval');
+          if(lifecycle.current.candidateReviews.length!==4) throw Error('Lifecycle frontier must contain incumbent + 3 Phase 5 candidates');
+          console.log('Current autonomous state PASS');
+          NODE
+      - name: Audit scheduled workflow surface
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          scheduled=[]
+          for p in Path('.github/workflows').glob('*.yml'):
+              text=p.read_text()
+              if 'cron:' in text:
+                  scheduled.append(p.name)
+          expected={'daily-signal.yml','phase5-forward.yml','lifecycle-review.yml'}
+          if set(scheduled)!=expected:
+              raise SystemExit(f'Unexpected scheduled workflows: {scheduled}; expected {sorted(expected)}')
+          print('Scheduled workflow surface PASS:', sorted(scheduled))
+          PY
+      - name: Audit frozen historical research workflows
+        run: |
+          for f in phase1-screening.yml phase1-5.yml phase2.yml phase3.yml phase4.yml weekly-research.yml daily-ticker-forward.yml; do
+            test -f ".github/workflows/$f"
+            ! grep -q 'cron:' ".github/workflows/$f"
+            ! grep -q '^  push:' ".github/workflows/$f"
+          done
+          echo "Historical/legacy workflows are manual-only"
+      - name: Audit public-data cache policy
+        run: |
+          grep -q '/data/' github-pages/public/sw.js
+          grep -q 'no-store' github-pages/public/sw.js
+          echo "PWA data cache policy PASS"
