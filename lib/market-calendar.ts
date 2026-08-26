@@ -10,12 +10,17 @@ const easter=(year:number)=>{const a=year%19,b=Math.floor(year/100),c=year%100,d
 export function isNyseHoliday(date:string){
   const y=+date.slice(0,4),goodFriday=easter(y);goodFriday.setUTCDate(goodFriday.getUTCDate()-2);
   const holidays=[observed(y,0,1),nthWeekday(y,0,1,3),nthWeekday(y,1,1,3),goodFriday.toISOString().slice(0,10),lastWeekday(y,4,1),observed(y,6,4),nthWeekday(y,8,1,1),nthWeekday(y,10,4,4),observed(y,11,25)];
-  // NYSE first observed Juneteenth as an exchange holiday in 2022.
   if(y>=2022)holidays.push(observed(y,5,19));
   return new Set(holidays).has(date);
 }
 export function isNyseSession(date:string){const d=new Date(`${date}T12:00:00Z`);return ![0,6].includes(d.getUTCDay())&&!isNyseHoliday(date)}
 export function nextNyseSession(date:string,delay=1){const d=new Date(`${date}T12:00:00Z`);for(let n=0;n<delay;n++){do d.setUTCDate(d.getUTCDate()+1);while(!isNyseSession(d.toISOString().slice(0,10)))}return d.toISOString().slice(0,10)}
+export function countNyseSessions(startDate:string,endDate:string){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!/^\d{4}-\d{2}-\d{2}$/.test(endDate)||endDate<startDate)return 0;
+  let count=0,d=new Date(`${startDate}T12:00:00Z`),guard=0;
+  while(d.toISOString().slice(0,10)<=endDate&&guard++<10000){if(isNyseSession(d.toISOString().slice(0,10)))count++;d.setUTCDate(d.getUTCDate()+1)}
+  return count;
+}
 
 export function nyClock(isoTimestamp:string){
   const date=new Date(isoTimestamp);if(!Number.isFinite(date.getTime()))throw new Error(`Invalid timestamp: ${isoTimestamp}`);
