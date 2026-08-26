@@ -1,0 +1,29 @@
+name: Re-Audit 2 Phase F Final Integration
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/re-audit2-phasef.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Re-Audit 2 targeted regression
+        run: node --experimental-strip-types --test tests/re-audit2-phasec.test.ts tests/re-audit2-phased.test.ts tests/re-audit2-phasee.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Integrated Pages build
+        run: npm run build:pages
+      - name: Repository remains unchanged by verification
+        run: |
+          git diff --check
+          git diff --exit-code
