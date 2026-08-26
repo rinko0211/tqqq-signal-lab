@@ -7,7 +7,7 @@ const weekdays=(start:string,count:number)=>{const out:string[]=[];const d=new D
 const dates=weekdays("2025-01-02",430);
 const bar=(date:string,close:number)=>({date,open:close*.999,high:close*1.01,low:close*.99,close,adjClose:close,volume:1_000_000});
 const series=(base:number,growth:number)=>dates.map((d,i)=>bar(d,base*Math.pow(1+growth,i)));
-const payload:any={source:"test",retrievedAt:"2026-08-26T21:00:00.000Z",series:{UPRO:series(40,.0012),SSO:series(50,.0008),QLD:series(60,.0009),SPY:series(100,.0004),QQQ:series(120,.0006),VIX:dates.map(d=>bar(d,18))}};
+const payload={source:"test",retrievedAt:"2026-08-26T21:00:00.000Z",series:{UPRO:series(40,.0012),SSO:series(50,.0008),QLD:series(60,.0009),SPY:series(100,.0004),QQQ:series(120,.0006),VIX:dates.map(d=>bar(d,18))}} satisfies Parameters<typeof updatePhase5Ledger>[0];
 
 test("phase5 paper accounts preserve frozen true-forward start and scale capital linearly",()=>{
   const ledger=updatePhase5Ledger(payload,emptyPhase5Ledger("2026-08-25T15:15:00.000Z"),"2026-08-26T21:00:00.000Z");
