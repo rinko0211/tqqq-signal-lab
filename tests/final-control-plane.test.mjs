@@ -109,14 +109,22 @@ test("final certification requires two consecutive clean re-audit rounds",()=>{
   assert.match(reAuditProtocol,/If a material issue is found and fixed during the round, that round is \*\*NOT CLEAN\*\*/);
 });
 
-test("current production config is structurally safe",()=>{
+test("current production config is structurally safe across Research Decision and Production",()=>{
   const cfg=JSON.parse(read("github-pages/public/data/production-config.json"));
   assert.ok(["RESEARCH","DECISION","PRODUCTION"].includes(cfg.mode));
-  if(cfg.mode==="PRODUCTION"){
-    assert.equal(cfg.approvedByHuman,true);
-    assert.ok(cfg.selectedTicker&&cfg.selectedStrategy&&cfg.strategyVersion);
-  }else{
+  const selected=Boolean(cfg.selectedTicker&&cfg.selectedStrategy&&cfg.strategyVersion);
+  if(cfg.mode==="RESEARCH"){
     assert.equal(cfg.approvedByHuman,false);
+    assert.equal(selected,false);
+  }else if(cfg.mode==="PRODUCTION"){
+    assert.equal(cfg.approvedByHuman,true);
+    assert.equal(selected,true);
+  }else if(cfg.approvedByHuman){
+    // An incumbent remains formally active while a new DECISION review is pending.
+    assert.equal(selected,true);
+  }else{
+    // First Production decision: no incumbent exists yet.
+    assert.equal(selected,false);
   }
 });
 
