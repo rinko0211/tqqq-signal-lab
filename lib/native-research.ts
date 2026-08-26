@@ -1,9 +1,9 @@
-import { STRATEGIES, runBacktest, type Metrics, type StrategyConfig } from "./engine.ts";
+import { STRATEGIES, runBacktest, type Bar, type Metrics, type StrategyConfig } from "./engine.ts";
 import { SCREENING, makeCrossTickerDataset, type CrossTicker } from "./cross-ticker.ts";
 import { fixedOos } from "./research.ts";
 
 export const NATIVE_RESEARCH_VERSION = "native-research-1.1.0";
-type Payload={source?:string;retrievedAt?:string;crossSeries?:Record<string,any[]>};
+type Payload={source?:string;retrievedAt?:string;crossSeries?:Record<string,Bar[]>};
 type Family={id:string;name:string;hypothesis:string;config:StrategyConfig;complexity:number;parameter:string;neighbors:StrategyConfig[]};
 export type NativeExperiment={ticker:CrossTicker;family:string;name:string;hypothesis:string;parameter:string;complexity:number;full:Metrics;oos:Metrics;stress25:Metrics;delay2:Metrics;positiveYearShare:number;stable:boolean;gatePassed:boolean;score:number;decision:"CANDIDATE"|"COMMON RETAINED"|"REJECT";reason:string};
 export type NativeTickerResult={ticker:CrossTicker;status:"CANDIDATE SELECTED"|"RESEARCH QUEUE"|"EXCLUDED";commonName:string;nativeCandidate:string|null;version:string|null;hypothesis:string;families:number;experiments:NativeExperiment[]};
@@ -39,13 +39,12 @@ export function nativeResearchBundle(payload:Payload):NativeResearchBundle{
       const full=runBacktest(ds,f.config).metrics,oosRun=fixedOos(ds,f.config),oos=oosRun.metrics,stress25=fixedOos(ds,f.config,{commissionBps:3,slippageBps:22,delay:1}).metrics,delay2=fixedOos(ds,f.config,{commissionBps:3,slippageBps:5,delay:2}).metrics,positiveYearShare=oosRun.yearMetrics.filter(x=>x.metrics.totalReturn>0).length/Math.max(1,oosRun.yearMetrics.length);
       return{ticker,family:f.id,name:f.name,hypothesis:f.hypothesis,parameter:f.parameter,complexity:f.complexity,full,oos,stress25,delay2,positiveYearShare,stable:true,gatePassed:false,score:boundedScore(oos,f.complexity),decision:"REJECT" as const,reason:"候補比較中"};
     }).sort((a,b)=>b.score-a.score);
-    let best:NativeExperiment|undefined;
     for(const candidate of experiments){
       const definition=definitions.find(x=>x.id===candidate.family)!;
       candidate.stable=!definition.neighbors.length||definition.neighbors.every(n=>{const m=fixedOos(ds,n).metrics;return m.calmar>=candidate.oos.calmar*.80&&m.cagr>=candidate.oos.cagr*.80&&m.maxDd>=candidate.oos.maxDd-.07});
       candidate.gatePassed=candidate.stable&&candidate.oos.ordersPerYear>=3&&candidate.oos.ordersPerYear<=20&&candidate.oos.calmar>0&&candidate.stress25.cagr>0&&candidate.delay2.cagr>0&&candidate.positiveYearShare>=.5;
     }
-    best=experiments.find(x=>x.gatePassed);
+    const best=experiments.find(x=>x.gatePassed);
     const common=experiments.find(x=>x.family==="shield")!;
     if(best){best.decision=best.family===common.family?"COMMON RETAINED":"CANDIDATE";best.reason=best.family===common.family?"Common VS13を上回る独立Native優位がなく、新Versionは作らない":"OOS、年別再現性、近傍安定性、25bpsコスト、T+2遅延、注文数、複雑性Gateを通過"}
     for(const x of experiments)if(x!==best)x.reason=!x.stable?"Parameter plateau不合格":!x.gatePassed?"OOS・年別安定・Stress・執行遅延Gateのいずれかに不合格":x.complexity>0&&x.score<=common.score?"複雑性に見合うOOS改善なし":"複合Scoreで選抜候補に届かず";
