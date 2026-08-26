@@ -44,4 +44,4 @@ jobs:
         run: node --test tests/rendered-html.test.mjs tests/deployment.test.mjs
       - name: Integrated Pages build
         run: npm run build:pages
-      # Read-only acceptance after atomic Human Approval hardening; never mutates Forward/Production state.
+      # Authoritative read-only acceptance on the fully hardened control plane.
