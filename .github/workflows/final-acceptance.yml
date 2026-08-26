@@ -41,19 +41,31 @@ jobs:
           if(lifecycle.current.candidateReviews.length!==4) throw Error('Lifecycle frontier must contain incumbent + 3 Phase 5 candidates');
           console.log('Current autonomous state PASS');
           NODE
-      - name: Audit scheduled workflow surface
+      - name: Audit execution causality and stale-review UI guards
+        run: |
+          grep -q 'earliestLegalExecutionDate(latest.date,generatedAt)' scripts/generate-daily.ts
+          grep -q 'signal.executionDate || nextExecutionDate(signal.date)' app/page.tsx
+          grep -q 'REVIEW_STALE_MS=48' app/lifecycle-ui.tsx
+          grep -q 'Lifecycle Reviewが48時間以上更新されていません' app/lifecycle-ui.tsx
+          echo "Live execution causality and stale-review guards PASS"
+      - name: Audit scheduled workflow surface and recovery cadence
         run: |
           python3 - <<'PY'
           from pathlib import Path
           scheduled=[]
+          counts={}
           for p in Path('.github/workflows').glob('*.yml'):
               text=p.read_text()
-              if '- cron:' in text:
-                  scheduled.append(p.name)
+              n=text.count('- cron:')
+              if n:
+                  scheduled.append(p.name); counts[p.name]=n
           expected={'daily-signal.yml','phase5-forward.yml','lifecycle-review.yml'}
           if set(scheduled)!=expected:
               raise SystemExit(f'Unexpected scheduled workflows: {scheduled}; expected {sorted(expected)}')
-          print('Scheduled workflow surface PASS:', sorted(scheduled))
+          expected_counts={'daily-signal.yml':2,'phase5-forward.yml':2,'lifecycle-review.yml':1}
+          if counts!=expected_counts:
+              raise SystemExit(f'Unexpected cron counts: {counts}; expected {expected_counts}')
+          print('Scheduled workflow surface PASS:', counts)
           PY
       - name: Audit frozen historical research workflows
         run: |
@@ -63,6 +75,12 @@ jobs:
             ! grep -q '^  push:' ".github/workflows/$f"
           done
           echo "Historical/legacy workflows are manual-only"
+      - name: Audit daily operational test isolation
+        run: |
+          grep -q '"test:ops"' package.json
+          grep -q 'npm run test:ops' .github/workflows/daily-signal.yml
+          ! grep -q 'npm run test:core' .github/workflows/daily-signal.yml
+          echo "Daily workflow uses focused operational regression suite"
       - name: Audit public-data cache policy
         run: |
           grep -q '/data/' github-pages/public/sw.js
