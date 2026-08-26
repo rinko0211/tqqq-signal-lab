@@ -12,6 +12,12 @@ type Payload={source?:string;retrievedAt?:string;crossSeries?:Record<string,Bar[
 type M=Pick<Metrics,"cagr"|"totalReturn"|"annualizedVolatility"|"sharpe"|"sortino"|"maxDd"|"calmar"|"ulcerIndex"|"exposure"|"timeInCash">&{actionDaysPerYear:number};
 type D={date:string;dailyReturn:number;position:number};
 type FamilyDef={id:Phase3Family;name:string;hypothesis:string;complexity:number;config:(row:ScreeningRow)=>StrategyConfig;neighbors:(row:ScreeningRow)=>StrategyConfig[]};
+type Phase3Year={year:number;metrics:M};
+type Phase3Row={
+  ticker:CrossTicker;underlying:ScreeningRow["underlying"];leverage:ScreeningRow["leverage"];family:Phase3Family;name:string;hypothesis:string;complexity:number;incumbent:boolean;
+  oos:M;stress25:M;delay2:M;parameterNeighborhood:{label:string;metrics:M}[];stabilityFloor:number;yearly:Phase3Year[];maxYearActionDays:number;
+  regimes:{id:string;start:string;end:string;metrics:M}[];absoluteRobustness:boolean;noSevereRegression:boolean;materialValue:boolean;gatePassed:boolean;score:number;
+};
 
 const OOS_START="2020-01-02";
 const lev=(r:ScreeningRow)=>r.leverage.startsWith("2")?2:3;
@@ -76,7 +82,7 @@ const score=(m:M,stability:number,complexity:number)=>.32*m.calmar+.24*m.sortino
 
 export function phase3Bundle(payload:Payload,group:Phase3Group){
   const tickers:CrossTicker[]=group==="NASDAQ"?["TQQQ","QLD"]:["UPRO","SSO"];
-  const defs=familyDefs(group),rows:any[]=[];
+  const defs=familyDefs(group),rows:Phase3Row[]=[];
   for(const ticker of tickers){
     const row=SCREENING.find(x=>x.ticker===ticker)!;
     const ds=makeCrossTickerDataset(payload,row,PHASE1_COMMON_START);
@@ -86,7 +92,7 @@ export function phase3Bundle(payload:Payload,group:Phase3Group){
       const r=run(ds,f.config(row)),stress25=run(ds,f.config(row),25,1),delay2=run(ds,f.config(row),8,2);
       const neigh=f.neighbors(row).map((c,i)=>({label:i===0?"LOW":"HIGH",metrics:run(ds,c).metrics}));
       const stabilityFloor=Math.min(...neigh.map(x=>x.metrics.calmar))/Math.max(Math.abs(r.metrics.calmar),1e-9);
-      const yearly=[] as any[];for(let y=2020;y<=2026;y++){const a=`${y}-01-01`,b=`${y}-12-31`,m=sliceMetrics(r.daily,a,b);const n=r.daily.filter(x=>x.date>=a&&x.date<=b).length;if(n>=20)yearly.push({year:y,metrics:m});}
+      const yearly:Phase3Year[]=[];for(let y=2020;y<=2026;y++){const a=`${y}-01-01`,b=`${y}-12-31`,m=sliceMetrics(r.daily,a,b);const n=r.daily.filter(x=>x.date>=a&&x.date<=b).length;if(n>=20)yearly.push({year:y,metrics:m});}
       const maxYearActionDays=Math.max(0,...yearly.map(x=>x.metrics.actionDaysPerYear));
       const regimes=windows.map(w=>({id:w.id,start:w.start,end:w.end,metrics:sliceMetrics(r.daily,w.start,w.end)}));
       const absolute=r.metrics.cagr>0&&r.metrics.calmar>0&&stress25.metrics.cagr>0&&delay2.metrics.cagr>0&&r.metrics.actionDaysPerYear<=40&&maxYearActionDays<=40&&stabilityFloor>=.75;

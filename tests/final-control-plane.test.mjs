@@ -8,8 +8,6 @@ const workflowsDir=".github/workflows";
 const workflowFiles=fs.readdirSync(workflowsDir).filter(x=>x.endsWith(".yml")).sort();
 const workflow=(name)=>read(path.join(workflowsDir,name));
 const daily=workflow("daily-signal.yml");
-const phase5=workflow("phase5-forward.yml");
-const lifecycle=workflow("lifecycle-review.yml");
 const approval=workflow("approve-production.yml");
 const approveScript=read("scripts/approve-production.ts");
 const production=read("lib/production.ts");

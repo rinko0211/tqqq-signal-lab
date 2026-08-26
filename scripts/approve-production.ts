@@ -1,5 +1,5 @@
 import{readFile,mkdir,writeFile}from"node:fs/promises";
-import{DEFAULT_PRODUCTION_CONFIG,cancelDecision,hasActiveProduction,transitionMode,type ProductionConfig,type PlatformMode}from"../lib/production.ts";
+import{DEFAULT_PRODUCTION_CONFIG,cancelDecision,hasActiveProduction,transitionMode,type ProductionConfig}from"../lib/production.ts";
 import{productionEligibleVersions,type LifecycleLedger}from"../lib/lifecycle-review.ts";
 import{lifecycleReviewIsFresh}from"../lib/lifecycle-approval.ts";
 const action=process.env.MODE||"DECISION",confirmation=process.env.CONFIRMATION||"";

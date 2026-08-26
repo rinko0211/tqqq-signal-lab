@@ -18,6 +18,14 @@ type SeriesRun = {
   metrics: Phase2Metrics;
   daily: { date: string; dailyReturn: number; position: number }[];
 };
+type Phase2Year={year:number;metrics:Phase2Metrics};
+type Phase2Row={
+  ticker:CrossTicker;underlying:ScreeningRow["underlying"];leverage:ScreeningRow["leverage"];family:Phase15Family;
+  full:Phase2Metrics;oos:Phase2Metrics;walkForwardYears:Phase2Year[];
+  costStress:{costBps:number;metrics:Phase2Metrics}[];delayStress:{delay:number;metrics:Phase2Metrics}[];
+  regime:{id:string;label:string;start:string;end:string;metrics:Phase2Metrics}[];
+  parameterNeighborhood:{label:string;metrics:Phase2Metrics}[];stabilityFloor:number;robust:boolean;operationalCapPassed:boolean;
+};
 
 const leverageNumber = (row: ScreeningRow) => row.leverage.startsWith("2") ? 2 : 3;
 const subMetrics = (m: Metrics, actionDaysPerYear = m.ordersPerYear): Phase2Metrics => ({
@@ -87,12 +95,12 @@ const windows=[
 
 export function phase2Bundle(payload:Payload){
   const datasets=CORE_TICKERS.flatMap(ticker=>{const row=SCREENING.find(x=>x.ticker===ticker);if(!row)return[];const ds=makeCrossTickerDataset(payload,row,PHASE1_COMMON_START);return ds?[{row,ds}]:[]});
-  const rows=[] as any[];
+  const rows:Phase2Row[]=[];
   for(const {row,ds} of datasets){
     for(const family of FAMILIES){
       const base=runFamily(ds,family,row);
       const oos=runFamily(ds,family,row,{activeFrom:OOS_START});
-      const years=[] as any[];
+      const years:Phase2Year[]=[];
       for(let year=2020;year<=2026;year++){
         const start=`${year}-01-01`,end=`${year}-12-31`;
         const d=oos.daily.filter(x=>x.date>=start&&x.date<=end);

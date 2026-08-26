@@ -5,7 +5,7 @@ import { phase2StressBundle } from "../lib/phase2-stress.ts";
 import { type Bar } from "../lib/engine.ts";
 
 const mk=(ticker:string,mult:number,underMult=1):Bar[]=>{
-  const out:Bar[]=[];let p=100*mult,u=100*underMult;
+  const out:Bar[]=[];let p=100*mult;
   const start=new Date("2016-08-22T00:00:00Z");
   // Keep the synthetic fixture intentionally small while still long enough
   // for 200DMA and the 2020+ OOS partition. This is a structure/invariant
@@ -14,7 +14,7 @@ const mk=(ticker:string,mult:number,underMult=1):Bar[]=>{
     const d=new Date(start);d.setUTCDate(d.getUTCDate()+i);
     if([0,6].includes(d.getUTCDay()))continue;
     const r=.0004+.004*Math.sin(i/23);
-    u*=1+r;p*=1+r*mult/underMult;
+    p*=1+r*mult/underMult;
     const date=d.toISOString().slice(0,10);
     out.push({date,open:p*.999,high:p*1.01,low:p*.99,close:p,adjClose:p,volume:1_000_000});
   }

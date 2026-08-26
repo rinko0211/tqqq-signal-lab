@@ -8,7 +8,7 @@ import {compareCandidateToIncumbent} from "../lib/forward-pareto.ts";
 import {emptyPhase5Ledger,type Phase5Record} from "../lib/phase5-forward.ts";
 import {emptyForwardLedger,type ForwardRecord} from "../lib/forward.ts";
 
-const rec=(version:string,date:string,r:number,dd=0,position=.75,execution:any=null):any=>({key:`${version}|${date}`,marketDataDate:date,recordedAt:`${date}T22:00:00Z`,recordMode:"LIVE",strategyId:"UPRO_SPBT",ticker:"UPRO",strategyName:"x",strategyVersion:version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:"弱い上昇",targetExposure:position,previousExposure:position,signal:"HOLD",tradeReason:"x",intendedExecutionDate:date,execution,assetClose:100,position,quantity:1,cash:0,equity:1,dailyReturn:r,currentDrawdown:dd,cumulativeCosts:0,dataSource:"test",dataStatus:"VALID",buildVersion:"test"});
+const rec=(version:string,date:string,r:number,dd=0,position=.75,execution:Phase5Record["execution"]|ForwardRecord["execution"]=null)=>({key:`${version}|${date}`,marketDataDate:date,recordedAt:`${date}T22:00:00Z`,recordMode:"LIVE",strategyId:"UPRO_SPBT",ticker:"UPRO",strategyName:"x",strategyVersion:version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:"弱い上昇",targetExposure:position,previousExposure:position,signal:"HOLD",tradeReason:"x",intendedExecutionDate:date,execution,assetClose:100,position,quantity:1,cash:0,equity:1,dailyReturn:r,currentDrawdown:dd,cumulativeCosts:0,dataSource:"test",dataStatus:"VALID",buildVersion:"test"});
 const sessions=(start:string,count:number)=>{const out:string[]=[],d=new Date(`${start}T12:00:00Z`);while(out.length<count){const date=d.toISOString().slice(0,10);if(isNyseSession(date))out.push(date);d.setUTCDate(d.getUTCDate()+1)}return out};
 
 test("NYSE calendar handles 2026 holidays and historical Juneteenth correctly",()=>{
@@ -63,7 +63,7 @@ test("common-period Pareto identifies strict incumbent dominance without scalar 
   const p=emptyPhase5Ledger("2026-01-01T00:00:00Z"),f=emptyForwardLedger("2026-01-01T00:00:00Z");p.records=[];f.records=[];
   for(const date of sessions("2026-01-05",70)){
     p.records.push(rec("UPRO-SPBT-v1.0",date,.0002) as Phase5Record);
-    const x=rec("VS13-v1.0",date,.0004) as ForwardRecord;x.strategyId="VS13";delete (x as any).ticker;f.records.push(x);
+    const x=rec("VS13-v1.0",date,.0004) as ForwardRecord;x.strategyId="VS13";Reflect.deleteProperty(x as object,"ticker");f.records.push(x);
   }
   const c=compareCandidateToIncumbent(p,f,"UPRO-SPBT-v1.0");assert.equal(c.commonDays>=63,true);assert.equal(c.merit,"DOMINATED_BY_INCUMBENT");
 });
@@ -73,7 +73,7 @@ test("Pareto restarts its common period after the latest missing NYSE session",(
   const dates=sessions("2026-01-05",90),missing=dates[50];
   for(const date of dates){
     if(date!==missing)p.records.push(rec("UPRO-SPBT-v1.0",date,.0003) as Phase5Record);
-    const x=rec("VS13-v1.0",date,.0004) as ForwardRecord;x.strategyId="VS13";delete (x as any).ticker;f.records.push(x);
+    const x=rec("VS13-v1.0",date,.0004) as ForwardRecord;x.strategyId="VS13";Reflect.deleteProperty(x as object,"ticker");f.records.push(x);
   }
   const c=compareCandidateToIncumbent(p,f,"UPRO-SPBT-v1.0");
   assert.equal(c.commonDays,39);
