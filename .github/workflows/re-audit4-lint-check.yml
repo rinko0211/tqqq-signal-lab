@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
     paths:
+      - "lib/**"
+      - "scripts/**"
+      - "tests/**"
       - ".github/workflows/re-audit4-lint-check.yml"
 permissions:
   contents: read
