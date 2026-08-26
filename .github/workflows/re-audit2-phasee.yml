@@ -1,0 +1,28 @@
+name: Re-Audit 2 Phase E Workflow Reliability
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tests/re-audit2-phasee.test.ts"
+      - ".github/workflows/re-audit2-phasee.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Workflow and recovery invariants
+        run: node --experimental-strip-types --test tests/re-audit2-phasee.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Integrated Pages build
+        run: npm run build:pages
+      - name: Verify audit made no runtime changes
+        run: git diff --exit-code
