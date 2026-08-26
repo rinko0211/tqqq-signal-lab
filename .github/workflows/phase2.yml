@@ -1,16 +1,6 @@
 name: Phase 2 Robustness Validation
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "lib/phase2-core.ts"
-      - "lib/phase2-stress.ts"
-      - "scripts/generate-phase2-core.ts"
-      - "scripts/generate-phase2-stress.ts"
-      - "tests/phase2.test.ts"
-      - "package.json"
-      - ".github/workflows/phase2.yml"
 permissions:
   contents: write
 concurrency:
