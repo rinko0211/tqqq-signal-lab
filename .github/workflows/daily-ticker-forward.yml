@@ -1,11 +1,6 @@
-name: Daily UPRO Forward
+name: Legacy UPRO Forward
 on:
-  schedule:
-    - cron: "15 23 * * 1-5"
   workflow_dispatch:
-  push:
-    paths:
-      - ".github/workflows/daily-ticker-forward.yml"
 permissions:
   contents: write
 concurrency:
@@ -23,19 +18,19 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Generate isolated UPRO Forward record
+      - name: Generate isolated legacy UPRO Forward record
         run: npm run generate:ticker-forward
       - name: Run integrity tests
         run: npm run test:core
-      - name: Persist append-only Track B ledger
+      - name: Persist append-only legacy Track B ledger
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add github-pages/public/data/ticker-forward-ledger.json github-pages/public/data/ticker-forward-status.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update daily UPRO forward"
+            git commit -m "Update legacy UPRO forward"
             git pull --rebase origin main
             git push
           fi
-      # The data commit triggers Daily TQQQ Signal, which owns the single Pages
-      # deployment path. UPRO failure therefore cannot cancel the daily signal.
+      # Historical Track B is retained for auditability, but Phase 5 SPBT is the
+      # active S&P challenger path. This workflow no longer consumes daily resources.
