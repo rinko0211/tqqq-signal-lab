@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-26T01:48:11.597Z",
+  "generatedAt": "2026-08-26T02:44:52.325Z",
   "status": "success",
   "forwardStart": "2026-08-25",
   "latestDates": {
     "UPRO": "2026-08-25",
     "SSO": "2026-08-25",
     "QLD": "2026-08-25",
-    "SPY": "2026-08-24",
-    "QQQ": "2026-08-24",
+    "SPY": "2026-08-25",
+    "QQQ": "2026-08-25",
     "VIX": "2026-08-25"
   },
   "summary": [
@@ -15,8 +15,8 @@
       "version": "UPRO-SPBT-v1.0",
       "ticker": "UPRO",
       "role": "PRIMARY_CHALLENGER",
-      "observations": 0,
-      "liveObservations": 0,
+      "observations": 1,
+      "liveObservations": 1,
       "missing": 0,
       "executions": 0,
       "actionDays": 0,
@@ -41,7 +41,7 @@
         "expectancy": 0,
         "ulcerIndex": 0,
         "exposure": 0,
-        "timeInCash": 0,
+        "timeInCash": 1,
         "recoveryDays": null,
         "maxLossStreak": 0,
         "entries": 0,
@@ -53,14 +53,14 @@
         "ordersPerYear": 0
       },
       "evidence": "INSUFFICIENT",
-      "status": "AWAITING_FIRST_BAR"
+      "status": "FORWARD_ACTIVE"
     },
     {
       "version": "SSO-SPBT-Scaled-v1.0",
       "ticker": "SSO",
       "role": "S&P_LEVERAGE_CONTROL",
-      "observations": 0,
-      "liveObservations": 0,
+      "observations": 1,
+      "liveObservations": 1,
       "missing": 0,
       "executions": 0,
       "actionDays": 0,
@@ -85,7 +85,7 @@
         "expectancy": 0,
         "ulcerIndex": 0,
         "exposure": 0,
-        "timeInCash": 0,
+        "timeInCash": 1,
         "recoveryDays": null,
         "maxLossStreak": 0,
         "entries": 0,
@@ -97,14 +97,14 @@
         "ordersPerYear": 0
       },
       "evidence": "INSUFFICIENT",
-      "status": "AWAITING_FIRST_BAR"
+      "status": "FORWARD_ACTIVE"
     },
     {
       "version": "QLD-VS13-Scaled-v1.0",
       "ticker": "QLD",
       "role": "NASDAQ_BALANCED_CONTROL",
-      "observations": 0,
-      "liveObservations": 0,
+      "observations": 1,
+      "liveObservations": 1,
       "missing": 0,
       "executions": 0,
       "actionDays": 0,
@@ -129,7 +129,7 @@
         "expectancy": 0,
         "ulcerIndex": 0,
         "exposure": 0,
-        "timeInCash": 0,
+        "timeInCash": 1,
         "recoveryDays": null,
         "maxLossStreak": 0,
         "entries": 0,
@@ -141,10 +141,10 @@
         "ordersPerYear": 0
       },
       "evidence": "INSUFFICIENT",
-      "status": "AWAITING_FIRST_BAR"
+      "status": "FORWARD_ACTIVE"
     }
   ],
-  "records": 0,
-  "buildVersion": "a5f6df620156",
+  "records": 3,
+  "buildVersion": "755bffb5b616",
   "errors": []
 }
