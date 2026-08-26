@@ -4,6 +4,17 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/re-audit4-remediation.yml"
+      - ".github/workflows/daily-signal.yml"
+      - ".github/workflows/phase5-forward.yml"
+      - ".github/workflows/lifecycle-review.yml"
+      - ".github/workflows/approve-production.yml"
+      - "app/phase5-ui.tsx"
+      - "app/lifecycle-ui.tsx"
+      - "lib/forward.ts"
+      - "tests/final-control-plane.test.mjs"
+      - "tests/re-audit4-recurring-failures.test.ts"
+      - "tests/corporate-action-ledger.test.ts"
+      - "package.json"
   workflow_dispatch:
 permissions:
   contents: read
