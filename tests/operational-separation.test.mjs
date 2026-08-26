@@ -33,11 +33,14 @@ test("Daily uses shared NYSE calendar",()=>{
   assert.doesNotMatch(daily,/const nthWeekday=/);
 });
 
-test("primary Production state is driven by platform mode and human approval",()=>{
+test("primary Production state preserves approved Production during Decision review",()=>{
   const start=page.indexOf("function SignalView(");
   assert.ok(start>=0,"SignalView must exist");
   const signalView=page.slice(start);
-  assert.match(signalView,/platformMode==="PRODUCTION"&&humanApproved/);
+  assert.match(signalView,/activeProduction=humanApproved&&platformMode!=="RESEARCH"/);
+  assert.match(signalView,/decisionPending=activeProduction&&platformMode==="DECISION"/);
+  assert.match(signalView,/正式Production継続中 · Decision Review Pending/);
+  assert.doesNotMatch(signalView,/platformMode==="PRODUCTION"&&humanApproved\?"ok":"warn"/);
   assert.doesNotMatch(signalView,/holdoutMetrics/);
 });
 
