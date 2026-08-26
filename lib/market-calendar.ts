@@ -1,6 +1,7 @@
 const NY_ZONE="America/New_York";
 const OPEN_MINUTES=9*60+30;
 const CLOSE_MINUTES=16*60;
+const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 
 const nthWeekday=(year:number,month:number,weekday:number,n:number)=>{const d=new Date(Date.UTC(year,month,1));while(d.getUTCDay()!==weekday)d.setUTCDate(d.getUTCDate()+1);d.setUTCDate(d.getUTCDate()+7*(n-1));return d.toISOString().slice(0,10)};
 const lastWeekday=(year:number,month:number,weekday:number)=>{const d=new Date(Date.UTC(year,month+1,0));while(d.getUTCDay()!==weekday)d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10)};
@@ -13,10 +14,10 @@ export function isNyseHoliday(date:string){
   if(y>=2022)holidays.push(observed(y,5,19));
   return new Set(holidays).has(date);
 }
-export function isNyseSession(date:string){const d=new Date(`${date}T12:00:00Z`);return ![0,6].includes(d.getUTCDay())&&!isNyseHoliday(date)}
+export function isNyseSession(date:string){const d=new Date(`${date}T12:00:00Z`);return DATE_RE.test(date)&&Number.isFinite(d.getTime())&&![0,6].includes(d.getUTCDay())&&!isNyseHoliday(date)}
 export function nextNyseSession(date:string,delay=1){const d=new Date(`${date}T12:00:00Z`);for(let n=0;n<delay;n++){do d.setUTCDate(d.getUTCDate()+1);while(!isNyseSession(d.toISOString().slice(0,10)))}return d.toISOString().slice(0,10)}
 export function countNyseSessions(startDate:string,endDate:string){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!/^\d{4}-\d{2}-\d{2}$/.test(endDate)||endDate<startDate)return 0;
+  if(!DATE_RE.test(startDate)||!DATE_RE.test(endDate)||endDate<startDate)return 0;
   let count=0,guard=0;const d=new Date(`${startDate}T12:00:00Z`);
   while(d.toISOString().slice(0,10)<=endDate&&guard++<10000){if(isNyseSession(d.toISOString().slice(0,10)))count++;d.setUTCDate(d.getUTCDate()+1)}
   return count;
@@ -27,6 +28,46 @@ export function nyClock(isoTimestamp:string){
   const parts=new Intl.DateTimeFormat("en-US",{timeZone:NY_ZONE,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(date);
   const get=(t:Intl.DateTimeFormatPartTypes)=>parts.find(p=>p.type===t)?.value||"";
   return{localDate:`${get("year")}-${get("month")}-${get("day")}`,minutes:Number(get("hour"))*60+Number(get("minute"))};
+}
+
+export function marketDate(now=new Date().toISOString()){return nyClock(now).localDate}
+
+/**
+ * Formal lifecycle review dates are US-market dates, not UTC dates. A named
+ * NYSE session is not review-complete until its core close has passed.
+ * Early-close days are deliberately treated as incomplete until 16:00 ET;
+ * this is conservative (late), never an early gate.
+ */
+export function nyseReviewBoundaryReached(reviewDate:string,now=new Date().toISOString()){
+  if(!DATE_RE.test(reviewDate))return false;
+  const clock=nyClock(now);
+  if(clock.localDate>reviewDate)return true;
+  if(clock.localDate<reviewDate)return false;
+  return !isNyseSession(reviewDate)||clock.minutes>=CLOSE_MINUTES;
+}
+
+export type NyseExecutionWindow="UPCOMING_OPEN"|"OPEN_PASSED"|"INVALID_SESSION";
+export function nyseExecutionWindow(executionDate:string,now=new Date().toISOString()):NyseExecutionWindow{
+  if(!DATE_RE.test(executionDate)||!isNyseSession(executionDate))return"INVALID_SESSION";
+  const clock=nyClock(now);
+  if(clock.localDate<executionDate)return"UPCOMING_OPEN";
+  if(clock.localDate>executionDate)return"OPEN_PASSED";
+  return clock.minutes<OPEN_MINUTES?"UPCOMING_OPEN":"OPEN_PASSED";
+}
+
+/**
+ * Daily OHLC bars may be returned by a provider while the current session is
+ * still trading. Current/future New York dates are rejected until 16:15 ET.
+ * The 15-minute grace is intentionally conservative and also makes scheduled
+ * early-close days safe even though their exact 13:00 close is not modeled.
+ */
+export function dailyBarIsComplete(barDate:string,now=new Date().toISOString(),graceMinutes=15){
+  if(!DATE_RE.test(barDate)||graceMinutes<0)return false;
+  const clock=nyClock(now);
+  if(barDate<clock.localDate)return true;
+  if(barDate>clock.localDate)return false;
+  if(!isNyseSession(barDate))return false;
+  return clock.minutes>=CLOSE_MINUTES+graceMinutes;
 }
 
 export function earliestLegalNyseOpen(signalDate:string,recordedAt:string){
