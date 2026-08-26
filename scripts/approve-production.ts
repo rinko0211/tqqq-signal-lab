@@ -1,7 +1,8 @@
 import{readFile,mkdir,writeFile}from"node:fs/promises";
 import{DEFAULT_PRODUCTION_CONFIG,cancelDecision,hasActiveProduction,transitionMode,type ProductionConfig}from"../lib/production.ts";
 import{productionEligibleVersions,type LifecycleLedger}from"../lib/lifecycle-review.ts";
-import{lifecycleReviewIsFresh}from"../lib/lifecycle-approval.ts";
+import{lifecycleReviewCoversUpstreams,lifecycleReviewIsFresh}from"../lib/lifecycle-approval.ts";
+import{marketDate}from"../lib/market-calendar.ts";
 const action=process.env.MODE||"DECISION",confirmation=process.env.CONFIRMATION||"";
 const root=new URL("../github-pages/public/data/",import.meta.url),path=new URL("production-config.json",root);let current:ProductionConfig=DEFAULT_PRODUCTION_CONFIG;
 try{current=JSON.parse(await readFile(path,"utf8"))}catch{}
@@ -16,13 +17,16 @@ if(action==="CANCEL_DECISION"){
   const ticker=process.env.TICKER||"",system=process.env.STRATEGY||"",version=process.env.VERSION||"";
   if(!ticker||!system||!version)throw Error("Ticker, strategy and version are required");
   let lifecycle:LifecycleLedger;
+  let runtimeStatus:{generatedAt?:string},phase5Status:{generatedAt?:string};
   try{lifecycle=JSON.parse(await readFile(new URL("lifecycle-review.json",root),"utf8"))}catch{throw Error("LIFECYCLE-001: autonomous lifecycle review is missing")}
+  try{runtimeStatus=JSON.parse(await readFile(new URL("status.json",root),"utf8"));phase5Status=JSON.parse(await readFile(new URL("phase-5-forward-status.json",root),"utf8"))}catch{throw Error("LIFECYCLE-006: authoritative upstream status is missing; refresh Daily/Phase5/Lifecycle before Production approval")}
   if(!lifecycleReviewIsFresh(lifecycle))throw Error("LIFECYCLE-005: autonomous lifecycle review is stale or has an invalid timestamp; run a current review before Production approval");
+  if(!lifecycleReviewCoversUpstreams(lifecycle,[runtimeStatus.generatedAt,phase5Status.generatedAt]))throw Error("LIFECYCLE-006: lifecycle review predates a current upstream status; refresh Lifecycle immediately before Production approval");
   if(lifecycle.current.stage!=="FORMAL"&&lifecycle.current.stage!=="STRONGER")throw Error("LIFECYCLE-002: Production is blocked before the formal Forward review");
   if(lifecycle.current.systemDecision!=="PHASE6_HUMAN_DECISION_REQUIRED")throw Error(`LIFECYCLE-003: current review state is ${lifecycle.current.systemDecision}; Production approval is blocked`);
   const eligible=productionEligibleVersions(lifecycle);
   if(!eligible.includes(version))throw Error(`LIFECYCLE-004: ${version} is not eligible in the current Phase 6 review`);
-  next=transitionMode(current,"PRODUCTION",{ticker,system,version,date:new Date().toISOString().slice(0,10),evidence:"Strong",finalReviewComplete:true});
+  next=transitionMode(current,"PRODUCTION",{ticker,system,version,date:marketDate(),evidence:"Strong",finalReviewComplete:true});
 }else if(action==="DECISION"){
   next=transitionMode(current,"DECISION");
 }else{
