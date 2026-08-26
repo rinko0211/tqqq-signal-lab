@@ -1,0 +1,44 @@
+name: Re-Audit 3 Clean Round
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/re-audit3-clean-round.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Permanent targeted reliability regression
+        run: node --experimental-strip-types --test tests/re-audit2-phasec.test.ts tests/re-audit2-phased.test.ts tests/re-audit2-phasee.test.ts tests/production-lifecycle.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs
+      - name: Full core regression
+        run: npm run test:core
+      - name: Validate current authoritative state is non-promoted and internally coherent
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const root='github-pages/public/data/';
+          const production=JSON.parse(fs.readFileSync(root+'production-config.json','utf8'));
+          const lifecycle=JSON.parse(fs.readFileSync(root+'lifecycle-review.json','utf8'));
+          const status=JSON.parse(fs.readFileSync(root+'status.json','utf8'));
+          if(production.mode==='PRODUCTION' || production.approvedByHuman) throw new Error('Audit must not observe an automatic Production promotion');
+          if(!lifecycle.appendOnly) throw new Error('Lifecycle ledger is not append-only');
+          if(!lifecycle.current || !Array.isArray(lifecycle.current.candidateReviews)) throw new Error('Lifecycle current state is malformed');
+          if(lifecycle.current.candidateReviews.some(x=>x.promotionSelectable && !x.eligible)) throw new Error('Production-selectable candidate is not operationally eligible');
+          if(status.actionStatus!=='success') throw new Error('Current Daily authoritative status is not successful');
+          if(status.errors?.length) throw new Error('Current Daily authoritative status contains errors');
+          NODE
+      - name: Integrated Pages build
+        run: npm run build:pages
+      - name: Verification must not mutate repository/runtime state
+        run: |
+          git diff --check
+          git diff --exit-code
