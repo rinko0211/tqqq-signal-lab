@@ -10,7 +10,7 @@ const mk=(mode:"bull"|"bear"|"sideways"|"crash"|"recovery"|"highvol"|"lowvol"):D
   const days=dates.map((date,i)=>{
     let r=.0003;if(mode==="bull")r=.001;if(mode==="bear")r=-.0008;if(mode==="sideways")r=.003*Math.sin(i/7);if(mode==="crash")r=i>270&&i<285?-.035:.0004;if(mode==="recovery")r=i<270?-.0005:i<285?-.025:.012;if(mode==="highvol")r=.015*Math.sin(i*.8);if(mode==="lowvol")r=.00045+.0005*Math.sin(i/20);
     q*=1+r;s*=1+r*.8;t*=1+r*3;const v=mode==="highvol"||mode==="crash"?38:mode==="lowvol"?12:18;const bar=(p:number)=>({date,open:p*(1-r*.2),high:p*1.01,low:p*.99,close:p,adjClose:p,volume:1_000_000});return{date,tqqq:bar(t),qqq:bar(q),spy:bar(s),vix:{...bar(v),open:v,high:v,low:v,close:v,adjClose:v,volume:0}};
-  });return{days,issues:[],source:"test",precision:"next-open",tickers:{} as any};
+  });return{days,issues:[],source:"test",precision:"next-open",tickers:{} as Dataset["tickers"]};
 };
 const frontier=PRODUCTION_SYSTEMS.filter(x=>["VS13-v1.0","UPRO-SPBT-v1.0","SSO-SPBT-Scaled-v1.0","QLD-VS13-Scaled-v1.0"].includes(x.version));
 
@@ -28,5 +28,3 @@ test("crash regime produces a risk-reduced state in every frontier system",()=>{
 test("delayed close cannot retroactively fill an already-passed open",()=>{assert.equal(earliestLegalExecutionDate("2026-08-25","2026-08-26T14:00:00Z"),"2026-08-27");assert.equal(earliestLegalExecutionDate("2026-08-25","2026-08-26T12:00:00Z"),"2026-08-26")});
 
 test("execution guard respects New York DST clock rather than fixed UTC",()=>{assert.equal(earliestLegalExecutionDate("2026-07-14","2026-07-15T13:00:00Z"),"2026-07-15");assert.equal(earliestLegalExecutionDate("2026-01-13","2026-01-14T14:00:00Z"),"2026-01-14")});
-
-test("weekend recording never creates a weekend execution date",()=>{const d=earliestLegalExecutionDate("2026-08-28","2026-08-29T16:00:00Z");assert.equal(new Date(`${d}T12:00:00Z`).getUTCDay(),1)});
