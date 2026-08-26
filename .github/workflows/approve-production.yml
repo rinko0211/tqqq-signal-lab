@@ -30,13 +30,17 @@ jobs:
   approve:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Serialize the approval preflight/commit with all three operational writers.
+    concurrency:
+      group: daily-signal-pages
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
         with: {ref: main}
       - uses: actions/setup-node@v7
         with: {node-version: 22, cache: npm}
       - run: npm ci
-      - name: Record explicit human decision
+      - name: Record explicit human decision locally
         env:
           MODE: ${{ inputs.mode }}
           TICKER: ${{ inputs.ticker }}
@@ -44,19 +48,29 @@ jobs:
           VERSION: ${{ inputs.version }}
           CONFIRMATION: ${{ inputs.confirmation }}
         run: npm run approve:production
-      - run: npm run test:core
-      - name: Persist production config
+      - name: Full policy/configuration regression before persistence
+        run: npm run test:core
+      - name: Preflight the exact approved operational state
+        run: |
+          npm run generate:daily
+          test ! -s github-pages/public/data/.failed
+          npm run test:ops
+          npm run build:pages
+      - name: Atomically persist approval and validated live state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/production-config.json
-          git commit -m "Record human platform mode approval"
+          git add github-pages/public/data
+          git commit -m "Record human approval with validated live state"
           git pull --rebase origin main
           git push
 
-  refresh-live-system:
+  deploy-validated-state:
     needs: approve
-    # A GITHUB_TOKEN-authored push does not recursively trigger push workflows.
-    # Call Daily explicitly so approved ticker/version and Pages switch atomically in the control plane.
+    # GITHUB_TOKEN pushes do not recursively trigger Daily. The approved config,
+    # Signal, status and ledgers are already one coherent commit; this reusable
+    # call only regression-tests/builds/deploys that persisted state.
     uses: ./.github/workflows/daily-signal.yml
+    with:
+      deploy_persisted_only: true
     secrets: inherit
