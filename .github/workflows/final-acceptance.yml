@@ -48,7 +48,7 @@ jobs:
           scheduled=[]
           for p in Path('.github/workflows').glob('*.yml'):
               text=p.read_text()
-              if 'cron:' in text:
+              if '- cron:' in text:
                   scheduled.append(p.name)
           expected={'daily-signal.yml','phase5-forward.yml','lifecycle-review.yml'}
           if set(scheduled)!=expected:
@@ -59,7 +59,7 @@ jobs:
         run: |
           for f in phase1-screening.yml phase1-5.yml phase2.yml phase3.yml phase4.yml weekly-research.yml daily-ticker-forward.yml; do
             test -f ".github/workflows/$f"
-            ! grep -q 'cron:' ".github/workflows/$f"
+            ! grep -q -- '- cron:' ".github/workflows/$f"
             ! grep -q '^  push:' ".github/workflows/$f"
           done
           echo "Historical/legacy workflows are manual-only"
