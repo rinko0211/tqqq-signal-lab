@@ -1,16 +1,6 @@
 name: Phase 1 Leverage Screening
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "scripts/generate-phase1-screening.ts"
-      - "lib/phase1-screening.ts"
-      - "lib/cross-ticker.ts"
-      - "lib/official-data.ts"
-      - "tests/leverage-screening.test.ts"
-      - "package.json"
-      - ".github/workflows/phase1-screening.yml"
 permissions:
   contents: write
 concurrency:
