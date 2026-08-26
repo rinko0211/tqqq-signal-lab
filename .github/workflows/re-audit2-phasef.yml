@@ -17,6 +17,17 @@ jobs:
       - uses: actions/setup-node@v7
         with: {node-version: 22, cache: npm}
       - run: npm ci
+      - name: Verify Phase C D E regressions are permanently registered
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+          for (const script of ['test:core','test:ops']) {
+            for (const t of ['tests/re-audit2-phasec.test.ts','tests/re-audit2-phased.test.ts','tests/re-audit2-phasee.test.ts']) {
+              if(!pkg.scripts?.[script]?.includes(t)) throw new Error(`${t} is not permanently registered in ${script}`);
+            }
+          }
+          NODE
       - name: Re-Audit 2 targeted regression
         run: node --experimental-strip-types --test tests/re-audit2-phasec.test.ts tests/re-audit2-phased.test.ts tests/re-audit2-phasee.test.ts
       - name: Full core regression
