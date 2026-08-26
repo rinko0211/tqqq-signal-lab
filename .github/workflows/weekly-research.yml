@@ -1,17 +1,7 @@
-# Track B remains isolated from the daily TQQQ signal path.
-name: Weekly Quant Research
+# Historical research is frozen while Phase 5 accumulates true Forward evidence.
+name: Historical Quant Research
 on:
-  schedule:
-    - cron: "30 3 * * 0"
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "lib/cross-ticker.ts"
-      - "lib/official-data.ts"
-      - "tests/leverage-screening.test.ts"
-      - "package.json"
-      - ".github/workflows/weekly-research.yml"
 permissions:
   contents: write
 concurrency:
@@ -40,9 +30,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add github-pages/public/data/deep-research.json github-pages/public/data/cross-ticker.json github-pages/public/data/native-research.json
           if ! git diff --cached --quiet; then
-            git commit -m "Update weekly quant research"
+            git commit -m "Update historical quant research"
             git pull --rebase origin main
             git push
           fi
-      # The research commit triggers the isolated daily deploy workflow. Heavy
-      # research can fail without cancelling Daily Signal or publishing stale data.
+      # Manual-only by design: Phase 5 must not continuously mine the same history.
