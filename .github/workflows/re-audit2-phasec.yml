@@ -1,0 +1,43 @@
+name: Re-Audit 2 Phase C Remediation
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/re-audit2-phasec-fix.mjs"
+      - "tests/re-audit2-phasec.test.ts"
+      - ".github/workflows/re-audit2-phasec.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: node scripts/re-audit2-phasec-fix.mjs
+      - name: Audit change boundary
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^lib/lifecycle-review.ts$' || true)"
+          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
+      - name: State-machine and operational regressions
+        run: |
+          node --experimental-strip-types --test tests/re-audit2-phasec.test.ts tests/production-lifecycle.test.ts tests/production-health-review.test.ts tests/lifecycle-review.test.ts
+          npm run test:ops
+      - name: Pages build
+        run: npm run build:pages
+      - name: Persist tested Lifecycle Decision-state patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/lifecycle-review.ts
+          git commit -m "Keep Production health active during Decision review"
+          git pull --rebase origin main
+          git push
