@@ -29,9 +29,9 @@ const bar=(date:string,close:number)=>({date,open:close*.999,high:close*1.01,low
 test("Phase 5 missing ratio counts an omitted common NYSE session and missed-live backfill",()=>{
   const pre=weekdays("2025-05-01","2026-08-24"),post=["2026-08-25","2026-08-26","2026-08-27"],all=[...pre,...post];
   const make=(base:number,dates=all)=>dates.map((d,i)=>bar(d,base+i*.01));
-  const payload:any={source:"test",retrievedAt:"2026-08-27T22:00:00Z",series:{
+  const payload={source:"test",retrievedAt:"2026-08-27T22:00:00Z",series:{
     UPRO:make(40,all.filter(d=>d!=="2026-08-26")),SSO:make(50),QLD:make(60),SPY:make(100),QQQ:make(120),VIX:make(18),
-  }};
+  }} satisfies Parameters<typeof updatePhase5Ledger>[0];
   const ledger=updatePhase5Ledger(payload,emptyPhase5Ledger("2026-08-25T15:15:00Z"),"2026-08-27T22:00:00Z");
   const upro=summarizePhase5(ledger).find(x=>x.ticker==="UPRO")!;
   assert.equal(countNyseSessions("2026-08-25","2026-08-27"),3);
