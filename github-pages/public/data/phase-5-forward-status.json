@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-08-25T23:04:51.704Z",
+  "generatedAt": "2026-08-26T01:48:11.597Z",
   "status": "success",
   "forwardStart": "2026-08-25",
   "latestDates": {
-    "UPRO": "2026-08-24",
-    "SSO": "2026-08-24",
-    "QLD": "2026-08-24",
+    "UPRO": "2026-08-25",
+    "SSO": "2026-08-25",
+    "QLD": "2026-08-25",
     "SPY": "2026-08-24",
     "QQQ": "2026-08-24",
-    "VIX": "2026-08-24"
+    "VIX": "2026-08-25"
   },
   "summary": [
     {
@@ -145,6 +145,6 @@
     }
   ],
   "records": 0,
-  "buildVersion": "be8ed040dbb6",
+  "buildVersion": "a5f6df620156",
   "errors": []
 }
