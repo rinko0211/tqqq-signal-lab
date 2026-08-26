@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-08-26T01:46:51.613Z",
+  "updatedAt": "2026-08-26T01:46:51.614Z",
+  "appendOnly": true,
+  "events": [],
+  "current": {
+    "active": false,
+    "version": null,
+    "lastReview": null,
+    "nextReview": null,
+    "state": "NOT_ACTIVE",
+    "userAction": "NONE",
+    "message": "No human-approved Production system is active."
+  }
+}

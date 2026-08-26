@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-08-26T01:46:51.369Z",
+  "updatedAt": "2026-08-26T01:46:51.369Z",
+  "appendOnly": true,
+  "schedule": {
+    "interim": "2027-02-25",
+    "formal": "2027-08-25",
+    "stronger": "2028-08-25"
+  },
+  "events": [],
+  "current": {
+    "asOf": "2026-08-26",
+    "stage": "ACCUMULATING",
+    "systemDecision": "ACCUMULATING",
+    "userAction": "NONE",
+    "message": "Forward evidence is accumulating. No user action is required.",
+    "candidateReviews": [
+      {
+        "version": "VS13-v1.0",
+        "ticker": "TQQQ",
+        "incumbent": true,
+        "decision": "CONTINUE_FORWARD",
+        "eligible": false,
+        "reasons": [],
+        "observations": 2,
+        "liveObservations": 2,
+        "missingRatio": 0,
+        "executions": 1,
+        "actionDaysPerYear": 126,
+        "regimes": 1,
+        "maxDd": -0.011200778571428538,
+        "historicalDd": -0.3816,
+        "adverseDdFloor": -0.48160000000000003,
+        "evidence": "Insufficient"
+      },
+      {
+        "version": "UPRO-SPBT-v1.0",
+        "ticker": "UPRO",
+        "incumbent": false,
+        "decision": "CONTINUE_FORWARD",
+        "eligible": false,
+        "reasons": [],
+        "observations": 0,
+        "liveObservations": 0,
+        "missingRatio": 0,
+        "executions": 0,
+        "actionDaysPerYear": 0,
+        "regimes": 0,
+        "maxDd": 0,
+        "historicalDd": -0.3457,
+        "adverseDdFloor": -0.4457,
+        "evidence": "INSUFFICIENT"
+      },
+      {
+        "version": "SSO-SPBT-Scaled-v1.0",
+        "ticker": "SSO",
+        "incumbent": false,
+        "decision": "CONTINUE_FORWARD",
+        "eligible": false,
+        "reasons": [],
+        "observations": 0,
+        "liveObservations": 0,
+        "missingRatio": 0,
+        "executions": 0,
+        "actionDaysPerYear": 0,
+        "regimes": 0,
+        "maxDd": 0,
+        "historicalDd": -0.2416,
+        "adverseDdFloor": -0.3416,
+        "evidence": "INSUFFICIENT"
+      },
+      {
+        "version": "QLD-VS13-Scaled-v1.0",
+        "ticker": "QLD",
+        "incumbent": false,
+        "decision": "CONTINUE_FORWARD",
+        "eligible": false,
+        "reasons": [],
+        "observations": 0,
+        "liveObservations": 0,
+        "missingRatio": 0,
+        "executions": 0,
+        "actionDaysPerYear": 0,
+        "regimes": 0,
+        "maxDd": 0,
+        "historicalDd": -0.2705,
+        "adverseDdFloor": -0.37050000000000005,
+        "evidence": "INSUFFICIENT"
+      }
+    ],
+    "productionHealth": {
+      "state": "NOT_IN_PRODUCTION",
+      "version": null,
+      "reasons": [
+        "No human-approved Production system is active"
+      ],
+      "nextHealthReview": null
+    },
+    "nextReview": "2027-02-25"
+  }
+}
