@@ -111,9 +111,9 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
       </section>
 
       <article className="panel">
-        <div className="panelHead"><div><em>DAILY CONTROL BOARD</em><h2>ProductionとChallengerを混同しない</h2></div><span>Productionだけが実運用判断。Challengerは比較観測。</span></div>
+        <div className="panelHead"><div><em>DAILY CONTROL BOARD</em><h2>運用基準とChallengerを混同しない</h2></div><span>{formalProduction ? "正式Productionだけが実運用判断。" : "現在はOperational Baselineが日次判断基準。"} Challengerは比較観測。</span></div>
         <SimpleTable heads={["区分", "Ticker / Version", "現在Target", "Position", "次回Action", "観測", "Evidence"]} rows={[
-          [<Chip key="p" tone="ok">PRODUCTION</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", champion?.observations ?? "—", champion?.evidence || "—"],
+          [<Chip key="p" tone={formalProduction?"ok":"warn"}>{formalProduction?"PRODUCTION":"BASELINE"}</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", champion?.observations ?? "—", champion?.evidence || "—"],
           ...challengers.map((x) => {
             const last = phase5!.records.filter((r) => r.strategyVersion === x.version).at(-1);
             return [<Chip key={x.version} tone="warn">RESEARCH</Chip>, `${x.ticker} / ${x.version}`, last ? `${Math.round(last.targetExposure * 100)}%` : "—", last ? `${Math.round(last.position * 100)}%` : "—", last && Math.abs(last.targetExposure - last.position) > 0.001 ? last.intendedExecutionDate : "なし", x.observations, x.evidence];
