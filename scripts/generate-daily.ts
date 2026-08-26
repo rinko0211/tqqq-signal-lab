@@ -6,7 +6,7 @@ import { earliestLegalExecutionDate } from "../lib/execution-integrity.ts";
 import {assertPlausibleTransition,corporateActionContinuity} from "../lib/corporate-actions.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
 import type { LiveSnapshot } from "../lib/paper.ts";
-import {DEFAULT_PRODUCTION_CONFIG,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
+import {DEFAULT_PRODUCTION_CONFIG,hasActiveProduction,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
 import {SCREENING,makeCrossTickerDataset} from "../lib/cross-ticker.ts";
 import {isNyseSession} from "../lib/market-calendar.ts";
 
@@ -26,7 +26,7 @@ const priorForward = await readJson<ForwardLedger>("forward-ledger.json", emptyF
 const production = await readJson<ProductionConfig>("production-config.json", DEFAULT_PRODUCTION_CONFIG);
 
 try {
-  const productionTicker=production.mode==="PRODUCTION"&&production.approvedByHuman?production.selectedTicker:null;
+  const productionTicker=hasActiveProduction(production)?production.selectedTicker:null;
   const selected=productionTicker?resolveProductionSystem(productionTicker,production.strategyVersion||"",production.selectedStrategy):resolveProductionSystem("TQQQ","VS13-v1.0");
   const productionRow=productionTicker?SCREENING.find(x=>x.ticker===productionTicker):null;
   const payload=productionRow&&productionTicker!=="TQQQ"
