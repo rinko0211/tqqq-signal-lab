@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-08-26T02:41:55.798Z",
+  "updatedAt": "2026-08-26T06:34:30.444Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -52,15 +52,17 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Only 0 common Forward days; Pareto merit is not yet evaluated"
+          "Only 1 common Forward days; Pareto merit is not yet evaluated"
         ],
-        "observations": 0,
-        "liveObservations": 0,
+        "observations": 1,
+        "liveObservations": 1,
         "missingRatio": 0,
         "executions": 0,
         "actionDaysPerYear": 0,
-        "regimes": 0,
-        "regimeFamilies": [],
+        "regimes": 1,
+        "regimeFamilies": [
+          "RISK_ON"
+        ],
         "regimeCoverageOk": false,
         "totalReturn": 0,
         "sortino": 0,
@@ -69,7 +71,7 @@
         "historicalDd": -0.3457,
         "adverseDdFloor": -0.4457,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 0,
+        "paretoCommonDays": 1,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -80,15 +82,17 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Only 0 common Forward days; Pareto merit is not yet evaluated"
+          "Only 1 common Forward days; Pareto merit is not yet evaluated"
         ],
-        "observations": 0,
-        "liveObservations": 0,
+        "observations": 1,
+        "liveObservations": 1,
         "missingRatio": 0,
         "executions": 0,
         "actionDaysPerYear": 0,
-        "regimes": 0,
-        "regimeFamilies": [],
+        "regimes": 1,
+        "regimeFamilies": [
+          "RISK_ON"
+        ],
         "regimeCoverageOk": false,
         "totalReturn": 0,
         "sortino": 0,
@@ -97,7 +101,7 @@
         "historicalDd": -0.2416,
         "adverseDdFloor": -0.3416,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 0,
+        "paretoCommonDays": 1,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -108,15 +112,17 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Only 0 common Forward days; Pareto merit is not yet evaluated"
+          "Only 1 common Forward days; Pareto merit is not yet evaluated"
         ],
-        "observations": 0,
-        "liveObservations": 0,
+        "observations": 1,
+        "liveObservations": 1,
         "missingRatio": 0,
         "executions": 0,
         "actionDaysPerYear": 0,
-        "regimes": 0,
-        "regimeFamilies": [],
+        "regimes": 1,
+        "regimeFamilies": [
+          "RISK_ON"
+        ],
         "regimeCoverageOk": false,
         "totalReturn": 0,
         "sortino": 0,
@@ -125,7 +131,7 @@
         "historicalDd": -0.2705,
         "adverseDdFloor": -0.37050000000000005,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 0,
+        "paretoCommonDays": 1,
         "decision": "CONTINUE_FORWARD"
       }
     ],
