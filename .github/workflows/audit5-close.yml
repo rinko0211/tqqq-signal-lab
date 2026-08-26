@@ -143,3 +143,4 @@ jobs:
           fi
           git commit -m "Close Audit 5 operational continuity remediation"
           git push origin HEAD:main
+# trigger: approved Audit 5 close
