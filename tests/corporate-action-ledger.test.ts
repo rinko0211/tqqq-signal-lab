@@ -7,7 +7,7 @@ const bar=(date:string,open:number,close=open)=>({date,open,high:Math.max(open,c
 const ds=(priorClose:number,currentOpen:number):Dataset=>({days:[
   {date:"2027-01-04",tqqq:bar("2027-01-04",priorClose,priorClose),qqq:bar("2027-01-04",100),spy:bar("2027-01-04",100),vix:bar("2027-01-04",20)},
   {date:"2027-01-05",tqqq:bar("2027-01-05",currentOpen,currentOpen),qqq:bar("2027-01-05",101),spy:bar("2027-01-05",101),vix:bar("2027-01-05",20)},
-],issues:[],source:"test",precision:"next-open",tickers:{} as any});
+],issues:[],source:"test",precision:"next-open",tickers:{} as Dataset["tickers"]});
 const priorRecord=(assetClose:number):ForwardRecord=>({key:"VS13-v1.0|2027-01-04",marketDataDate:"2027-01-04",recordedAt:"2027-01-04T22:00:00Z",recordMode:"LIVE",strategyId:"VS13",strategyName:"Volatility Shield 13%",strategyVersion:"VS13-v1.0",score:80,components:{trend:80,momentum:80,volatility:80,market:80},regime:"強い上昇",targetExposure:1,previousExposure:1,signal:"HOLD",tradeReason:"test",intendedExecutionDate:"2027-01-05",execution:null,assetClose,position:1,quantity:1,cash:0,equity:1_000_000,dailyReturn:0,currentDrawdown:0,cumulativeCosts:0,dataSource:"test",dataStatus:"VALID",buildVersion:"test"});
 
 test("append-only Forward continuity neutralizes provider back-adjustment after a 2:1 split",()=>{
