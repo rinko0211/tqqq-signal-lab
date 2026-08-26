@@ -9,23 +9,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "app/**"
-      - "lib/**"
-      - "github-pages/main.tsx"
-      - "github-pages/index.html"
-      - "github-pages/public/sw.js"
-      - "github-pages/public/manifest.webmanifest"
-      - "vite.pages.config.ts"
-      - "package.json"
-      - "package-lock.json"
-      - "tests/**"
-      - ".github/workflows/daily-signal.yml"
-      - "github-pages/public/data/deep-research.json"
-      - "github-pages/public/data/cross-ticker.json"
-      - "github-pages/public/data/native-research.json"
-      - "github-pages/public/data/ticker-forward-ledger.json"
-      - "github-pages/public/data/ticker-forward-status.json"
+      # Human Production approval must refresh the live signal immediately.
       - "github-pages/public/data/production-config.json"
+      # Workflow maintenance self-tests once when intentionally changed.
+      - ".github/workflows/daily-signal.yml"
 permissions:
   contents: write
   pages: write
@@ -65,12 +52,12 @@ jobs:
           fi
       - name: Build PWA from the persisted latest main
         run: npm run build:pages
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist-pages
       - name: Deploy GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       - name: Mark data failure after publishing status
         run: test ! -s github-pages/public/data/.failed
