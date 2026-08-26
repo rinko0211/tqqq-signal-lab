@@ -17,6 +17,8 @@ const official=read("lib/official-data.ts");
 const generateDaily=read("scripts/generate-daily.ts");
 const sw=read("github-pages/public/sw.js");
 const superseded=read("research/final-operations-audit-close-2026-08-26.md");
+const historicalAddendum=read("research/final-operations-audit-addendum-2026-08-26.md");
+const reAuditProtocol=read("research/final-re-audit-protocol-2026-08-26.md");
 
 const hasSchedule=(s)=>/\n\s*schedule:\s*\n/.test(s);
 
@@ -77,6 +79,18 @@ test("earlier PASS/CLOSED report is visibly superseded after later material find
   assert.match(superseded,/Status: \*\*SUPERSEDED/);
   assert.match(superseded,/DO NOT USE AS CURRENT FINAL RELIABILITY CERTIFICATION/);
   assert.match(superseded,/two consecutive re-audits/);
+});
+
+test("historical approval addendum preserves the safeguard but not an obsolete final-PASS claim",()=>{
+  assert.match(historicalAddendum,/SAFEGUARD REMAINS ACTIVE/);
+  assert.match(historicalAddendum,/EARLIER FINAL-PASS CONTEXT SUPERSEDED/);
+  assert.match(historicalAddendum,/does not by itself constitute final reliability certification/);
+});
+
+test("final certification requires two consecutive clean re-audit rounds",()=>{
+  assert.match(reAuditProtocol,/two consecutive complete re-audit rounds discover no new material defect/);
+  assert.match(reAuditProtocol,/resets the consecutive-clean count to \*\*0\*\*/);
+  assert.match(reAuditProtocol,/If a material issue is found and fixed during the round, that round is \*\*NOT CLEAN\*\*/);
 });
 
 test("current production config is structurally safe",()=>{
