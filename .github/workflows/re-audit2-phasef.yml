@@ -21,6 +21,26 @@ jobs:
         run: node --experimental-strip-types --test tests/re-audit2-phasec.test.ts tests/re-audit2-phased.test.ts tests/re-audit2-phasee.test.ts
       - name: Full core regression
         run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Validate authoritative control state remains non-promoted and coherent
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const root='github-pages/public/data/';
+          const production=JSON.parse(fs.readFileSync(root+'production-config.json','utf8'));
+          const lifecycle=JSON.parse(fs.readFileSync(root+'lifecycle-review.json','utf8'));
+          const forward=JSON.parse(fs.readFileSync(root+'forward-ledger.json','utf8'));
+          const phase5=JSON.parse(fs.readFileSync(root+'phase-5-forward-ledger.json','utf8'));
+          const status=JSON.parse(fs.readFileSync(root+'status.json','utf8'));
+          if(production.mode==='PRODUCTION' || production.approvedByHuman) throw new Error('Audit must not observe an automatic Production promotion');
+          if(!lifecycle.appendOnly || !forward.appendOnly || !phase5.appendOnly) throw new Error('Append-only ledger invariant failed');
+          if(lifecycle.current?.stage==='ACCUMULATING' || lifecycle.current?.stage==='INTERIM') {
+            if(lifecycle.current.systemDecision==='PHASE6_HUMAN_DECISION_REQUIRED') throw new Error('Premature Production decision gate detected');
+          }
+          if(lifecycle.current?.candidateReviews?.some(x=>x.promotionSelectable && !x.eligible)) throw new Error('Selectable candidate is not operationally eligible');
+          if(status.actionStatus!=='success' || status.errors?.length) throw new Error('Current Daily authoritative status is failed or contains errors');
+          NODE
       - name: Integrated Pages build
         run: npm run build:pages
       - name: Repository remains unchanged by verification
