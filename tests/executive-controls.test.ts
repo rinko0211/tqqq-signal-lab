@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {isNyseHoliday,isNyseSession,nextNyseSession,earliestLegalNyseOpen,completedNyseSessionsSince,upstreamWorkflowFresh,marketDataLagSessions} from "../lib/market-calendar.ts";
+import {freshness,nextExecutionDate} from "../lib/engine.ts";
 import {corporateActionContinuity,applyShareFactor} from "../lib/corporate-actions.ts";
 import {summarizeRegimeCoverage} from "../lib/regime-coverage.ts";
 import {compareCandidateToIncumbent} from "../lib/forward-pareto.ts";
@@ -14,22 +15,30 @@ test("NYSE calendar handles 2026 holidays and historical Juneteenth correctly",(
   assert.equal(isNyseSession("2026-07-03"),false);
   assert.equal(nextNyseSession("2026-07-02"),"2026-07-06");
   assert.equal(isNyseHoliday("2021-06-18"),false);
+  assert.equal(nextExecutionDate("2021-06-17"),"2021-06-18");
 });
 
 test("earliest legal open never returns an NYSE holiday",()=>{
-  // Jul 3 2026 is observed Independence Day. A signal known before 09:30 that day must wait until Jul 6.
   assert.equal(earliestLegalNyseOpen("2026-07-01","2026-07-03T12:00:00Z"),"2026-07-06");
 });
 
 test("upstream freshness counts completed market sessions, not weekend wall-clock hours",()=>{
-  assert.equal(completedNyseSessionsSince("2026-08-28T22:30:00Z","2026-08-31T12:00:00Z"),0); // Friday after close -> Monday pre-open
+  assert.equal(completedNyseSessionsSince("2026-08-28T22:30:00Z","2026-08-31T12:00:00Z"),0);
   assert.equal(upstreamWorkflowFresh("2026-08-28T22:30:00Z","2026-08-31T12:00:00Z"),true);
-  assert.equal(upstreamWorkflowFresh("2026-08-28T22:30:00Z","2026-08-31T22:00:00Z"),false); // Monday session completed without a new status
+  assert.equal(upstreamWorkflowFresh("2026-08-28T22:30:00Z","2026-08-31T22:00:00Z"),false);
 });
 
 test("market data lag is measured in completed NYSE sessions",()=>{
   assert.equal(marketDataLagSessions("2026-08-28","2026-08-31T12:00:00Z"),0);
   assert.equal(marketDataLagSessions("2026-08-28","2026-08-31T22:00:00Z"),1);
+});
+
+test("primary freshness fails closed after any completed NYSE session is missing",()=>{
+  const weekend=freshness("2026-08-28","2026-08-31T12:00:00Z");
+  assert.equal(weekend.stale,false);assert.equal(weekend.lagSessions,0);
+  const afterMonday=freshness("2026-08-28","2026-08-31T22:00:00Z");
+  assert.equal(afterMonday.stale,true);assert.equal(afterMonday.lagSessions,1);
+  assert.match(afterMonday.message,/使用しないでください/);
 });
 
 test("corporate action continuity recognizes forward and reverse splits from same-date provider restatement",()=>{
