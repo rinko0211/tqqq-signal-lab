@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-08-26T03:59:32.345Z",
-  "actionRunId": "32928483178",
+  "generatedAt": "2026-08-26T04:00:32.448Z",
+  "actionRunId": "32928503877",
   "actionStatus": "success",
   "marketDataDate": "2026-08-25",
   "signalDate": "2026-08-25",
   "lastForwardRecord": "2026-08-25",
   "forwardRecords": 15,
   "forwardPersistent": true,
-  "buildVersion": "460a6dbd0f96",
+  "buildVersion": "0d430f754afc",
   "dataSource": "Nasdaq Historical + Cboe VIX History",
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
-  "state": "not_updated",
-  "message": "最新データ未更新",
+  "state": "market_pending",
+  "message": "米国市場終了後の更新待ち・新規判定なし",
   "errors": []
 }
