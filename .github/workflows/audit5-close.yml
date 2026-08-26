@@ -1,0 +1,145 @@
+name: Audit 5 Remediation Close
+on:
+  push:
+    paths:
+      - .github/workflows/audit5-close.yml
+      - scripts/audit5-remediate.mjs
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: audit5-remediation-close
+  cancel-in-progress: false
+jobs:
+  remediate-validate-close:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Capture starting state
+        run: |
+          echo "AUDIT5_START_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          cp -a github-pages/public/data /tmp/audit5-authoritative-data
+      - name: Apply Audit 5 remediation
+        run: node scripts/audit5-remediate.mjs
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Audit 5 targeted boundary and continuity regression
+        run: node --experimental-strip-types --test tests/audit5-operational-continuity.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Full application and Pages integration
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: Non-persistent live operational preflight
+        run: |
+          npm run generate:daily
+          test ! -s github-pages/public/data/.failed
+          npm run generate:phase5-forward
+          npm run generate:lifecycle-review
+          npm run generate:production-health-review
+          npm run test:ops
+          npm run build:pages
+      - name: Restore authoritative ledgers after live preflight
+        run: |
+          rm -rf github-pages/public/data
+          cp -a /tmp/audit5-authoritative-data github-pages/public/data
+          git clean -fd -- public/data github-pages/public/data
+          git restore -- public/data github-pages/public/data 2>/dev/null || true
+      - name: Verify Production and Forward state were not changed by Audit 5
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('github-pages/public/data/production-config.json','utf8'));
+          const f=JSON.parse(fs.readFileSync('github-pages/public/data/forward-ledger.json','utf8'));
+          const p5=JSON.parse(fs.readFileSync('github-pages/public/data/phase-5-forward-ledger.json','utf8'));
+          if(p.mode!=='RESEARCH'||p.approvedByHuman!==false) throw new Error('Audit 5 must not promote Production');
+          if(f.appendOnly!==true||p5.appendOnly!==true) throw new Error('Forward ledgers must remain append-only');
+          NODE
+      - name: Write Audit 5 close report
+        run: |
+          cat > research/audit-5-close-2026-08-27.md <<EOF
+          # Audit 5 Close — Unattended Annual Operations / Review Continuity
+
+          Date: 2026-08-27
+          Audit start head: ${AUDIT5_START_SHA}
+          Validation run: ${GITHUB_RUN_ID}
+          Status: **NOT CLEAN — material findings remediated and validated**
+          Clean streak: **0/2**
+
+          ## Audit objective
+          This audit independently reviewed whether the system can remain useful when the user largely leaves it alone across market closures, delayed data, review boundaries, Paper/Forward operation, Production transitions, and repeated post-selection reviews. It deliberately extended beyond the prior audit checklist.
+
+          ## Material findings discovered in Audit 5
+          1. Lifecycle review gates used a calendar-date boundary that could open before the relevant NYSE close.
+          2. Production selection could leave TQQQ/VS13 hard-coded as the comparison incumbent in subsequent reviews.
+          3. UI surfaces could show a newly selected Phase 5 Production version simultaneously as FORMAL PRODUCTION and RESEARCH, while legacy views still called TQQQ the current Champion.
+          4. Human Production Approval could use a still-fresh but older Lifecycle snapshot and did not regenerate Lifecycle/Production Health from the newly approved state before atomic persistence.
+          5. Formal/Stronger reviews lacked a durable consumed-review cycle and a recurring annual selection-review schedule after the 24-month checkpoint.
+          6. The primary UI did not fail closed when the scheduled next-open execution window had already passed while device-local holdings still differed from target.
+          7. Manual/off-schedule Daily execution lacked an explicit guard against provider daily bars that were still forming.
+
+          ## Remediation implemented
+          - Review milestones now use America/New_York time and require the named NYSE session's conservative close boundary before opening the gate.
+          - Provider bars for the current NY date are rejected until the conservative post-close boundary; incomplete bars cannot create a Signal/Forward update.
+          - Lifecycle/Pareto comparison derives the incumbent from the active human-approved Production when it belongs to the frozen frontier; TQQQ VS13 remains an immutable reference baseline.
+          - Scheduled selection snapshots are append-only, a completed Human Approval consumes the applicable review cycle, and subsequent annual selection cycles continue after the 24-month checkpoint.
+          - Human Production Approval refreshes Daily + Phase 5 + Lifecycle immediately before approval, then regenerates Daily + Lifecycle + Production Health from the resulting control state before one atomic persistence/deploy.
+          - Primary action UI refuses a late execution when the planned NYSE open has passed and tells the user to wait for the next validated Daily update rather than chase/retroactively assume the missed open.
+          - Dashboard, Phase 5, Lifecycle and Roadmap semantics distinguish **current Production** from **TQQQ reference baseline** and do not duplicate the same selected Phase 5 version as RESEARCH.
+          - Audit 5 boundary/continuity tests are permanently registered in both test:core and test:ops.
+
+          ## Validation required for close
+          The close workflow requires all of the following to succeed before this report is committed:
+          - Audit 5 targeted boundary/continuity tests
+          - full test:core
+          - full test:ops
+          - full npm test application integration
+          - lint
+          - non-persistent live Daily → Phase 5 → Lifecycle → Production Health preflight
+          - Pages build
+          - restoration of authoritative data after live preflight
+          - assertion that Production remains RESEARCH/unapproved and both Forward ledgers remain append-only
+
+          ## Reliability certification decision
+          Two consecutive clean audits remain a useful **Layer 1** requirement, but are not sufficient by themselves for unattended-operation certification. The approved policy is now three layers:
+          1. two consecutive independent complete CLEAN audits;
+          2. permanent boundary/fault-injection regression;
+          3. at least 10 consecutive NYSE sessions of unattended operational soak on a materially unchanged control plane.
+
+          The detailed policy is recorded in `research/final-reliability-certification-policy-2026-08-27.md`.
+
+          Because Audit 5 discovered material defects, this round cannot count as CLEAN even after successful remediation. The next independent complete audit is the next candidate **Clean 1/2** round.
+
+          ## Authoritative-state effect
+          Audit 5 does not select or promote a Production system and does not rewrite Forward history. The live-generation preflight is restored before persistence. The Production/Forward state therefore remains governed by the pre-audit authoritative ledgers.
+          EOF
+      - name: Remove one-time remediation helper
+        run: rm scripts/audit5-remediate.mjs
+      - name: Repository diff sanity
+        run: |
+          git diff --check
+          git status --short
+          test -z "$(git status --porcelain github-pages/public/data public/data)"
+      - name: Commit validated Audit 5 close
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$AUDIT5_START_SHA" ]; then
+            echo "::error::main changed during Audit 5 validation; refusing to persist a stale validation result"
+            exit 1
+          fi
+          git commit -m "Close Audit 5 operational continuity remediation"
+          git push origin HEAD:main
