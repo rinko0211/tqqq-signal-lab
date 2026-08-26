@@ -43,12 +43,12 @@ test("primary Production state is driven by platform mode and human approval",()
 
 test("Human Approval validates config plus live state before one atomic persistence commit",()=>{
   assert.match(approvalWorkflow,/Record explicit human decision locally/);
-  assert.match(approvalWorkflow,/Preflight the exact approved operational state/);
+  assert.match(approvalWorkflow,/Preflight the exact resulting operational state/);
   assert.match(approvalWorkflow,/npm run generate:daily/);
   assert.match(approvalWorkflow,/test ! -s github-pages\/public\/data\/\.failed/);
   assert.match(approvalWorkflow,/npm run test:ops/);
   assert.match(approvalWorkflow,/npm run build:pages/);
-  assert.match(approvalWorkflow,/Atomically persist approval and validated live state/);
+  assert.match(approvalWorkflow,/Atomically persist decision and validated live state/);
   assert.match(approvalWorkflow,/git add github-pages\/public\/data/);
   assert.doesNotMatch(approvalWorkflow,/git add github-pages\/public\/data\/production-config\.json\s*$/m);
 });
