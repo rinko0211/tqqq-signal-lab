@@ -10,10 +10,13 @@ on:
       - "lib/phase5-forward.ts"
       - "lib/execution-integrity.ts"
       - "lib/official-data.ts"
+      - "lib/production.ts"
       - "scripts/generate-phase5-forward.ts"
       - "tests/phase5-forward.test.ts"
       - "tests/phase5-paper.test.ts"
       - "tests/execution-integrity.test.ts"
+      - "tests/operations-regimes.test.ts"
+      - "tests/production-lifecycle.test.ts"
       - "research/phase-5-forward-gate-2026-08-26.md"
       - ".github/workflows/phase5-forward.yml"
       - "package.json"
@@ -40,9 +43,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Run Phase 5 integrity, causality and paper tests
+      - name: Run focused operational regression tests
         id: integrity
-        run: node --experimental-strip-types --test tests/execution-integrity.test.ts tests/phase5-forward.test.ts tests/phase5-paper.test.ts
+        run: npm run test:ops
       - name: Update true Forward ledger
         id: generate
         continue-on-error: true
