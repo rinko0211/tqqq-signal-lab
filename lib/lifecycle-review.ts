@@ -39,7 +39,7 @@ function runtimeStatusQuality(status:RuntimeStatus|null|undefined,now:string,str
 
 function baseDecision(args:{version:string;ticker:string;incumbent:boolean;observations:number;liveObservations:number;missing:number;executions:number;actionDays:number;regimes:string[];totalReturn:number;sortino:number;calmar:number;maxDd:number;evidence:string;stage:LifecycleStage;integrity:boolean;integrityReasons:string[]}):CandidateReview{
   const {version,ticker,incumbent,observations,liveObservations,missing,executions,actionDays,regimes,totalReturn,sortino,calmar,maxDd,evidence,stage,integrity,integrityReasons}=args;
-  const missingRatio=missing/Math.max(1,observations),apy=actionDays/yearsObserved(liveObservations),historicalDd=HIST_DD[version]??-.40,adverseDdFloor=historicalDd-.10,reasons=[...integrityReasons],coverage=summarizeRegimeCoverage(regimes);
+  const missingRatio=missing/Math.max(1,liveObservations+missing),apy=actionDays/yearsObserved(liveObservations),historicalDd=HIST_DD[version]??-.40,adverseDdFloor=historicalDd-.10,reasons=[...integrityReasons],coverage=summarizeRegimeCoverage(regimes);
   if(missingRatio>.01)reasons.push(`Missing/invalid ratio ${(missingRatio*100).toFixed(2)}% > 1%`);
   if(apy>40&&liveObservations>=63)reasons.push(`Action Days/year ${apy.toFixed(1)} > 40`);
   if(maxDd<adverseDdFloor)reasons.push(`Forward Max DD ${(maxDd*100).toFixed(1)}% breached revalidation floor ${(adverseDdFloor*100).toFixed(1)}%`);

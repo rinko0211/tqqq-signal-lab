@@ -10,6 +10,7 @@ import {
 } from "./engine.ts";
 import { earliestLegalExecutionDate } from "./execution-integrity.ts";
 import {assertPlausibleTransition,corporateActionContinuity} from "./corporate-actions.ts";
+import {countNyseSessions} from "./market-calendar.ts";
 
 export const FORWARD_SCHEMA_VERSION = 1;
 export const FORWARD_START_DATE = "2026-08-21";
@@ -199,8 +200,8 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
         const slippage = equity * turnover * .0005;
         const totalCost = commission + slippage;
         equity -= totalCost; cumulativeCosts += totalCost;
-        execution = { signalDate: previous.marketDataDate, intendedDate: intended, recordedDate: ds.days.at(-1)!.date,
-          price: assetBar.open * (previous.targetExposure > previous.previousExposure ? 1.0005 : .9995),
+        execution = { signalDate: previous.marketDataDate, intendedDate: intended, recordedDate: day.date,
+          price: assetBar.open * (previous.targetExposure > previous.position ? 1.0005 : .9995),
           before: previous.position, after: previous.targetExposure, turnover, commission, slippage, totalCost,
           status: intended === day.date && isLatest ? "ON_TIME" : "SCHEDULED_CATCHUP" };
         actualExposure = previous.targetExposure;
@@ -258,11 +259,12 @@ export function summarizeForward(ledger: ForwardLedger): ForwardSummary[] {
     const metrics = metricSet(returns, [], [], dates, positions);
     const currentCapital = rows.at(-1)?.equity ?? freeze.initialCapital;
     const orders = rows.filter(r=>r.execution&&r.execution.turnover>0).length;
-    const missing = rows.filter(r=>r.dataStatus!=="VALID").length;
-    const regimes = new Set(rows.filter(r=>r.dataStatus==="VALID"&&!r.regime.includes("Benchmark")).map(r=>r.regime)).size;
     const observations = rows.filter(r=>r.dataStatus==="VALID").length;
+    const expectedSessions=rows.length?countNyseSessions(freeze.startDate,rows.at(-1)!.marketDataDate):0;
+    const missing = Math.max(0,expectedSessions-observations);
+    const regimes = new Set(rows.filter(r=>r.dataStatus==="VALID"&&!r.regime.includes("Benchmark")).map(r=>r.regime)).size;
     let evidence: EvidenceLevel = "Insufficient";
-    if (observations>=252&&orders>=6&&regimes>=4&&missing/Math.max(1,rows.length)<=.01)evidence="Strong";
+    if (observations>=252&&orders>=6&&regimes>=4&&missing/Math.max(1,expectedSessions)<=.01)evidence="Strong";
     else if(observations>=126&&orders>=3&&regimes>=3)evidence="Moderate";
     else if(observations>=63&&regimes>=2)evidence="Low";
     const months=new Map<string,number[]>();for(const r of rows){const k=r.marketDataDate.slice(0,7);months.set(k,[...(months.get(k)||[]),r.dailyReturn])}
