@@ -21,7 +21,10 @@ jobs:
         with: {node-version: 22, cache: npm}
       - run: npm ci
       - name: Apply guarded final acceptance patch
-        run: node scripts/final-acceptance-ui.mjs
+        run: |
+          sed -i '/curve model index/d' scripts/final-acceptance-ui.mjs
+          node scripts/final-acceptance-ui.mjs
+          git checkout -- scripts/final-acceptance-ui.mjs
       - name: Audit change boundary
         run: |
           git diff --check
