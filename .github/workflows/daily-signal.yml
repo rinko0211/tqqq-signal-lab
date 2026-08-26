@@ -61,3 +61,4 @@ jobs:
         uses: actions/deploy-pages@v5
       - name: Mark data failure after publishing status
         run: test ! -s github-pages/public/data/.failed
+      # Phase 5 executive acceptance: keep this workflow self-triggerable on maintenance changes.
