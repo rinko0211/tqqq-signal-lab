@@ -8,6 +8,7 @@ const FAMILIES:Phase15Family[]=["VS13_FIXED","VS13_LEVERAGE_SCALED_STOP"];
 const OOS_START="2020-01-02";
 type Payload={source?:string;retrievedAt?:string;crossSeries?:Record<string,Bar[]>};
 type M=Pick<Metrics,"cagr"|"totalReturn"|"annualizedVolatility"|"sharpe"|"sortino"|"maxDd"|"calmar"|"ulcerIndex"|"exposure"|"timeInCash">&{actionDaysPerYear:number};
+type StressRow={ticker:CrossTicker;underlying:string;leverage:string;family:Phase15Family;base:M;costStress:{costBps:number;metrics:M}[];delayStress:{delay:number;metrics:M}[];robust:boolean;operationalCapPassed:boolean};
 const lev=(r:ScreeningRow)=>r.leverage.startsWith("2")?2:3;
 const cfg=(f:Phase15Family,r:ScreeningRow):StrategyConfig=>f==="VS13_FIXED"?{...STRATEGIES.defensive}:{...STRATEGIES.defensive,trailStop:.13*lev(r)/3};
 const out=(m:Metrics,a:number):M=>({cagr:m.cagr,totalReturn:m.totalReturn,annualizedVolatility:m.annualizedVolatility,sharpe:m.sharpe,sortino:m.sortino,maxDd:m.maxDd,calmar:m.calmar,ulcerIndex:m.ulcerIndex,exposure:m.exposure,timeInCash:m.timeInCash,actionDaysPerYear:a});
@@ -20,7 +21,7 @@ function run(ds:Dataset,f:Phase15Family,r:ScreeningRow,costBps=8,delay=1){
 }
 export function phase2StressBundle(payload:Payload){
   const datasets=CORE_TICKERS.flatMap(t=>{const row=SCREENING.find(x=>x.ticker===t);if(!row)return[];const ds=makeCrossTickerDataset(payload,row,PHASE1_COMMON_START);return ds?[{row,ds}]:[]});
-  const rows:any[]=[];
+  const rows:StressRow[]=[];
   for(const {row,ds} of datasets)for(const family of FAMILIES){
     const base=run(ds,family,row,8,1);
     const costStress=[8,15,25,50].map(costBps=>({costBps,metrics:costBps===8?base:run(ds,family,row,costBps,1)}));
