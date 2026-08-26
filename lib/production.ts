@@ -39,7 +39,8 @@ export function transitionMode(current:ProductionConfig,next:PlatformMode,approv
     if(!approval)throw Error("Human approval is required");
     const selected=resolveProductionSystem(approval.ticker,approval.version,approval.system);
     if(approval.evidence!=="Strong"||!approval.finalReviewComplete)throw Error("Strong Forward evidence and completed Final Selection Review are required");
-    return{...current,mode:"PRODUCTION",selectedTicker:selected.ticker,selectedStrategy:selected.strategy,strategyVersion:selected.version,approvedByHuman:true,approvalDate:approval.date,effectiveDate:approval.date,nextHealthReview:addMonths(approval.date,3),updatedAt:new Date().toISOString()};
+    const sameSystem=hasActiveProduction(current)&&current.selectedTicker===selected.ticker&&current.strategyVersion===selected.version;
+    return{...current,mode:"PRODUCTION",selectedTicker:selected.ticker,selectedStrategy:selected.strategy,strategyVersion:selected.version,approvedByHuman:true,approvalDate:approval.date,effectiveDate:sameSystem?(current.effectiveDate||approval.date):approval.date,nextHealthReview:sameSystem?(current.nextHealthReview||addMonths(approval.date,3)):addMonths(approval.date,3),updatedAt:new Date().toISOString()};
   }
   return{...DEFAULT_PRODUCTION_CONFIG,updatedAt:new Date().toISOString()};
 }
