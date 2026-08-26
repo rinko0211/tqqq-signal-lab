@@ -133,25 +133,27 @@ export async function fetchOfficialData(includeCross = false) {
 }
 
 /**
- * Bounded data surface for a single human-approved non-TQQQ Production system.
- * Unlike Phase-1 research this deliberately does not fetch the rest of the research universe.
+ * Bounded data surface for one human-approved non-TQQQ Production system.
+ * It preserves the TQQQ/QQQ baseline series so the immutable incumbent Forward
+ * track can continue independently while fetching only the selected Production
+ * ticker/proxy rather than the closed research universe.
  */
 export async function fetchProductionData(ticker:"UPRO"|"SSO"|"QLD",proxy:"SPY"|"QQQ") {
-  const requested=[ticker,proxy,"SPY"] as const;
-  const symbols=[...new Set(requested)] as string[];
+  const symbols=[...new Set(["TQQQ","QQQ","SPY",ticker,proxy])] as string[];
   const [rows,VIX]=await Promise.all([
     Promise.all(symbols.map(symbol=>fetchNasdaq(symbol,"2006-01-01",1000))),
     fetchVix(),
   ]);
-  const crossSeries:Record<string,Bar[]>=Object.fromEntries(symbols.map((symbol,i)=>[symbol,rows[i]]));
-  crossSeries.VIX=VIX;
+  const bySymbol:Record<string,Bar[]>=Object.fromEntries(symbols.map((symbol,i)=>[symbol,rows[i]]));
+  const crossSeries:Record<string,Bar[]>={...bySymbol,VIX};
   return{
     source:`Nasdaq Historical + Cboe VIX History · Production ${ticker}`,
     retrievedAt:new Date().toISOString(),
-    series:{TQQQ:crossSeries[ticker],QQQ:crossSeries[proxy],SPY:crossSeries.SPY,VIX},
+    series:{TQQQ:bySymbol.TQQQ,QQQ:bySymbol.QQQ,SPY:bySymbol.SPY,VIX},
     crossSeries,
     warnings:[
-      `Formal Production data is bounded to ${ticker}, ${proxy}, SPY and VIX; closed research-universe tickers are not fetched.`,
+      `Formal Production data is bounded to the TQQQ/QQQ baseline plus ${ticker}/${proxy}, SPY and VIX; closed research-universe tickers are not fetched.`,
+      "The TQQQ incumbent Forward remains sourced from TQQQ even after a different ticker becomes Formal Production.",
       "Actual ETF OHLC only. FX, tax and broker-specific realized friction are outside this market-data payload.",
     ],
   };
