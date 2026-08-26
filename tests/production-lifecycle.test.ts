@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULT_PRODUCTION_CONFIG, PRODUCTION_SYSTEMS, resolveProductionSystem, transitionMode } from "../lib/production.ts";
-import { PHASE5_FREEZES } from "../lib/phase5-forward.ts";
+import { PHASE5_FREEZES, emptyPhase5Ledger } from "../lib/phase5-forward.ts";
+import { emptyLifecycleLedger } from "../lib/lifecycle-review.ts";
+import { lifecycleReviewIsFresh } from "../lib/lifecycle-approval.ts";
 
 test("all Phase 5 frontier systems are registered without configuration drift",()=>{
   for(const freeze of PHASE5_FREEZES){
@@ -22,4 +24,13 @@ test("Production can never skip DECISION and human evidence gate",()=>{
   assert.throws(()=>transitionMode(d,"PRODUCTION",{ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2027-08-25",evidence:"Low",finalReviewComplete:true}),/Strong Forward evidence/);
   const p=transitionMode(d,"PRODUCTION",{ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2027-08-25",evidence:"Strong",finalReviewComplete:true});
   assert.equal(p.mode,"PRODUCTION");assert.equal(p.approvedByHuman,true);assert.equal(p.selectedTicker,"UPRO");
+});
+
+test("Production approval requires a lifecycle review no older than 48 hours",()=>{
+  const schedule=emptyPhase5Ledger().reviewSchedule;
+  const l=emptyLifecycleLedger(schedule,"2027-08-25T00:00:00Z");
+  assert.equal(lifecycleReviewIsFresh(l,"2027-08-26T23:59:59Z"),true);
+  assert.equal(lifecycleReviewIsFresh(l,"2027-08-27T00:00:01Z"),false);
+  assert.equal(lifecycleReviewIsFresh({...l,updatedAt:"invalid"},"2027-08-25T01:00:00Z"),false);
+  assert.equal(lifecycleReviewIsFresh(l,"2027-08-24T23:59:59Z"),false);
 });
