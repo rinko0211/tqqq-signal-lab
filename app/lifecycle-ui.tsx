@@ -8,7 +8,11 @@ const label:Record<string,string>={ACCUMULATING:"Forward蓄積中",INTERIM:"6か
 const strategy:Record<string,string>={"VS13-v1.0":"Volatility Shield 13%","UPRO-SPBT-v1.0":"UPRO + S&P Broad Trend","SSO-SPBT-Scaled-v1.0":"SSO + S&P Broad Trend + scaled stop","QLD-VS13-Scaled-v1.0":"QLD + Common VS13 + scaled stop"};
 const tone=(a:string)=>a==="NONE"?"ok":a.includes("URGENT")||a.includes("REVALIDATE")||a.includes("CHECK")?"bad":"warn";
 const REVIEW_STALE_MS=48*60*60*1000;
-const isReviewStale=(review:LifecycleLedger|null)=>!review||!Number.isFinite(Date.parse(review.updatedAt))||Date.now()-Date.parse(review.updatedAt)>REVIEW_STALE_MS;
+const isReviewStale=(review:LifecycleLedger|null)=>{
+  if(!review)return true;
+  const updated=Date.parse(review.updatedAt),age=Date.now()-updated;
+  return !Number.isFinite(updated)||!Number.isFinite(age)||age<0||age>REVIEW_STALE_MS;
+};
 const pct=(v:number,d=1)=>Number.isFinite(v)?`${v>=0?"+":""}${(v*100).toFixed(d)}%`:"—";
 const num=(v:number,d=2)=>Number.isFinite(v)?v.toFixed(d):"—";
 const meritLabel:Record<string,string>={INCUMBENT:"現行基準",NOT_EVALUATED:"未評価",PARETO_SUPPORTED:"Pareto支持",MIXED:"Trade-off",DOMINATED_BY_INCUMBENT:"現行に支配"};
