@@ -8,8 +8,11 @@ on:
     branches: [main]
     paths:
       - "lib/lifecycle-review.ts"
+      - "lib/production-health-review.ts"
       - "scripts/generate-lifecycle-review.ts"
+      - "scripts/generate-production-health-review.ts"
       - "tests/lifecycle-review.test.ts"
+      - "tests/production-health-review.test.ts"
       - "tests/operations-regimes.test.ts"
       - "github-pages/public/data/phase-5-forward-ledger.json"
       - "github-pages/public/data/phase-5-forward-status.json"
@@ -36,15 +39,17 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
       - run: npm ci
-      - name: Run lifecycle/regime acceptance tests
-        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/operations-regimes.test.ts tests/execution-integrity.test.ts
+      - name: Run lifecycle/regime/health acceptance tests
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/operations-regimes.test.ts tests/production-lifecycle.test.ts tests/execution-integrity.test.ts
       - name: Generate autonomous lifecycle judgment
         run: node --experimental-strip-types scripts/generate-lifecycle-review.ts
+      - name: Generate quarterly Production health ledger
+        run: node --experimental-strip-types scripts/generate-production-health-review.ts
       - name: Persist append-only review state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/lifecycle-review.json
+          git add github-pages/public/data/lifecycle-review.json github-pages/public/data/production-health-review.json
           if ! git diff --cached --quiet; then
             git commit -m "Update autonomous lifecycle review"
             git pull --rebase origin main
