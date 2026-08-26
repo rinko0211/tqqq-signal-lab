@@ -1,0 +1,63 @@
+name: Re-Audit 4 Remediation Verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/re-audit4-remediation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Verify Re-Audit 4 safeguards are permanently registered
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+          const t='tests/re-audit4-recurring-failures.test.ts';
+          for(const script of ['test:core','test:ops']){
+            if(!pkg.scripts?.[script]?.includes(t))throw new Error(`${t} is not permanently registered in ${script}`);
+          }
+          NODE
+      - name: Re-Audit 4 recurring-failure regression
+        run: node --experimental-strip-types --test tests/re-audit4-recurring-failures.test.ts tests/re-audit2-phaseb.test.ts tests/re-audit2-phasec.test.ts tests/re-audit2-phased.test.ts tests/re-audit2-phasee.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Full application and deployment test suite
+        run: npm test
+      - name: Static lint
+        run: npm run lint
+      - name: Validate authoritative current state and canonical freezes
+        run: |
+          node --experimental-strip-types --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import {assertForwardFreezeIntegrity} from './lib/forward.ts';
+          const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+          const production=read('github-pages/public/data/production-config.json');
+          const lifecycle=read('github-pages/public/data/lifecycle-review.json');
+          const status=read('github-pages/public/data/status.json');
+          const forward=read('github-pages/public/data/forward-ledger.json');
+          const phase5=read('github-pages/public/data/phase-5-forward-ledger.json');
+          if(production.mode!=='RESEARCH'||production.approvedByHuman!==false||production.selectedTicker!==null||production.strategyVersion!==null)throw new Error('Unexpected Production promotion/state');
+          if(lifecycle.appendOnly!==true||lifecycle.current.stage!=='ACCUMULATING'||lifecycle.current.systemDecision==='PHASE6_HUMAN_DECISION_REQUIRED')throw new Error('Lifecycle state is not safely accumulating');
+          if(lifecycle.current.candidateReviews?.some(x=>x.promotionSelectable))throw new Error('Premature Production-selectable candidate');
+          if(status.actionStatus!=='success'||!Array.isArray(status.errors)||status.errors.length)throw new Error('Daily authoritative status unhealthy');
+          if(forward.appendOnly!==true||phase5.appendOnly!==true)throw new Error('Forward ledger lost append-only flag');
+          assertForwardFreezeIntegrity(forward);
+          NODE
+      - name: Integrated Pages build
+        run: npm run build:pages
+      - name: Verification must not mutate operational state or repository
+        run: |
+          git diff --check
+          git diff --exit-code
