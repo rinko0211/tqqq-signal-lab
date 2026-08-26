@@ -55,8 +55,11 @@ jobs:
           scheduled=[]
           counts={}
           for p in Path('.github/workflows').glob('*.yml'):
+              if p.name == 'final-acceptance.yml':
+                  continue
               text=p.read_text()
-              n=text.count('- cron:')
+              marker='- ' + 'cron:'
+              n=text.count(marker)
               if n:
                   scheduled.append(p.name); counts[p.name]=n
           expected={'daily-signal.yml','phase5-forward.yml','lifecycle-review.yml'}
@@ -81,6 +84,13 @@ jobs:
           grep -q 'npm run test:ops' .github/workflows/daily-signal.yml
           ! grep -q 'npm run test:core' .github/workflows/daily-signal.yml
           echo "Daily workflow uses focused operational regression suite"
+      - name: Audit cleanup boundary
+        run: |
+          test ! -e .github/workflows/phase2-finalize.yml
+          test ! -e .github/workflows/patch-live-execution-ui.yml
+          test ! -e scripts/patch-live-execution-ui.mjs
+          test ! -e scripts/wire-final-ops.mjs
+          echo "Temporary migration/finalizer files are absent"
       - name: Audit public-data cache policy
         run: |
           grep -q '/data/' github-pages/public/sw.js
