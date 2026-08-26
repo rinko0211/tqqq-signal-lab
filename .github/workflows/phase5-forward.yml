@@ -1,6 +1,7 @@
 name: Phase 5 Forward Gate
 on:
   schedule:
+    # Authoritative true-Forward observation path; code/research pushes do not create observations.
     - cron: "45 22 * * 1-5"
     - cron: "15 13 * * 2-6"
   workflow_dispatch:
