@@ -11,6 +11,10 @@ const OOS_START="2020-01-02";
 type Payload={source?:string;retrievedAt?:string;crossSeries?:Record<string,Bar[]>};
 type M=Pick<Metrics,"cagr"|"totalReturn"|"annualizedVolatility"|"sharpe"|"sortino"|"maxDd"|"calmar"|"ulcerIndex"|"exposure"|"timeInCash">&{actionDaysPerYear:number};
 type D={date:string;dailyReturn:number;position:number};
+type YearRow={year:number;metrics:M};
+type RegimeRow={id:string;start:string;end:string;metrics:M};
+type NeighborhoodRow={label:string;metrics:M};
+type CoreRow={ticker:CrossTicker;underlying:string;leverage:string;family:Phase15Family;full:M;oos:M;yearly:YearRow[];regimes:RegimeRow[];parameterNeighborhood:NeighborhoodRow[];stabilityFloor:number|null;operationalCapPassed:boolean};
 const lev=(r:ScreeningRow)=>r.leverage.startsWith("2")?2:3;
 const out=(m:Metrics,a=m.ordersPerYear):M=>({cagr:m.cagr,totalReturn:m.totalReturn,annualizedVolatility:m.annualizedVolatility,sharpe:m.sharpe,sortino:m.sortino,maxDd:m.maxDd,calmar:m.calmar,ulcerIndex:m.ulcerIndex,exposure:m.exposure,timeInCash:m.timeInCash,actionDaysPerYear:a});
 const fromDaily=(d:D[],a=0)=>out(metricSet(d.map(x=>x.dailyReturn),[],[],d.map(x=>x.date),d.map(x=>x.position)),a);
@@ -50,12 +54,12 @@ const windows=[
 
 export function phase2CoreBundle(payload:Payload){
   const datasets=CORE_TICKERS.flatMap(t=>{const row=SCREENING.find(x=>x.ticker===t);if(!row)return[];const ds=makeCrossTickerDataset(payload,row,PHASE1_COMMON_START);return ds?[{row,ds}]:[]});
-  const rows:any[]=[];
+  const rows:CoreRow[]=[];
   for(const {row,ds} of datasets)for(const family of FAMILIES){
     const full=run(ds,family,row),oos=run(ds,family,row,OOS_START);
-    const yearly=[] as any[];for(let y=2020;y<=2026;y++){const a=`${y}-01-01`,b=`${y}-12-31`,d=oos.daily.filter(x=>x.date>=a&&x.date<=b);if(d.length>=20)yearly.push({year:y,metrics:fromDaily(d)});}
-    const regimes=windows.map(w=>({id:w.id,start:w.start,end:w.end,metrics:fromDaily(full.daily.filter(x=>x.date>=w.start&&x.date<=w.end))}));
-    const neighborhood=PRIMARY.has(family)?[-.10,0,.10].map(p=>({label:p===0?"BASE":p<0?"-10%":"+10%",metrics:p===0?oos.metrics:run(ds,family,row,OOS_START,p).metrics})):[];
+    const yearly:YearRow[]=[];for(let y=2020;y<=2026;y++){const a=`${y}-01-01`,b=`${y}-12-31`,d=oos.daily.filter(x=>x.date>=a&&x.date<=b);if(d.length>=20)yearly.push({year:y,metrics:fromDaily(d)});}
+    const regimes:RegimeRow[]=windows.map(w=>({id:w.id,start:w.start,end:w.end,metrics:fromDaily(full.daily.filter(x=>x.date>=w.start&&x.date<=w.end))}));
+    const neighborhood:NeighborhoodRow[]=PRIMARY.has(family)?[-.10,0,.10].map(p=>({label:p===0?"BASE":p<0?"-10%":"+10%",metrics:p===0?oos.metrics:run(ds,family,row,OOS_START,p).metrics})):[];
     const floor=neighborhood.length?Math.min(...neighborhood.map(x=>x.metrics.calmar))/Math.max(Math.abs(oos.metrics.calmar),1e-9):null;
     rows.push({ticker:row.ticker,underlying:row.underlying,leverage:row.leverage,family,full:full.metrics,oos:oos.metrics,yearly,regimes,parameterNeighborhood:neighborhood,stabilityFloor:floor,operationalCapPassed:oos.metrics.actionDaysPerYear<=40});
   }
