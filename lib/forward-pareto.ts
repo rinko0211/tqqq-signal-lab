@@ -7,7 +7,8 @@ export type ParetoMerit="NOT_EVALUATED"|"PARETO_SUPPORTED"|"MIXED"|"DOMINATED_BY
 export type CommonForwardMetrics={days:number;totalReturn:number;metrics:Metrics;actionDays:number};
 export type ParetoComparison={version:string;incumbentVersion:string;commonDays:number;candidate:CommonForwardMetrics|null;incumbent:CommonForwardMetrics|null;merit:ParetoMerit;reasons:string[]};
 
-type ComparableRow={marketDataDate:string;dailyReturn:number;position:number;execution?:unknown};
+type ComparableExecution={turnover:number;recordedDate:string};
+type ComparableRow={marketDataDate:string;dailyReturn:number;position:number;execution?:ComparableExecution|null};
 
 function scheduledSessions(start:string,end:string){
   const out:string[]=[];if(!start||!end||end<start)return out;
@@ -28,7 +29,7 @@ function cleanCommonSuffix(cRows:ComparableRow[],iRows:ComparableRow[]){
 function commonMetrics(rows:ComparableRow[],dates:string[]):CommonForwardMetrics|null{
   const set=new Set(dates),x=rows.filter(r=>set.has(r.marketDataDate)).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
   if(!x.length)return null;
-  const returns=x.map(r=>r.dailyReturn),positions=x.map(r=>r.position),ds=x.map(r=>r.marketDataDate),m=metricSet(returns,[],[],ds,positions),actionDays=new Set(x.filter(r=>(r as any).execution&&(r as any).execution.turnover>0).map(r=>(r as any).execution.recordedDate||r.marketDataDate)).size;
+  const returns=x.map(r=>r.dailyReturn),positions=x.map(r=>r.position),ds=x.map(r=>r.marketDataDate),m=metricSet(returns,[],[],ds,positions),actionDays=new Set(x.filter(r=>r.execution&&r.execution.turnover>0).map(r=>r.execution!.recordedDate||r.marketDataDate)).size;
   return{days:x.length,totalReturn:returns.reduce((e,r)=>e*(1+r),1)-1,metrics:m,actionDays};
 }
 
