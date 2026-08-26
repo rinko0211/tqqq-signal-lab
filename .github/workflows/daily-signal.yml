@@ -2,6 +2,9 @@ name: Daily TQQQ Signal
 on:
   schedule:
     - cron: "30 22 * * 1-5"
+    # Recovery fetch before the next US open: 09:00 EDT / 08:00 EST.
+    # Tue-Sat UTC corresponds to the morning after each Mon-Fri US session.
+    - cron: "0 13 * * 2-6"
   workflow_dispatch:
   push:
     branches: [main]
@@ -37,9 +40,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # A queued push run can start after an earlier scheduled run has already
-      # persisted data. Always calculate from the current branch tip, not the
-      # event SHA, so same-day JSON never rebases against an older snapshot.
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -62,9 +62,6 @@ jobs:
             git pull --rebase origin main
             git push
           fi
-      # A scheduled run can have been queued from an older commit. Build only
-      # after the append-only record has been rebased onto the latest main so
-      # Pages never republishes an older status.json over a newer daily run.
       - name: Build PWA from the persisted latest main
         run: npm run build:pages
       - uses: actions/configure-pages@v5
