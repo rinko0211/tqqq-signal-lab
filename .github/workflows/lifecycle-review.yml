@@ -1,0 +1,62 @@
+name: Autonomous Lifecycle Review
+on:
+  schedule:
+    # Daily, including weekends. Review milestones must not depend on a market session.
+    - cron: "15 1 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "lib/lifecycle-review.ts"
+      - "scripts/generate-lifecycle-review.ts"
+      - "tests/lifecycle-review.test.ts"
+      - "tests/operations-regimes.test.ts"
+      - "github-pages/public/data/phase-5-forward-ledger.json"
+      - "github-pages/public/data/phase-5-forward-status.json"
+      - "github-pages/public/data/forward-ledger.json"
+      - "github-pages/public/data/production-config.json"
+      - ".github/workflows/lifecycle-review.yml"
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: daily-signal-pages
+  cancel-in-progress: false
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Run lifecycle/regime acceptance tests
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/operations-regimes.test.ts tests/execution-integrity.test.ts
+      - name: Generate autonomous lifecycle judgment
+        run: node --experimental-strip-types scripts/generate-lifecycle-review.ts
+      - name: Persist append-only review state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add github-pages/public/data/lifecycle-review.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update autonomous lifecycle review"
+            git pull --rebase origin main
+            git push
+          fi
+      - name: Refresh current main before Pages build
+        run: git pull --rebase origin main
+      - name: Build integrated PWA
+        run: npm run build:pages
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: dist-pages}
+      - name: Deploy integrated Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
