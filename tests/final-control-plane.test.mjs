@@ -46,12 +46,12 @@ test("Human Approval cannot rely on suppressed GITHUB_TOKEN push recursion",()=>
 
 test("Human Approval atomically persists validated config and live state",()=>{
   assert.match(approval,/Record explicit human decision locally/);
-  assert.match(approval,/Preflight the exact approved operational state/);
+  assert.match(approval,/Preflight the exact resulting operational state/);
   assert.match(approval,/npm run generate:daily/);
   assert.match(approval,/test ! -s github-pages\/public\/data\/\.failed/);
   assert.match(approval,/npm run test:ops/);
   assert.match(approval,/npm run build:pages/);
-  assert.match(approval,/Atomically persist approval and validated live state/);
+  assert.match(approval,/Atomically persist decision and validated live state/);
   assert.match(approval,/git add github-pages\/public\/data/);
   assert.match(approval,/approve:[\s\S]*concurrency:[\s\S]*group: daily-signal-pages/);
 });
@@ -63,9 +63,11 @@ test("Production approval remains fresh-lifecycle, formal-stage, eligible-versio
   assert.match(approveScript,/systemDecision!=="PHASE6_HUMAN_DECISION_REQUIRED"/);
   assert.match(approveScript,/productionEligibleVersions/);
   assert.match(approveScript,/!eligible\.includes\(version\)/);
-  assert.match(production,/current\.mode==="RESEARCH"&&next==="PRODUCTION"/);
+  assert.match(production,/if\(current\.mode!=="DECISION"\)throw Error\("DECISION review is required immediately before PRODUCTION"\)/);
   assert.match(production,/Human approval is required/);
   assert.match(production,/Strong Forward evidence and completed Final Selection Review are required/);
+  assert.match(production,/if\(next==="DECISION"\)return\{\.\.\.current,mode:"DECISION"/);
+  assert.match(production,/cancelDecision/);
 });
 
 test("Daily routine path is operational, not historical research",()=>{
