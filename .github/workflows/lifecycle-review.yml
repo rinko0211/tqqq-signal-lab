@@ -1,18 +1,12 @@
 name: Autonomous Lifecycle Review
 on:
   schedule:
-    # Daily, including weekends. Review milestones must not depend on a market session.
+    # Daily, including weekends. This schedule is the authoritative autonomous review path.
     - cron: "15 1 * * *"
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      # Re-evaluate immediately only when authoritative operational evidence changes.
-      - "github-pages/public/data/status.json"
-      - "github-pages/public/data/phase-5-forward-ledger.json"
-      - "github-pages/public/data/phase-5-forward-status.json"
-      - "github-pages/public/data/forward-ledger.json"
-      - "github-pages/public/data/production-config.json"
       # Workflow maintenance self-tests once when intentionally changed.
       - ".github/workflows/lifecycle-review.yml"
 permissions:
