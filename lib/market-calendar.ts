@@ -17,7 +17,7 @@ export function isNyseSession(date:string){const d=new Date(`${date}T12:00:00Z`)
 export function nextNyseSession(date:string,delay=1){const d=new Date(`${date}T12:00:00Z`);for(let n=0;n<delay;n++){do d.setUTCDate(d.getUTCDate()+1);while(!isNyseSession(d.toISOString().slice(0,10)))}return d.toISOString().slice(0,10)}
 export function countNyseSessions(startDate:string,endDate:string){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!/^\d{4}-\d{2}-\d{2}$/.test(endDate)||endDate<startDate)return 0;
-  let count=0,d=new Date(`${startDate}T12:00:00Z`),guard=0;
+  let count=0,guard=0;const d=new Date(`${startDate}T12:00:00Z`);
   while(d.toISOString().slice(0,10)<=endDate&&guard++<10000){if(isNyseSession(d.toISOString().slice(0,10)))count++;d.setUTCDate(d.getUTCDate()+1)}
   return count;
 }
@@ -39,7 +39,7 @@ export function earliestLegalNyseOpen(signalDate:string,recordedAt:string){
 
 export function completedNyseSessionsSince(generatedAt:string,now=new Date().toISOString()){
   const start=nyClock(generatedAt),end=nyClock(now);if(end.localDate<start.localDate||Date.parse(now)<Date.parse(generatedAt))return Number.POSITIVE_INFINITY;
-  let count=0,d=new Date(`${start.localDate}T12:00:00Z`),guard=0;
+  let count=0,guard=0;const d=new Date(`${start.localDate}T12:00:00Z`);
   while(d.toISOString().slice(0,10)<=end.localDate&&guard++<4000){
     const date=d.toISOString().slice(0,10);
     if(isNyseSession(date)){
@@ -60,9 +60,9 @@ export function upstreamWorkflowFresh(generatedAt:string|undefined,now=new Date(
 export function marketDataLagSessions(marketDataDate:string|undefined,now=new Date().toISOString()){
   if(!marketDataDate)return Number.POSITIVE_INFINITY;
   const end=nyClock(now);let latest=end.localDate;
-  if(end.minutes<CLOSE_MINUTES||!isNyseSession(latest)){let d=new Date(`${latest}T12:00:00Z`);do d.setUTCDate(d.getUTCDate()-1);while(!isNyseSession(d.toISOString().slice(0,10)));latest=d.toISOString().slice(0,10)}
+  if(end.minutes<CLOSE_MINUTES||!isNyseSession(latest)){const d=new Date(`${latest}T12:00:00Z`);do d.setUTCDate(d.getUTCDate()-1);while(!isNyseSession(d.toISOString().slice(0,10)));latest=d.toISOString().slice(0,10)}
   if(marketDataDate>=latest)return 0;
-  let count=0,d=new Date(`${marketDataDate}T12:00:00Z`),guard=0;
+  let count=0,guard=0;const d=new Date(`${marketDataDate}T12:00:00Z`);
   while(d.toISOString().slice(0,10)<latest&&guard++<4000){d.setUTCDate(d.getUTCDate()+1);if(isNyseSession(d.toISOString().slice(0,10)))count++}
   return count;
 }
