@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-26T06:55:23.481Z",
+  "generatedAt": "2026-08-26T13:52:56.335Z",
   "dataDate": "2026-08-25",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
@@ -32,7 +32,7 @@
       "atrPct": 1.618068797988787,
       "vix": 15.45
     },
-    "executionDate": "2026-08-26"
+    "executionDate": "2026-08-27"
   },
   "suggestion": "75%を維持。売買なし。",
   "warnings": [
