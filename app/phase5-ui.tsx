@@ -98,7 +98,7 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
     <>
       <section className="opsDashboard">
         <article className="decision productionCard">
-          <div className="panelHead"><div><em>{formalProduction ? "FORMAL PRODUCTION · HUMAN APPROVED" : "OPERATIONAL BASELINE · NOT FORMAL PRODUCTION"}</em><h2>{activeProduction ? "現在の正式運用" : "現在の日次運用基準"}</h2></div><Chip tone={activeProduction ? "ok" : "warn"}>{activeProduction ? "PRODUCTION" : "BASELINE"}</Chip></div>
+          <div className="panelHead"><div><em>{productionStateLabel}</em><h2>{activeProduction ? "現在の正式運用" : "現在の日次運用基準"}</h2></div><Chip tone={activeProduction ? "ok" : "warn"}>{activeProduction ? "PRODUCTION" : "BASELINE"}</Chip></div>
           {production ? <>
             <div className="opsHeadline"><div><span>{production.ticker} / {production.version || production.strategy}</span><strong>{Math.round(production.target * 100)}%</strong></div><div><span>本日のAction</span><b>{changed ? `${Math.round(production.previousTarget * 100)}% → ${Math.round(production.target * 100)}%` : "売買なし"}</b></div></div>
             <p>{production.date || "—"} 判定 · {production.regime || "Regime未表示"} · Score {production.score ?? "—"}</p>
