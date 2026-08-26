@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "scripts/wire-phase4-ui-controls.mjs"
+      - "scripts/refresh-deployment-tests.mjs"
       - "app/lifecycle-ui.tsx"
       - ".github/workflows/executive-phase4-ui-audit.yml"
   workflow_dispatch:
@@ -12,28 +13,31 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with: {ref: main}
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
       - run: npm ci
-      - name: Apply guarded UI patch
-        run: node scripts/wire-phase4-ui-controls.mjs
+      - name: Apply guarded UI and deployment-test patches
+        run: |
+          node scripts/wire-phase4-ui-controls.mjs
+          node scripts/refresh-deployment-tests.mjs
       - name: Audit change boundary
         run: |
           git diff --check
           changed="$(git diff --name-only | sort)"
           printf '%s\n' "$changed"
-          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(app/page.tsx|app/phase5-ui.tsx)$' || true)"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(app/page.tsx|app/phase5-ui.tsx|tests/deployment.test.mjs)$' || true)"
           test -z "$unexpected" || { echo "Unexpected files:"; echo "$unexpected"; exit 1; }
       - name: Run lifecycle and operational regression
         run: |
           node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/executive-controls.test.ts tests/corporate-action-ledger.test.ts
           npm run test:ops
-      - name: Build and rendered HTML checks
+      - name: Build both targets and run deployment/render checks
         run: |
+          npm run build
           npm run build:pages
           node --test tests/rendered-html.test.mjs tests/deployment.test.mjs
       - name: Verify critical UI wording in source
@@ -44,11 +48,11 @@ jobs:
           grep -q "OPERATIONAL BASELINE · NOT FORMAL PRODUCTION" app/phase5-ui.tsx
           grep -q "JPY-normalized" app/phase5-ui.tsx
           grep -q "Legacy Evidence" app/page.tsx
-      - name: Persist tested Phase 4 UI controls
+      - name: Persist tested Phase 4 UI controls and current deployment tests
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/page.tsx app/phase5-ui.tsx
+          git add app/page.tsx app/phase5-ui.tsx tests/deployment.test.mjs
           git commit -m "Clarify Production and Forward review UI"
           git pull --rebase origin main
           git push
