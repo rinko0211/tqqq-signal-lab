@@ -1,3 +1,5 @@
+import {marketDataLagSessions,nextNyseSession} from "./market-calendar.ts";
+
 export type Ticker = "TQQQ" | "QQQ" | "SPY" | "VIX";
 export type Bar = {
   date: string;
@@ -191,15 +193,7 @@ const sma = (x: number[], i: number, n: number) =>
   i < n - 1 ? NaN : mean(x.slice(i - n + 1, i + 1));
 const change = (x: number[], i: number, n: number) =>
   i < n ? 0 : x[i] / x[i - n] - 1;
-const nthWeekday=(year:number,month:number,weekday:number,n:number)=>{const d=new Date(Date.UTC(year,month,1));while(d.getUTCDay()!==weekday)d.setUTCDate(d.getUTCDate()+1);d.setUTCDate(d.getUTCDate()+7*(n-1));return d.toISOString().slice(0,10)},lastWeekday=(year:number,month:number,weekday:number)=>{const d=new Date(Date.UTC(year,month+1,0));while(d.getUTCDay()!==weekday)d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10)},observed=(year:number,month:number,day:number)=>{const d=new Date(Date.UTC(year,month,day)),w=d.getUTCDay();if(w===6)d.setUTCDate(d.getUTCDate()-1);if(w===0)d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10)},easter=(year:number)=>{const a=year%19,b=Math.floor(year/100),c=year%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31)-1,day=(h+l-7*m+114)%31+1;return new Date(Date.UTC(year,month,day))},isNyseHoliday=(date:string)=>{const y=+date.slice(0,4),goodFriday=easter(y);goodFriday.setUTCDate(goodFriday.getUTCDate()-2);return new Set([observed(y,0,1),nthWeekday(y,0,1,3),nthWeekday(y,1,1,3),goodFriday.toISOString().slice(0,10),lastWeekday(y,4,1),observed(y,5,19),observed(y,6,4),nthWeekday(y,8,1,1),nthWeekday(y,10,4,4),observed(y,11,25)]).has(date)};
-const nextWeekday = (date: string, delay = 1) => {
-  const d = new Date(`${date}T12:00:00Z`);
-  for (let n = 0; n < delay; n++) {
-    do d.setUTCDate(d.getUTCDate() + 1);
-    while ([0, 6].includes(d.getUTCDay())||isNyseHoliday(d.toISOString().slice(0,10)));
-  }
-  return d.toISOString().slice(0, 10);
-};
+const nextWeekday = (date: string, delay = 1) => nextNyseSession(date,delay);
 export const annualize = (daily: number[]) =>
   daily.length
     ? Math.pow(
@@ -896,7 +890,8 @@ export function runBacktest(
     const dailyReturn = equity/dayStartEquity-1;
     if (openTrade) {
       openTrade.days++;
-      const r = d.tqqq.close / openTrade.price - 1;
+      const px = d.tqqq.close,
+        r = px / openTrade.price - 1;
       openTrade.mfe = Math.max(openTrade.mfe, r);
       openTrade.mae = Math.min(openTrade.mae, r);
     }
@@ -1341,18 +1336,16 @@ export function demoDataset(): Dataset {
     tickers: info,
   };
 }
-export function freshness(date: string) {
-  const age = Math.floor(
-    (Date.now() - new Date(`${date}T21:00:00Z`).getTime()) / 86400000,
-  );
+export function freshness(date: string, now=new Date().toISOString()) {
+  const age = Math.floor((Date.parse(now) - new Date(`${date}T21:00:00Z`).getTime()) / 86400000),lagSessions=marketDataLagSessions(date,now),stale=!Number.isFinite(lagSessions)||lagSessions>0;
   return {
     age,
-    stale: age > 4,
-    message:
-      age > 4
-        ? `最終データが${age}日前です。現在シグナルとして使用しないでください`
-        : `最終データは${age}日前です`,
+    lagSessions,
+    stale,
+    message: stale
+      ? `最終データから${Number.isFinite(lagSessions)?lagSessions:"不明"}完了NYSEセッション遅延。現在シグナルとして使用しないでください`
+      : `最新の完了NYSEセッションまで反映済み`,
   };
 }
 export const nextExecutionDate = (signalDate: string, delay = 1) =>
-  nextWeekday(signalDate, delay);
+  nextNyseSession(signalDate, delay);
