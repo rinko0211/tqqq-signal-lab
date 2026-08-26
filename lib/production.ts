@@ -3,13 +3,18 @@ import {STRATEGIES,type StrategyConfig} from "./engine.ts";
 export type PlatformMode="RESEARCH"|"DECISION"|"PRODUCTION";
 export type HealthState="Healthy"|"Watch"|"Revalidation Required"|"Critical";
 export type ProductionConfig={schemaVersion:1;mode:PlatformMode;selectedTicker:string|null;selectedStrategy:string|null;strategyVersion:string|null;approvedByHuman:boolean;approvalDate:string|null;effectiveDate:string|null;lastHealthReview:string|null;nextHealthReview:string|null;updatedAt:string};
-export type ProductionSystem={ticker:"TQQQ"|"UPRO";strategy:string;version:string;config:StrategyConfig;track:"A"|"B1"|"B2"};
+export type ProductionSystem={ticker:"TQQQ"|"UPRO"|"SSO"|"QLD";strategy:string;version:string;config:StrategyConfig;track:"A"|"B1"|"B2"|"P5"};
+const scaledStop=.13*2/3;
+const spbt=(stop:number):StrategyConfig=>({...STRATEGIES.defensive,weights:{trend:.36,momentum:.16,volatility:.28,market:.20},confirmDays:3,minHold:8,trailStop:stop});
 export const PRODUCTION_SYSTEMS:ProductionSystem[]=[
   {ticker:"TQQQ",strategy:"Volatility Shield 13%",version:"VS13-v1.0",config:STRATEGIES.defensive,track:"A"},
   {ticker:"TQQQ",strategy:"Volatility Shield 12%",version:"VS12-v1.0",config:{...STRATEGIES.defensive,trailStop:.12},track:"A"},
   {ticker:"TQQQ",strategy:"30% Volatility Targeting",version:"VT30-v1.0",config:{...STRATEGIES.defensive,sizing:"volTarget",targetPortfolioVol:.30},track:"A"},
   {ticker:"UPRO",strategy:"UPRO + Common VS13",version:"UPRO-VS13-v1.0",config:STRATEGIES.defensive,track:"B1"},
   {ticker:"UPRO",strategy:"UPRO Native Broad Volatility Target",version:"UPRO-Native-v1.0",config:{...STRATEGIES.defensive,sizing:"volTarget",targetPortfolioVol:.25},track:"B2"},
+  {ticker:"UPRO",strategy:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",config:spbt(.13),track:"P5"},
+  {ticker:"SSO",strategy:"SSO + S&P Broad Trend + scaled stop",version:"SSO-SPBT-Scaled-v1.0",config:spbt(scaledStop),track:"P5"},
+  {ticker:"QLD",strategy:"QLD + Common VS13 + scaled stop",version:"QLD-VS13-Scaled-v1.0",config:{...STRATEGIES.defensive,trailStop:scaledStop},track:"P5"},
 ];
 export function resolveProductionSystem(ticker:string,version:string,strategy?:string|null):ProductionSystem{
   const found=PRODUCTION_SYSTEMS.find(x=>x.ticker===ticker&&x.version===version);
