@@ -27,14 +27,14 @@ const weekdays=(start:string,end:string)=>{const out:string[]=[],d=new Date(`${s
 const bar=(date:string,close:number)=>({date,open:close*.999,high:close*1.01,low:close*.99,close,adjClose:close,volume:1_000_000});
 
 test("Phase 5 missing ratio counts an omitted common NYSE session and missed-live backfill",()=>{
-  const pre=weekdays("2025-05-01","2026-08-20"),post=["2026-08-21","2026-08-24","2026-08-25"],all=[...pre,...post];
+  const pre=weekdays("2025-05-01","2026-08-24"),post=["2026-08-25","2026-08-26","2026-08-27"],all=[...pre,...post];
   const make=(base:number,dates=all)=>dates.map((d,i)=>bar(d,base+i*.01));
-  const payload:any={source:"test",retrievedAt:"2026-08-25T22:00:00Z",series:{
-    UPRO:make(40,all.filter(d=>d!=="2026-08-24")),SSO:make(50),QLD:make(60),SPY:make(100),QQQ:make(120),VIX:make(18),
+  const payload:any={source:"test",retrievedAt:"2026-08-27T22:00:00Z",series:{
+    UPRO:make(40,all.filter(d=>d!=="2026-08-26")),SSO:make(50),QLD:make(60),SPY:make(100),QQQ:make(120),VIX:make(18),
   }};
-  const ledger=updatePhase5Ledger(payload,emptyPhase5Ledger("2026-08-25T15:15:00Z"),"2026-08-25T22:00:00Z");
+  const ledger=updatePhase5Ledger(payload,emptyPhase5Ledger("2026-08-25T15:15:00Z"),"2026-08-27T22:00:00Z");
   const upro=summarizePhase5(ledger).find(x=>x.ticker==="UPRO")!;
-  assert.equal(countNyseSessions("2026-08-21","2026-08-25"),3);
+  assert.equal(countNyseSessions("2026-08-25","2026-08-27"),3);
   assert.equal(upro.liveObservations,1);
-  assert.equal(upro.missing,2); // Aug 21 was not observed live; Aug 24 was absent from the common dataset.
+  assert.equal(upro.missing,2);
 });
