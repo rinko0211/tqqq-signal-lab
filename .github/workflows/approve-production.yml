@@ -21,6 +21,8 @@ on:
         required: false
 permissions:
   contents: write
+  pages: write
+  id-token: write
 concurrency:
   group: production-approval
   cancel-in-progress: false
@@ -51,5 +53,10 @@ jobs:
           git commit -m "Record human platform mode approval"
           git pull --rebase origin main
           git push
-      # production-config.json triggers Daily TQQQ Signal. That workflow
-      # validates the selected registry entry and owns the Pages deployment.
+
+  refresh-live-system:
+    needs: approve
+    # A GITHUB_TOKEN-authored push does not recursively trigger push workflows.
+    # Call Daily explicitly so approved ticker/version and Pages switch atomically in the control plane.
+    uses: ./.github/workflows/daily-signal.yml
+    secrets: inherit
