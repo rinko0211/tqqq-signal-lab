@@ -26,6 +26,7 @@ permissions:
 concurrency:
   group: production-approval
   cancel-in-progress: false
+  queue: max
 jobs:
   approve:
     runs-on: ubuntu-latest
@@ -33,9 +34,12 @@ jobs:
     concurrency:
       group: daily-signal-pages
       cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@v7
         with: {ref: main}
+      - name: Capture validated main head
+        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v7
         with: {node-version: 22, cache: npm}
       - run: npm ci
@@ -60,9 +64,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add github-pages/public/data
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::main changed after approval preflight; refusing to rebase unvalidated source into the human decision"
+            exit 1
+          fi
           git commit -m "Record human control decision with validated live state"
-          git pull --rebase origin main
-          git push
+          git push origin HEAD:main
 
   deploy-validated-state:
     needs: approve
