@@ -7,6 +7,11 @@ on:
         required: false
         type: boolean
         default: false
+      expected_sha:
+        description: "Optional exact persisted commit SHA required for deploy-only calls"
+        required: false
+        type: string
+        default: ""
   schedule:
     - cron: "30 22 * * 1-5"
     # Recovery fetch before the next US open: 09:00 EDT / 08:00 EST.
@@ -37,9 +42,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: main
+          ref: ${{ inputs.expected_sha != '' && inputs.expected_sha || 'main' }}
       - name: Capture validated main head
         run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Enforce exact persisted SHA for deploy-only approval calls
+        if: ${{ inputs.deploy_persisted_only == true && inputs.expected_sha != '' }}
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$EXPECTED_SHA" ]; then
+            echo "::error::main advanced after Human Approval persistence; refusing to deploy a different runtime/state"
+            exit 1
+          fi
       - uses: actions/setup-node@v7
         with:
           node-version: 22
