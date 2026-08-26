@@ -635,7 +635,7 @@ function SignalView({
   operationalCandidate:boolean;
   ticker:string;
 }) {
-  const execute = nextExecutionDate(signal.date);
+  const execute = signal.executionDate || nextExecutionDate(signal.date);
   const assumption=bt?.assumption||EXECUTION_ASSUMPTION;
   const changed=Math.abs(signal.target-signal.previousTarget)>.001,
     direction=signal.target>signal.previousTarget?"増加":"縮小";
