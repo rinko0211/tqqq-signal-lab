@@ -7,27 +7,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "lib/lifecycle-review.ts"
-      - "lib/production-health-review.ts"
-      - "lib/production.ts"
-      - "lib/phase5-forward.ts"
-      - "lib/forward.ts"
-      - "lib/market-calendar.ts"
-      - "lib/regime-coverage.ts"
-      - "lib/forward-pareto.ts"
-      - "scripts/generate-lifecycle-review.ts"
-      - "scripts/generate-production-health-review.ts"
-      - "tests/lifecycle-review.test.ts"
-      - "tests/production-health-review.test.ts"
-      - "tests/operations-regimes.test.ts"
-      - "tests/production-lifecycle.test.ts"
-      - "tests/execution-integrity.test.ts"
-      - "tests/executive-controls.test.ts"
+      # Re-evaluate immediately only when authoritative operational evidence changes.
       - "github-pages/public/data/status.json"
       - "github-pages/public/data/phase-5-forward-ledger.json"
       - "github-pages/public/data/phase-5-forward-status.json"
       - "github-pages/public/data/forward-ledger.json"
       - "github-pages/public/data/production-config.json"
+      # Workflow maintenance self-tests once when intentionally changed.
       - ".github/workflows/lifecycle-review.yml"
 permissions:
   contents: write
@@ -69,9 +55,9 @@ jobs:
         run: git pull --rebase origin main
       - name: Build integrated PWA
         run: npm run build:pages
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with: {path: dist-pages}
       - name: Deploy integrated Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
