@@ -1,6 +1,6 @@
 import { summarizeForward, type ForwardLedger, type ForwardSummary } from "./forward.ts";
 import { summarizePhase5, type Phase5Ledger, type Phase5Summary } from "./phase5-forward.ts";
-import { assessHealth, type ProductionConfig, type HealthState } from "./production.ts";
+import { assessHealth, hasActiveProduction, type ProductionConfig, type HealthState } from "./production.ts";
 import {summarizeRegimeCoverage} from "./regime-coverage.ts";
 import {compareCandidateToIncumbent,type ParetoMerit} from "./forward-pareto.ts";
 import {marketDataLagSessions,upstreamWorkflowFresh} from "./market-calendar.ts";
@@ -77,7 +77,7 @@ function applyPareto(reviews:CandidateReview[],phase5:Phase5Ledger,forward:Forwa
 }
 
 function healthForProduction(production:ProductionConfig,phase5:Phase5Ledger,phase5Status:LifecycleInputStatus|null|undefined,runtimeStatus:RuntimeStatus|null|undefined,forward:ForwardLedger,now:string):ProductionHealth{
-  if(production.mode!=="PRODUCTION"||!production.approvedByHuman||!production.strategyVersion)return{state:"NOT_IN_PRODUCTION",version:null,reasons:["No human-approved Production system is active"],nextHealthReview:production.nextHealthReview};
+  if(!hasActiveProduction(production)||!production.strategyVersion)return{state:"NOT_IN_PRODUCTION",version:null,reasons:["No human-approved Production system is active"],nextHealthReview:production.nextHealthReview};
   const version=production.strategyVersion,p5=summarizePhase5(phase5).find(x=>x.version===version),legacy=summarizeForward(forward).find(x=>x.version===version),row=p5||legacy;
   if(!row)return{state:"Critical",version,reasons:["Selected Production version has no matching Forward ledger"],nextHealthReview:production.nextHealthReview};
   const quality=p5?phase5StatusQuality(phase5Status,now,false):runtimeStatusQuality(runtimeStatus,now,false),historicalDd=HIST_DD[version]??-.40,dd=(row as any).metrics?.maxDd??(row as any).currentDd??0,live=(row as any).liveObservations??(row as any).observations??0,actionDays=(row as any).actionDays??(row as any).orders??0,apy=actionDays/yearsObserved(live);
