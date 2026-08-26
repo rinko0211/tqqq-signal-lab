@@ -1,0 +1,36 @@
+name: Finalize Phase 4 Baseline Label
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/finalize-phase4-label.mjs"
+      - ".github/workflows/finalize-phase4-label.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: node scripts/finalize-phase4-label.mjs
+      - run: git diff --check
+      - run: npm run test:ops
+      - run: npm run build:pages
+      - name: Verify mode-aware labels
+        run: |
+          grep -q 'formalProduction?"PRODUCTION":"BASELINE"' app/phase5-ui.tsx
+          grep -q 'Operational Baselineが日次判断基準' app/phase5-ui.tsx
+      - name: Persist tested label
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/phase5-ui.tsx
+          git commit -m "Make dashboard baseline label mode-aware"
+          git pull --rebase origin main
+          git push
