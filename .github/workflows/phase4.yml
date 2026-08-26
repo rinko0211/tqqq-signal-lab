@@ -1,14 +1,5 @@
 name: Phase 4 Hierarchical Allocation
 on:
-  push:
-    branches: [main]
-    paths:
-      - "lib/phase4.ts"
-      - "scripts/generate-phase4.ts"
-      - "tests/phase4.test.ts"
-      - "research/phase-4-charter-2026-08-25.md"
-      - ".github/workflows/phase4.yml"
-      - "package.json"
   workflow_dispatch:
 permissions:
   contents: write
