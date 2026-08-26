@@ -1,14 +1,6 @@
 name: Phase 3 Bounded Native Research
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "lib/phase3.ts"
-      - "scripts/generate-phase3.ts"
-      - "tests/phase3.test.ts"
-      - "package.json"
-      - ".github/workflows/phase3.yml"
 permissions:
   contents: write
 concurrency:
