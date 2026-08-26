@@ -12,6 +12,9 @@ on:
       - "lib/production.ts"
       - "lib/phase5-forward.ts"
       - "lib/forward.ts"
+      - "lib/market-calendar.ts"
+      - "lib/regime-coverage.ts"
+      - "lib/forward-pareto.ts"
       - "scripts/generate-lifecycle-review.ts"
       - "scripts/generate-production-health-review.ts"
       - "tests/lifecycle-review.test.ts"
@@ -19,6 +22,8 @@ on:
       - "tests/operations-regimes.test.ts"
       - "tests/production-lifecycle.test.ts"
       - "tests/execution-integrity.test.ts"
+      - "tests/executive-controls.test.ts"
+      - "github-pages/public/data/status.json"
       - "github-pages/public/data/phase-5-forward-ledger.json"
       - "github-pages/public/data/phase-5-forward-status.json"
       - "github-pages/public/data/forward-ledger.json"
@@ -44,8 +49,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
       - run: npm ci
-      - name: Run lifecycle/regime/health acceptance tests
-        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/operations-regimes.test.ts tests/production-lifecycle.test.ts tests/execution-integrity.test.ts
+      - name: Run hardened lifecycle/regime/health acceptance tests
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/operations-regimes.test.ts tests/production-lifecycle.test.ts tests/execution-integrity.test.ts tests/executive-controls.test.ts tests/corporate-action-ledger.test.ts
       - name: Generate autonomous lifecycle judgment
         run: node --experimental-strip-types scripts/generate-lifecycle-review.ts
       - name: Generate quarterly Production health ledger
