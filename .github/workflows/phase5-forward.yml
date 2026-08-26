@@ -2,6 +2,7 @@ name: Phase 5 Forward Gate
 on:
   schedule:
     - cron: "45 22 * * 1-5"
+    - cron: "15 13 * * 2-6"
   workflow_dispatch:
   push:
     branches: [main]
@@ -21,8 +22,6 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  # Serialize with the existing Daily Signal Pages deployment so one workflow
-  # cannot publish an older site over a newer one.
   group: daily-signal-pages
   cancel-in-progress: false
 jobs:
