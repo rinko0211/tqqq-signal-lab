@@ -171,7 +171,7 @@ export function emptyForwardLedger(now = new Date().toISOString()): ForwardLedge
     updatedAt: now,
     appendOnly: true,
     championId: "VS13",
-    freezes: STRATEGY_FREEZES,
+    freezes: structuredClone(STRATEGY_FREEZES),
     promotionRule: PROMOTION_RULE,
     reviewSchedule: { sixMonth: "2027-02-22", twelveMonth: "2027-08-23", twentyFourMonth: "2028-08-21" },
     records: [], corrections: [],
