@@ -7,19 +7,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "lib/phase5-forward.ts"
-      - "lib/execution-integrity.ts"
-      - "lib/official-data.ts"
-      - "lib/production.ts"
-      - "scripts/generate-phase5-forward.ts"
-      - "tests/phase5-forward.test.ts"
-      - "tests/phase5-paper.test.ts"
-      - "tests/execution-integrity.test.ts"
-      - "tests/operations-regimes.test.ts"
-      - "tests/production-lifecycle.test.ts"
-      - "research/phase-5-forward-gate-2026-08-26.md"
+      # Forward observations are schedule-driven. Only workflow maintenance self-tests on push.
       - ".github/workflows/phase5-forward.yml"
-      - "package.json"
 permissions:
   contents: write
   pages: write
@@ -69,16 +58,16 @@ jobs:
         if: always()
         continue-on-error: true
         run: npm run build:pages
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         if: always() && steps.pages_build.outcome == 'success'
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: always() && steps.pages_build.outcome == 'success'
         with:
           path: dist-pages
       - name: Deploy integrated Pages
         id: deployment
         if: always() && steps.pages_build.outcome == 'success'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       - name: Enforce Phase 5 generation and build success
         if: always()
         run: |
