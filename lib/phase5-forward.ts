@@ -1,5 +1,6 @@
 import { metricSet, nextExecutionDate, signals, STRATEGIES, type Bar, type Dataset, type Metrics, type Signal, type StrategyConfig } from "./engine.ts";
 import { earliestLegalExecutionDate } from "./execution-integrity.ts";
+import {assertPlausibleTransition,corporateActionContinuity} from "./corporate-actions.ts";
 
 export const PHASE5_FORWARD_SCHEMA = 1;
 export const PHASE5_FORWARD_START = "2026-08-25";
@@ -62,7 +63,7 @@ export type Phase5Record = {
   key:string; marketDataDate:string; recordedAt:string; recordMode:"LIVE"|"BACKFILLED_OBSERVATION"; strategyId:Phase5Id; ticker:Phase5Ticker;
   strategyName:string; strategyVersion:string; score:number; components:Signal["components"]; regime:string; targetExposure:number; previousExposure:number;
   signal:string; tradeReason:string; intendedExecutionDate:string; execution:Phase5Execution|null; assetClose:number; position:number; quantity:number; cash:number;
-  equity:number; dailyReturn:number; currentDrawdown:number; cumulativeCosts:number; dataSource:string; dataStatus:"VALID"|"BACKFILLED_NO_SIGNAL"; buildVersion:string;
+  equity:number; dailyReturn:number; currentDrawdown:number; cumulativeCosts:number; corporateActionFactor?:number; corporateActionKind?:"SPLIT"|"REVERSE_SPLIT"; dataSource:string; dataStatus:"VALID"|"BACKFILLED_NO_SIGNAL"; buildVersion:string;
 };
 export type Phase5Ledger = {
   schemaVersion:1; createdAt:string; updatedAt:string; appendOnly:true; freezes:Phase5Freeze[];
@@ -107,7 +108,9 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
     if(day.date<freeze.startDate)throw new Error(`Phase 5 pre-start write blocked ${freeze.version} ${day.date}`);
     if(ledger.records.some(r=>r.key===keyOf(freeze.version,day.date)))continue;
     const rows=allRows(),previous=rows.at(-1),isLatest=i===ds.days.length-1;
-    const asset=day.tqqq,priorClose=previous?.assetClose??asset.close;
+    const asset=day.tqqq,providerPriorDay=previous?ds.days.find(x=>x.date===previous.marketDataDate):undefined,continuity=previous&&providerPriorDay?corporateActionContinuity(previous.assetClose,providerPriorDay.tqqq.close):null;
+    if(previous&&continuity)assertPlausibleTransition(continuity.adjustedPriorClose,asset.open,continuity);
+    const priorClose=continuity?.adjustedPriorClose??previous?.assetClose??asset.close;
     let equity=previous?.equity??freeze.initialCapital;
     const previousExposure=previous?.position??0;
     let actualExposure=previousExposure,execution:Phase5Execution|null=null,cumulativeCosts=previous?.cumulativeCosts??0;
@@ -130,7 +133,7 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
       strategyName:freeze.name,strategyVersion:freeze.version,score:sig.score,components:sig.components,regime:sig.regime,targetExposure,previousExposure,
       signal:targetExposure===actualExposure?"HOLD":targetExposure>actualExposure?"INCREASE":"REDUCE",tradeReason:sig.reason,intendedExecutionDate:isLatest?earliestLegalExecutionDate(day.date,generatedAt):nextExecutionDate(day.date),execution,
       assetClose:asset.close,position:actualExposure,quantity:asset.close?equity*actualExposure/asset.close:0,cash:equity*(1-actualExposure),equity,
-      dailyReturn:previous?equity/previous.equity-1:0,currentDrawdown,cumulativeCosts,dataSource:source,dataStatus:isLatest?"VALID":"BACKFILLED_NO_SIGNAL",buildVersion:PHASE5_BUILD,
+      dailyReturn:previous?equity/previous.equity-1:0,currentDrawdown,cumulativeCosts,...(continuity&&continuity.kind!=="NONE"&&continuity.kind!=="UNEXPLAINED_RESTATEMENT"?{corporateActionFactor:continuity.factor,corporateActionKind:continuity.kind}:{}),dataSource:source,dataStatus:isLatest?"VALID":"BACKFILLED_NO_SIGNAL",buildVersion:PHASE5_BUILD,
     };
     ledger.records.push(record);
   }

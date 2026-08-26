@@ -9,6 +9,7 @@ import {
   type StrategyConfig,
 } from "./engine.ts";
 import { earliestLegalExecutionDate } from "./execution-integrity.ts";
+import {assertPlausibleTransition,corporateActionContinuity} from "./corporate-actions.ts";
 
 export const FORWARD_SCHEMA_VERSION = 1;
 export const FORWARD_START_DATE = "2026-08-21";
@@ -76,6 +77,8 @@ export type ForwardRecord = {
   intendedExecutionDate: string;
   execution: ForwardExecution | null;
   assetClose: number;
+  corporateActionFactor?: number;
+  corporateActionKind?: "SPLIT"|"REVERSE_SPLIT";
   position: number;
   quantity: number;
   cash: number;
@@ -177,7 +180,11 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
     const isLatest = i === endIndex;
     const previous = ledger.records.filter(r => r.strategyVersion === freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)).at(-1);
     const assetBar = freeze.asset === "QQQ" ? day.qqq : day.tqqq;
-    const priorAssetClose = previous?.assetClose ?? assetBar.close;
+    const providerPriorDay = previous ? ds.days.find(x=>x.date===previous.marketDataDate) : undefined;
+    const providerPriorClose = providerPriorDay ? (freeze.asset === "QQQ" ? providerPriorDay.qqq.close : providerPriorDay.tqqq.close) : undefined;
+    const continuity = previous && providerPriorClose ? corporateActionContinuity(previous.assetClose, providerPriorClose) : null;
+    if(previous && continuity) assertPlausibleTransition(continuity.adjustedPriorClose, assetBar.open, continuity);
+    const priorAssetClose = continuity?.adjustedPriorClose ?? previous?.assetClose ?? assetBar.close;
     let equity = previous?.equity ?? freeze.initialCapital;
     const previousExposure = previous?.position ?? 0;
     let actualExposure = previousExposure;
@@ -222,6 +229,7 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
       tradeReason: signal.reason, intendedExecutionDate: isLatest ? earliestLegalExecutionDate(day.date, generatedAt) : nextExecutionDate(day.date), execution, assetClose: assetBar.close,
       position: actualExposure, quantity: assetBar.close ? equity * actualExposure / assetBar.close : 0, cash: equity * (1-actualExposure),
       equity, dailyReturn: previous ? equity / previous.equity - 1 : 0, currentDrawdown, cumulativeCosts,
+      ...(continuity && continuity.kind !== "NONE" && continuity.kind !== "UNEXPLAINED_RESTATEMENT" ? {corporateActionFactor:continuity.factor,corporateActionKind:continuity.kind} : {}),
       dataSource: source, dataStatus: isLatest ? "VALID" : "BACKFILLED_NO_SIGNAL", buildVersion: FORWARD_BUILD_VERSION,
     };
     ledger.records.push(record);

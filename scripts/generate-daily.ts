@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { fetchOfficialData } from "../lib/official-data.ts";
 import { datasetFromPayload, runBacktest, walkForward } from "../lib/engine.ts";
 import { earliestLegalExecutionDate } from "../lib/execution-integrity.ts";
+import {assertPlausibleTransition,corporateActionContinuity} from "../lib/corporate-actions.ts";
 import { emptyForwardLedger, summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
 import type { LiveSnapshot } from "../lib/paper.ts";
 import {DEFAULT_PRODUCTION_CONFIG,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
@@ -39,10 +40,12 @@ try {
   const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload,productionRow):trackADataset;
   if(!dataset)throw Error(`CONFIG-001: selected ticker ${productionTicker} data unavailable`);
   const errors = dataset.issues.filter(x=>x.severity==="error"); if (errors.length) throw Error(errors.map(x=>x.message).join("; "));
-  const bt = runBacktest(dataset, selected.config),latest = bt.daily.at(-1)!,bar = dataset.days.at(-1)!,priorBar = dataset.days.at(-2)!,wf = walkForward(dataset),oos = fixedOos(dataset,selected.config);
+  const bt = runBacktest(dataset, selected.config),latest = bt.daily.at(-1)!,bar = dataset.days.at(-1)!,wf = walkForward(dataset),oos = fixedOos(dataset,selected.config);
   const updated = priorSignal?.dataDate !== latest.date||priorSignal?.assetTicker!==selected.ticker||priorSignal?.strategyVersion!==selected.version;
   const nyWeekday = new Date(`${nyDate}T12:00:00Z`).getUTCDay(),closed = [0,6].includes(nyWeekday) || isNyseHoliday(nyDate),state = updated ? "latest" : closed ? "market_closed" : nyHour < 18 ? "market_pending" : "not_updated";
-  const splitRatio = priorBar.tqqq.close / bar.tqqq.open,splitFactor = [2,3,4,5,10].find(x=>Math.abs(splitRatio-x)/x<.08);
+  const priorSnapshot=[...history].filter(x=>(x.assetTicker||"TQQQ")===selected.ticker&&(x.strategyVersion||"VS13-v1.0")===selected.version).sort((a,b)=>a.date.localeCompare(b.date)).at(-1);
+  let splitFactor:number|undefined;
+  if(priorSnapshot){const providerPrior=dataset.days.find(x=>x.date===priorSnapshot.date);if(providerPrior){const continuity=corporateActionContinuity(priorSnapshot.tqqqClose,providerPrior.tqqq.close);assertPlausibleTransition(continuity.adjustedPriorClose,bar.tqqq.open,continuity);if(continuity.kind==="SPLIT"||continuity.kind==="REVERSE_SPLIT")splitFactor=continuity.factor;}}
   const snapshot:LiveSnapshot = { date:latest.date,assetTicker:selected.ticker,strategyVersion:selected.version,tqqqOpen:bar.tqqq.open,tqqqClose:bar.tqqq.close,qqqOpen:bar.qqq.open,qqqClose:bar.qqq.close,target:latest.signal.target,previousTarget:latest.signal.previousTarget,score:latest.signal.score,regime:latest.signal.regime,reason:latest.signal.reason,crisis:latest.signal.regime==="急落・危機",...(splitFactor?{splitFactor}:{}) };
   if (!history.some(x=>x.date===snapshot.date&&(x.assetTicker||"TQQQ")===selected.ticker&&(x.strategyVersion||"VS13-v1.0")===(selected.version))) history.push(snapshot);
   const forward = updateForwardLedger(trackADataset, priorForward, payload.source, generatedAt),forwardSummary = summarizeForward(forward),executionDate=earliestLegalExecutionDate(latest.date,generatedAt);
