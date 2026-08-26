@@ -16,6 +16,17 @@ test("non-TQQQ Formal Production uses bounded data fetch instead of research cro
   assert.match(official,/Formal Production data is bounded/);
 });
 
+test("bounded Production fetch preserves the independent TQQQ incumbent baseline",()=>{
+  const start=official.indexOf("export async function fetchProductionData");
+  const end=official.indexOf("export async function fetchUproForwardData");
+  assert.ok(start>=0&&end>start);
+  const fn=official.slice(start,end);
+  assert.match(fn,/"TQQQ","QQQ","SPY",ticker,proxy/);
+  assert.match(fn,/series:\{TQQQ:bySymbol\.TQQQ,QQQ:bySymbol\.QQQ,SPY:bySymbol\.SPY,VIX\}/);
+  assert.match(fn,/crossSeries/);
+  assert.doesNotMatch(fn,/series:\{TQQQ:crossSeries\[ticker\]/);
+});
+
 test("Daily uses shared NYSE calendar",()=>{
   assert.match(daily,/isNyseSession/);
   assert.doesNotMatch(daily,/const nthWeekday=/);
