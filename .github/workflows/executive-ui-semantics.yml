@@ -1,10 +1,11 @@
-name: Executive UI Semantics Audit
+name: Final Acceptance UI Safety Audit
 on:
   push:
     branches: [main]
     paths:
-      - "scripts/wire-executive-ui-semantics.mjs"
+      - "scripts/final-acceptance-ui.mjs"
       - "tests/executive-ui-semantics.test.mjs"
+      - "package.json"
       - ".github/workflows/executive-ui-semantics.yml"
   workflow_dispatch:
 permissions:
@@ -12,32 +13,34 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with: {ref: main}
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
       - run: npm ci
-      - run: node scripts/wire-executive-ui-semantics.mjs
+      - name: Apply guarded final acceptance patch
+        run: node scripts/final-acceptance-ui.mjs
       - name: Audit change boundary
         run: |
           git diff --check
           changed="$(git diff --name-only | sort)"
           printf '%s\n' "$changed"
-          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(app/page.tsx|app/phase5-ui.tsx)$' || true)"
-          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
-      - name: Test UI semantics and operational controls
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(app/page.tsx|app/phase5-ui.tsx|tests/executive-ui-semantics.test.mjs)$' || true)"
+          test -z "$unexpected" || { echo "Unexpected files:"; echo "$unexpected"; exit 1; }
+      - name: Test operational and UI safety controls
+        run: npm run test:ops
+      - name: Full build, Pages build and deployment contracts
         run: |
-          node --test tests/executive-ui-semantics.test.mjs
-          npm run test:ops
-      - name: Build integrated Pages
-        run: npm run build:pages
-      - name: Persist tested UI semantics
+          npm run build
+          npm run build:pages
+          node --test tests/rendered-html.test.mjs tests/deployment.test.mjs
+      - name: Persist tested safety controls
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/page.tsx app/phase5-ui.tsx
-          git commit -m "Clarify operational and Forward UI semantics"
+          git add app/page.tsx app/phase5-ui.tsx tests/executive-ui-semantics.test.mjs
+          git commit -m "Harden Production ticker handoff and model UI"
           git pull --rebase origin main
           git push
