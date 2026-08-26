@@ -26,6 +26,7 @@ import type {NativeResearchBundle} from "../lib/native-research";
 import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,type ProductionConfig} from "../lib/production";
 import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
+import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -40,6 +41,7 @@ const pct = (v: number, d = 1) =>
 const TABS = [
   ["signal", "今日のシグナル"],
   ["dashboard", "運用ダッシュボード"],
+  ["lifecycle", "Review / 次のAction"],
   ["forward", "Forward Test"],
   ["compare", "戦略比較"],
   ["walk", "Walk-Forward"],
@@ -452,6 +454,7 @@ export default function Home() {
           <div><span>最終計算日時（日本時間）</span><strong>{generatedLabel}</strong></div>
           <div><span>データ取得状態</span><strong>{runtimeStatus?.message||fresh?.message||"確認中"}</strong></div>
         </section>
+        <LifecycleGlobalBanner/>
         <div className="context">
           <div>
             <em>
@@ -542,6 +545,7 @@ export default function Home() {
           />
         </>)}
         {tab==="dashboard" && <IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status}/>}
+        {tab==="lifecycle" && <LifecycleActionCenter/>}
         {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status}/></>}
         {compareAnalysis && tab === "compare" && (
           <CompareView
