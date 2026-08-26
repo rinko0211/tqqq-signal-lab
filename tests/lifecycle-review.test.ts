@@ -6,14 +6,13 @@ import { emptyForwardLedger } from "../lib/forward.ts";
 import { DEFAULT_PRODUCTION_CONFIG } from "../lib/production.ts";
 
 const base=()=>({phase5:emptyPhase5Ledger("2026-08-25T15:15:00Z"),forward:emptyForwardLedger(),production:DEFAULT_PRODUCTION_CONFIG,phase5Status:{status:"success",errors:[]},runtimeStatus:{actionStatus:"success",state:"latest"}});
+const weekdays=(start:string,count:number)=>{const out:string[]=[];const d=new Date(`${start}T00:00:00Z`);while(out.length<count){if(![0,6].includes(d.getUTCDay()))out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1)}return out};
 const seed=(ledger:Phase5Ledger,version:string,n=252,executions=6,regimes=3)=>{
   const freeze=ledger.freezes.find(x=>x.version===version)!;let equity=1_000_000;
   const names=["Bull","Bear","High Vol","Recovery"];
-  for(let i=0;i<n;i++){
-    const d=new Date("2026-08-25T00:00:00Z");d.setUTCDate(d.getUTCDate()+i);if([0,6].includes(d.getUTCDay())){i--;continue}
-    const date=d.toISOString().slice(0,10),trade=i<executions;
-    equity*=1.0002;
-    ledger.records.push({key:`${version}|${date}`,marketDataDate:date,recordedAt:`${date}T22:00:00Z`,recordMode:"LIVE",strategyId:freeze.id,ticker:freeze.ticker,strategyName:freeze.name,strategyVersion:version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:names[i%regimes],targetExposure:trade?.75:.75,previousExposure:trade?0:.75,signal:trade?"INCREASE":"HOLD",tradeReason:"test",intendedExecutionDate:date,execution:trade?{signalDate:date,intendedDate:date,recordedDate:date,price:100,before:0,after:.75,turnover:.75,commission:1,slippage:1,totalCost:2,status:"ON_TIME"}:null,assetClose:100,position:.75,quantity:7500,cash:250000,equity,dailyReturn:.0002,currentDrawdown:0,cumulativeCosts:trade?2*(i+1):2*executions,dataSource:"test",dataStatus:"VALID",buildVersion:"test"});
+  for(const [i,date] of weekdays("2026-08-25",n).entries()){
+    const trade=i<executions;equity*=1.0002;
+    ledger.records.push({key:`${version}|${date}`,marketDataDate:date,recordedAt:`${date}T22:00:00Z`,recordMode:"LIVE",strategyId:freeze.id,ticker:freeze.ticker,strategyName:freeze.name,strategyVersion:version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:names[i%regimes],targetExposure:.75,previousExposure:trade?0:.75,signal:trade?"INCREASE":"HOLD",tradeReason:"test",intendedExecutionDate:date,execution:trade?{signalDate:date,intendedDate:date,recordedDate:date,price:100,before:0,after:.75,turnover:.75,commission:1,slippage:1,totalCost:2,status:"ON_TIME"}:null,assetClose:100,position:.75,quantity:7500,cash:250000,equity,dailyReturn:.0002,currentDrawdown:0,cumulativeCosts:2*Math.min(i+1,executions),dataSource:"test",dataStatus:"VALID",buildVersion:"test"});
   }
 };
 
