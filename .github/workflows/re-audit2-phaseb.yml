@@ -1,0 +1,43 @@
+name: Re-Audit 2 Phase B Remediation
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/re-audit2-phaseb-fix.mjs"
+      - "tests/re-audit2-phaseb.test.ts"
+      - ".github/workflows/re-audit2-phaseb.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: main}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: node scripts/re-audit2-phaseb-fix.mjs
+      - name: Audit change boundary
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(lib/forward.ts|lib/phase5-forward.ts|lib/lifecycle-review.ts)$' || true)"
+          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
+      - name: Phase B and operational regressions
+        run: |
+          node --experimental-strip-types --test tests/executive-controls.test.ts tests/re-audit2-phaseb.test.ts tests/forward.test.ts tests/phase5-forward.test.ts tests/lifecycle-review.test.ts
+          npm run test:ops
+      - name: Build Pages
+        run: npm run build:pages
+      - name: Persist tested Phase B fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/forward.ts lib/phase5-forward.ts lib/lifecycle-review.ts
+          git commit -m "Fix Forward completeness and catch-up dates"
+          git pull --rebase origin main
+          git push
