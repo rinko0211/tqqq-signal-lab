@@ -87,7 +87,9 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
   humanApproved?: boolean;
 }) {
   const challengers = phase5 ? summarizePhase5(phase5) : [];
-  const formalProduction = platformMode === "PRODUCTION" && humanApproved === true;
+  const activeProduction = humanApproved === true && platformMode !== "RESEARCH";
+  const decisionPending = activeProduction && platformMode === "DECISION";
+  const productionStateLabel = decisionPending ? "FORMAL PRODUCTION CONTINUES · DECISION REVIEW PENDING" : activeProduction ? "FORMAL PRODUCTION · HUMAN APPROVED" : "OPERATIONAL BASELINE · NOT FORMAL PRODUCTION";
   const champion = productionForward ? summarizeForward(productionForward).find((x) => x.id === "VS13") : null;
   const selectedP5=production?.version?challengers.find(x=>x.version===production.version):null;
   const modelSummary=selectedP5||champion;
@@ -96,13 +98,13 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
     <>
       <section className="opsDashboard">
         <article className="decision productionCard">
-          <div className="panelHead"><div><em>{formalProduction ? "FORMAL PRODUCTION · HUMAN APPROVED" : "OPERATIONAL BASELINE · NOT FORMAL PRODUCTION"}</em><h2>{formalProduction ? "現在の正式運用" : "現在の日次運用基準"}</h2></div><Chip tone={formalProduction ? "ok" : "warn"}>{formalProduction ? "PRODUCTION" : "BASELINE"}</Chip></div>
+          <div className="panelHead"><div><em>{formalProduction ? "FORMAL PRODUCTION · HUMAN APPROVED" : "OPERATIONAL BASELINE · NOT FORMAL PRODUCTION"}</em><h2>{activeProduction ? "現在の正式運用" : "現在の日次運用基準"}</h2></div><Chip tone={activeProduction ? "ok" : "warn"}>{activeProduction ? "PRODUCTION" : "BASELINE"}</Chip></div>
           {production ? <>
             <div className="opsHeadline"><div><span>{production.ticker} / {production.version || production.strategy}</span><strong>{Math.round(production.target * 100)}%</strong></div><div><span>本日のAction</span><b>{changed ? `${Math.round(production.previousTarget * 100)}% → ${Math.round(production.target * 100)}%` : "売買なし"}</b></div></div>
             <p>{production.date || "—"} 判定 · {production.regime || "Regime未表示"} · Score {production.score ?? "—"}</p>
             <div className="opsNext"><span>次回約定想定</span><strong>{changed ? production.executionDate || "次営業日始値" : "なし"}</strong></div>
           </> : <p>Production Signalを読み込めません。System Statusを確認してください。</p>}
-          <div className="opsMiniGrid"><div><span>Forward Model指数</span><b>{modelSummary ? modelIndex(modelSummary.totalReturn) : "—"}</b></div><div><span>Forward DD</span><b>{modelSummary ? pct(modelSummary.currentDd) : "—"}</b></div><div><span>Evidence</span><b>{modelSummary?.evidence || "—"}</b></div></div><p className="note">{formalProduction ? "正式ProductionはHuman Approval済みです。" : "このカードはOperational Baselineであり、正式Production承認状態ではありません。"} Model指数は開始=100のUSD価格リターン比較尺度で、FX・税・実broker約定コストを含む実円口座残高ではありません。</p>
+          <div className="opsMiniGrid"><div><span>Forward Model指数</span><b>{modelSummary ? modelIndex(modelSummary.totalReturn) : "—"}</b></div><div><span>Forward DD</span><b>{modelSummary ? pct(modelSummary.currentDd) : "—"}</b></div><div><span>Evidence</span><b>{modelSummary?.evidence || "—"}</b></div></div><p className="note">{decisionPending ? "Human Decision review中も既存の正式Productionは継続しています。" : activeProduction ? "正式ProductionはHuman Approval済みです。" : "このカードはOperational Baselineであり、正式Production承認状態ではありません。"} Model指数は開始=100のUSD価格リターン比較尺度で、FX・税・実broker約定コストを含む実円口座残高ではありません。</p>
         </article>
 
         <article className="decision challengerCard">
@@ -114,9 +116,9 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
       </section>
 
       <article className="panel">
-        <div className="panelHead"><div><em>DAILY CONTROL BOARD</em><h2>運用基準とChallengerを混同しない</h2></div><span>{formalProduction ? "正式Productionだけが実運用判断。" : "現在はOperational Baselineが日次判断基準。"} Challengerは比較観測。</span></div>
+        <div className="panelHead"><div><em>DAILY CONTROL BOARD</em><h2>運用基準とChallengerを混同しない</h2></div><span>{decisionPending ? "Decision review中も既存Productionが実運用判断を継続。" : activeProduction ? "正式Productionだけが実運用判断。" : "現在はOperational Baselineが日次判断基準。"} Challengerは比較観測。</span></div>
         <SimpleTable heads={["区分", "Ticker / Version", "現在Target", "Position", "次回Action", "観測", "Evidence"]} rows={[
-          [<Chip key="p" tone={formalProduction?"ok":"warn"}>{formalProduction?"PRODUCTION":"BASELINE"}</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", modelSummary?.observations ?? "—", modelSummary?.evidence || "—"],
+          [<Chip key="p" tone={activeProduction?"ok":"warn"}>{activeProduction?"PRODUCTION":"BASELINE"}</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", modelSummary?.observations ?? "—", modelSummary?.evidence || "—"],
           ...challengers.map((x) => {
             const last = phase5!.records.filter((r) => r.strategyVersion === x.version).at(-1);
             return [<Chip key={x.version} tone="warn">RESEARCH</Chip>, `${x.ticker} / ${x.version}`, last ? `${Math.round(last.targetExposure * 100)}%` : "—", last ? `${Math.round(last.position * 100)}%` : "—", last && Math.abs(last.targetExposure - last.position) > 0.001 ? last.intendedExecutionDate : "なし", x.observations, x.evidence];

@@ -658,6 +658,8 @@ function SignalView({
 }) {
   const execute = signal.executionDate || nextExecutionDate(signal.date);
   const assumption=bt?.assumption||EXECUTION_ASSUMPTION;
+  const activeProduction=humanApproved&&platformMode!=="RESEARCH";
+  const decisionPending=activeProduction&&platformMode==="DECISION";
   const changed=Math.abs(signal.target-signal.previousTarget)>.001,
     direction=signal.target>signal.previousTarget?"増加":"縮小";
   return (
@@ -670,7 +672,7 @@ function SignalView({
       </section>
       <section className="signal">
         <article className="decision">
-          <Status kind={signalUnsafe?"bad":platformMode==="PRODUCTION"&&humanApproved?"ok":"warn"}>{signalUnsafe?"データ安全確認待ち・売買禁止":platformMode==="PRODUCTION"&&humanApproved?"正式Production · Human Approved":"Operational Baseline · Research"}</Status>
+          <Status kind={signalUnsafe?"bad":activeProduction?"ok":"warn"}>{signalUnsafe?"データ安全確認待ち・売買禁止":decisionPending?"正式Production継続中 · Decision Review Pending":activeProduction?"正式Production · Human Approved":"Operational Baseline · Research"}</Status>
           <div className="decisionHead">
             <div>
               <span>現在の目標ポジション</span>
@@ -1324,11 +1326,11 @@ function NativeResearchView({data}:{data:NativeResearchBundle}){return <>
   <article className="issueBlock"><em>RESEARCH LIMITATIONS</em><h2>まだProduction判断には使えません</h2>{data.limitations.map((x,i)=><p key={i}>• {x}</p>)}</article>
  </>}
 
-function ProductionView({config}:{config:ProductionConfig|null}){const c=config;return <>
-  <article className="guideHero"><em>PLATFORM MODE</em><h2>{c?.mode||"設定確認中"}</h2><p>{c?.mode==="PRODUCTION"?"Human Approval済みの1システムだけをPrimary Signalとして日次運用します。":"現在は研究中です。Evidenceが揃うまでProduction Systemは選びません。"}</p></article>
+function ProductionView({config}:{config:ProductionConfig|null}){const c=config,active=Boolean(c?.approvedByHuman&&c?.mode!=="RESEARCH"&&c?.selectedTicker&&c?.strategyVersion),decisionPending=active&&c?.mode==="DECISION";return <>
+  <article className="guideHero"><em>PLATFORM MODE</em><h2>{c?.mode||"設定確認中"}</h2><p>{decisionPending?"既存のHuman Approved Productionを維持したままFinal Selection Review中です。":active?"Human Approval済みの1システムだけをPrimary Signalとして日次運用します。":"現在は研究中です。Evidenceが揃うまでProduction Systemは選びません。"}</p></article>
   <section className="metrics"><Metric label="Selected Ticker" value={c?.selectedTicker||"NO FINAL SELECTION YET"}/><Metric label="Strategy" value={c?.selectedStrategy||"未選定"}/><Metric label="Version" value={c?.strategyVersion||"—"}/><Metric label="Human Approval" value={c?.approvedByHuman?"記録済み":"未承認"}/><Metric label="次回Health Review" value={c?.nextHealthReview||"Production開始後に設定"}/></section>
   <article className="panel"><em>MODE GATES</em><h2>Research → Decision → Production</h2><Table heads={["Mode","意味","移行条件"]} rows={[["RESEARCH","Historical/OOS/Forwardを蓄積","現在地"],["DECISION","候補2〜3本のFinal Selection Review","十分なEvidenceとデータ品質"],["PRODUCTION","承認済み1本だけをPrimary表示","Actionsで明示承認文字を入力"]]}/><p className="warningNote">GitHub Actionsは自動昇格しません。PRODUCTIONへ直接飛ぶこともできません。</p></article>
-  <article className="panel"><em>FINAL SELECTION FRAMEWORK</em><h2>勝者を無理に作らない</h2><p>Historical、OOS、Walk-Forward、汚染状況、Forward、DD、Total Return、Sharpe、Sortino、Calmar、回復時間、回転率、コスト、Regime、Operational Quality、複雑性、データ品質をTicker × Strategy × Version単位で比較します。</p><strong>{c?.mode==="PRODUCTION"?`${c.selectedTicker} × ${c.selectedStrategy} × ${c.strategyVersion}`:"NO FINAL SELECTION YET"}</strong></article>
+  <article className="panel"><em>FINAL SELECTION FRAMEWORK</em><h2>勝者を無理に作らない</h2><p>Historical、OOS、Walk-Forward、汚染状況、Forward、DD、Total Return、Sharpe、Sortino、Calmar、回復時間、回転率、コスト、Regime、Operational Quality、複雑性、データ品質をTicker × Strategy × Version単位で比較します。</p><strong>{active?`${c?.selectedTicker} × ${c?.selectedStrategy} × ${c?.strategyVersion}`:"NO FINAL SELECTION YET"}</strong></article>
   <article className="panel"><em>PRODUCTION REGISTRY</em><h2>承認可能な固定Version</h2><Table heads={["Track","Ticker","Strategy","Version","追加条件"]} rows={PRODUCTION_SYSTEMS.map(x=>[x.track,x.ticker,x.strategy,x.version,"Strong Forward Evidence + Final Review + Human Approval"])}/><p className="note">このRegistryは技術的に登録済みのVersion一覧で、現在のProduction適格性を意味しません。実際に入力可能な候補は「Review / 次のAction」にProduction-selectableとして表示されたVersionだけです。</p></article>
   <article className="panel"><em>HEALTH REVIEW FREQUENCY STUDY</em><h2>Recommended Production Health Review Policy：Hybrid</h2><Table heads={["頻度","利点","弱点","採用"]} rows={HEALTH_POLICY.alternatives.map(x=>[x.frequency,x.benefit,x.cost,x.adopt?"YES":"NO"])}/><p>{HEALTH_POLICY.reason}</p><code>Operational: daily automated · Strategy health: quarterly · Formal revalidation: annual · Event-driven: immediate</code></article>
   <article className="panel"><em>PRE-REGISTERED DEGRADATION RULES</em><h2>Healthy → Watch → Revalidation Required → Critical</h2>{DEGRADATION_RULES.map((x,i)=><p key={i}>• {x}</p>)}<p className="note">検出しても戦略は自動変更しません。Research → Challenger → Forward → Review → Human Approvalを再度通します。</p></article>
