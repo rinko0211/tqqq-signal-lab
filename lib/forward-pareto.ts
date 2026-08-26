@@ -33,8 +33,13 @@ function commonMetrics(rows:ComparableRow[],dates:string[]):CommonForwardMetrics
   return{days:x.length,totalReturn:returns.reduce((e,r)=>e*(1+r),1)-1,metrics:m,actionDays};
 }
 
+function rowsForVersion(phase5:Phase5Ledger,forward:ForwardLedger,version:string):ComparableRow[]{
+  if(phase5.freezes.some(f=>f.version===version))return phase5.records.filter(r=>r.strategyVersion===version);
+  return forward.records.filter(r=>r.strategyVersion===version);
+}
+
 export function compareCandidateToIncumbent(phase5:Phase5Ledger,forward:ForwardLedger,version:string,incumbentVersion="VS13-v1.0"):ParetoComparison{
-  const cRows=phase5.records.filter(r=>r.strategyVersion===version),iRows=forward.records.filter(r=>r.strategyVersion===incumbentVersion),cleanDates=cleanCommonSuffix(cRows,iRows);
+  const cRows=rowsForVersion(phase5,forward,version),iRows=rowsForVersion(phase5,forward,incumbentVersion),cleanDates=cleanCommonSuffix(cRows,iRows);
   const candidate=commonMetrics(cRows,cleanDates),incumbent=commonMetrics(iRows,cleanDates),reasons:string[]=[];
   if(!candidate||!incumbent||cleanDates.length<63)return{version,incumbentVersion,commonDays:cleanDates.length,candidate,incumbent,merit:"NOT_EVALUATED",reasons:[`Only ${cleanDates.length} consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63`]};
   const c=candidate.metrics,i=incumbent.metrics;
