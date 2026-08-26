@@ -21,6 +21,21 @@ patch("app/page.tsx",[
     '<Status kind={signalUnsafe?"bad":platformMode==="PRODUCTION"&&humanApproved?"ok":"warn"}>{signalUnsafe?"データ安全確認待ち・売買禁止":platformMode==="PRODUCTION"&&humanApproved?"正式Production · Human Approved":"Operational Baseline · Research"}</Status>',
     '<Status kind={signalUnsafe?"bad":activeProduction?"ok":"warn"}>{signalUnsafe?"データ安全確認待ち・売買禁止":decisionPending?"正式Production継続中 · Decision Review Pending":activeProduction?"正式Production · Human Approved":"Operational Baseline · Research"}</Status>',
     "signal Production badge"
+  ],
+  [
+    'function ProductionView({config}:{config:ProductionConfig|null}){const c=config;return <>',
+    'function ProductionView({config}:{config:ProductionConfig|null}){const c=config,active=Boolean(c?.approvedByHuman&&c?.mode!=="RESEARCH"&&c?.selectedTicker&&c?.strategyVersion),decisionPending=active&&c?.mode==="DECISION";return <>',
+    "production tab active state"
+  ],
+  [
+    '<article className="guideHero"><em>PLATFORM MODE</em><h2>{c?.mode||"設定確認中"}</h2><p>{c?.mode==="PRODUCTION"?"Human Approval済みの1システムだけをPrimary Signalとして日次運用します。":"現在は研究中です。Evidenceが揃うまでProduction Systemは選びません。"}</p></article>',
+    '<article className="guideHero"><em>PLATFORM MODE</em><h2>{c?.mode||"設定確認中"}</h2><p>{decisionPending?"既存のHuman Approved Productionを維持したままFinal Selection Review中です。":active?"Human Approval済みの1システムだけをPrimary Signalとして日次運用します。":"現在は研究中です。Evidenceが揃うまでProduction Systemは選びません。"}</p></article>',
+    "production tab hero"
+  ],
+  [
+    '<strong>{c?.mode==="PRODUCTION"?`${c.selectedTicker} × ${c.selectedStrategy} × ${c.strategyVersion}`:"NO FINAL SELECTION YET"}</strong>',
+    '<strong>{active?`${c?.selectedTicker} × ${c?.selectedStrategy} × ${c?.strategyVersion}`:"NO FINAL SELECTION YET"}</strong>',
+    "production tab selected system"
   ]
 ]);
 
