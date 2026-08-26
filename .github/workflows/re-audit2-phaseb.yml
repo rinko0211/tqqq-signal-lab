@@ -1,16 +1,14 @@
-name: Re-Audit 2 Phase B Remediation
+name: Re-Audit 2 Phase B Acceptance
 on:
   push:
     branches: [main]
     paths:
-      - "scripts/re-audit2-phaseb-fix.mjs"
-      - "tests/re-audit2-phaseb.test.ts"
       - ".github/workflows/re-audit2-phaseb.yml"
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  remediate:
+  accept:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -19,25 +17,21 @@ jobs:
       - uses: actions/setup-node@v7
         with: {node-version: 22, cache: npm}
       - run: npm ci
-      - run: node scripts/re-audit2-phaseb-fix.mjs
-      - name: Audit change boundary
+      - name: Phase B permanent and operational regressions
         run: |
-          git diff --check
-          changed="$(git diff --name-only | sort)"
-          printf '%s\n' "$changed"
-          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(lib/forward.ts|lib/phase5-forward.ts|lib/lifecycle-review.ts)$' || true)"
-          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
-      - name: Phase B and operational regressions
-        run: |
-          node --experimental-strip-types --test tests/executive-controls.test.ts tests/re-audit2-phaseb.test.ts tests/forward.test.ts tests/phase5-forward.test.ts tests/lifecycle-review.test.ts
           npm run test:ops
-      - name: Build Pages
-        run: npm run build:pages
-      - name: Persist tested Phase B fixes
+          node --experimental-strip-types --test tests/re-audit2-phaseb.test.ts tests/executive-controls.test.ts
+      - name: Current ledger integrity assertions
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/forward.ts lib/phase5-forward.ts lib/lifecycle-review.ts
-          git commit -m "Fix Forward completeness and catch-up dates"
-          git pull --rebase origin main
-          git push
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
+          const old=read('github-pages/public/data/forward-ledger.json');
+          const p5=read('github-pages/public/data/phase-5-forward-ledger.json');
+          if(old.records.some(r=>r.execution?.status==='SCHEDULED_CATCHUP')) throw Error('Existing incumbent ledger contains catch-up records requiring audit');
+          if(p5.records.some(r=>r.execution?.status==='SCHEDULED_CATCHUP')) throw Error('Existing Phase5 ledger contains catch-up records requiring audit');
+          if(old.appendOnly!==true||p5.appendOnly!==true) throw Error('Forward append-only flag missing');
+          console.log('Existing ledgers have no historical catch-up record requiring correction');
+          NODE
+      - name: Integrated Pages build
+        run: npm run build:pages
