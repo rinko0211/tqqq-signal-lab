@@ -32,8 +32,8 @@ try {
   const payload=productionRow&&productionTicker!=="TQQQ"
     ? await fetchProductionData(productionTicker as "UPRO"|"SSO"|"QLD",productionRow.proxy as "SPY"|"QQQ")
     : await fetchOfficialData(false);
-  const trackADataset = datasetFromPayload(payload as any);
-  const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload as any,productionRow):trackADataset;
+  const trackADataset = datasetFromPayload(payload as Parameters<typeof datasetFromPayload>[0]);
+  const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload as Parameters<typeof makeCrossTickerDataset>[0],productionRow):trackADataset;
   if(!dataset)throw Error(`CONFIG-001: selected ticker ${productionTicker} data unavailable`);
   const errors = dataset.issues.filter(x=>x.severity==="error"); if (errors.length) throw Error(errors.map(x=>x.message).join("; "));
   const bt = runBacktest(dataset, selected.config),latest = bt.daily.at(-1)!,bar = dataset.days.at(-1)!;
