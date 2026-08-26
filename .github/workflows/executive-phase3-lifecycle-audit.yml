@@ -1,0 +1,28 @@
+name: Executive Phase 3 Lifecycle Audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/lifecycle-review.ts"
+      - "lib/production.ts"
+      - "tests/lifecycle-review.test.ts"
+      - ".github/workflows/executive-phase3-lifecycle-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Lifecycle and control tests
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-lifecycle.test.ts tests/production-health-review.test.ts tests/executive-controls.test.ts tests/corporate-action-ledger.test.ts
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Pages build
+        run: npm run build:pages
