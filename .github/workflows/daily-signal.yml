@@ -1,5 +1,6 @@
 name: Daily TQQQ Signal
 on:
+  workflow_call:
   schedule:
     - cron: "30 22 * * 1-5"
     # Recovery fetch before the next US open: 09:00 EDT / 08:00 EST.
@@ -9,9 +10,9 @@ on:
   push:
     branches: [main]
     paths:
-      # Human Production approval must refresh the live signal immediately.
+      # Manual/user-authored config commits may refresh immediately.
+      # Human Production Approval does NOT rely on this push; it explicitly calls this workflow.
       - "github-pages/public/data/production-config.json"
-      # Workflow maintenance self-tests once when intentionally changed.
       - ".github/workflows/daily-signal.yml"
 permissions:
   contents: write
@@ -61,4 +62,3 @@ jobs:
         uses: actions/deploy-pages@v5
       - name: Mark data failure after publishing status
         run: test ! -s github-pages/public/data/.failed
-      # Phase 5 executive acceptance: keep this workflow self-triggerable on maintenance changes.
