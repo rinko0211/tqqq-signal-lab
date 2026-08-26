@@ -145,6 +145,23 @@ export const STRATEGY_FREEZES: StrategyFreeze[] = [
   },
 ];
 
+const canonicalJson=(value:unknown):string=>{
+  const normalize=(v:unknown):unknown=>Array.isArray(v)?v.map(normalize):v&&typeof v==="object"?Object.fromEntries(Object.keys(v as Record<string,unknown>).sort().map(k=>[k,normalize((v as Record<string,unknown>)[k])])):v;
+  return JSON.stringify(normalize(value));
+};
+
+export function assertForwardFreezeIntegrity(ledger:ForwardLedger){
+  if(ledger.appendOnly!==true)throw Error("Forward ledger must remain append-only");
+  if(ledger.championId!=="VS13")throw Error(`Forward champion drift: ${ledger.championId}`);
+  if(ledger.freezes.length!==STRATEGY_FREEZES.length)throw Error(`Forward freeze count drift: ${ledger.freezes.length}`);
+  for(const canonical of STRATEGY_FREEZES){
+    const actual=ledger.freezes.find(f=>f.id===canonical.id);
+    if(!actual)throw Error(`Forward canonical freeze missing: ${canonical.id}`);
+    if(canonicalJson(actual)!==canonicalJson(canonical))throw Error(`Forward freeze drift: ${canonical.id} / ${canonical.version}`);
+  }
+  for(const actual of ledger.freezes)if(!STRATEGY_FREEZES.some(f=>f.id===actual.id))throw Error(`Unexpected Forward freeze: ${actual.id}`);
+}
+
 export const PROMOTION_RULE = "Human approval only. Strong evidence; at least 12 months; >=6 executed orders; >=4 observed regimes; missing observations <=1%; challenger Sortino or Calmar >= Champion by 10%; total return >=90% of Champion; Max DD no worse by >3 percentage points; turnover <=150% of Champion; no integrity/execution issue; complexity increase <=1 free parameter.";
 
 export function emptyForwardLedger(now = new Date().toISOString()): ForwardLedger {
@@ -239,6 +256,7 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
 
 export function updateForwardLedger(ds: Dataset, input: ForwardLedger | null | undefined, source: string, generatedAt = new Date().toISOString()) {
   const ledger = input?.schemaVersion === FORWARD_SCHEMA_VERSION ? structuredClone(input) : emptyForwardLedger(generatedAt);
+  assertForwardFreezeIntegrity(ledger);
   for (const freeze of ledger.freezes) appendForFreeze(ds, ledger, freeze, generatedAt, source);
   ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
   ledger.updatedAt = generatedAt;
