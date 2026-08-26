@@ -37,9 +37,23 @@ test("closed research and legacy workflows remain manual-only",()=>{
 
 test("Human Approval cannot rely on suppressed GITHUB_TOKEN push recursion",()=>{
   assert.match(daily,/workflow_call:/);
-  assert.match(approval,/refresh-live-system:/);
+  assert.match(daily,/deploy_persisted_only:/);
+  assert.match(approval,/deploy-validated-state:/);
   assert.match(approval,/needs: approve/);
   assert.match(approval,/uses: \.\/\.github\/workflows\/daily-signal\.yml/);
+  assert.match(approval,/deploy_persisted_only: true/);
+});
+
+test("Human Approval atomically persists validated config and live state",()=>{
+  assert.match(approval,/Record explicit human decision locally/);
+  assert.match(approval,/Preflight the exact approved operational state/);
+  assert.match(approval,/npm run generate:daily/);
+  assert.match(approval,/test ! -s github-pages\/public\/data\/\.failed/);
+  assert.match(approval,/npm run test:ops/);
+  assert.match(approval,/npm run build:pages/);
+  assert.match(approval,/Atomically persist approval and validated live state/);
+  assert.match(approval,/git add github-pages\/public\/data/);
+  assert.match(approval,/approve:[\s\S]*concurrency:[\s\S]*group: daily-signal-pages/);
 });
 
 test("Production approval remains fresh-lifecycle, formal-stage, eligible-version and exact-confirmation gated",()=>{
