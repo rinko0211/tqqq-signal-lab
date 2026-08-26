@@ -1,6 +1,12 @@
 name: Daily TQQQ Signal
 on:
   workflow_call:
+    inputs:
+      deploy_persisted_only:
+        description: "Deploy an already validated/persisted operational state without fetching or mutating data"
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "30 22 * * 1-5"
     # Recovery fetch before the next US open: 09:00 EDT / 08:00 EST.
@@ -11,7 +17,7 @@ on:
     branches: [main]
     paths:
       # Manual/user-authored config commits may refresh immediately.
-      # Human Production Approval does NOT rely on this push; it explicitly calls this workflow.
+      # Human Production Approval uses an atomic preflight + deploy-only workflow_call instead.
       - "github-pages/public/data/production-config.json"
       - ".github/workflows/daily-signal.yml"
 permissions:
@@ -38,10 +44,12 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Fetch data and generate signal
+        if: ${{ inputs.deploy_persisted_only != true }}
         run: npm run generate:daily
       - name: Run operational regression tests
         run: npm run test:ops
       - name: Save append-only live signal history
+        if: ${{ inputs.deploy_persisted_only != true }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
