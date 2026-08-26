@@ -21,8 +21,10 @@ test("Daily uses shared NYSE calendar",()=>{
   assert.doesNotMatch(daily,/const nthWeekday=/);
 });
 
-test("primary Production state is not derived from historical holdout metrics",()=>{
-  const signalView=page.slice(page.indexOf("function SignalView("),page.indexOf("function Metric("));
-  assert.doesNotMatch(signalView,/holdoutMetrics/);
+test("primary Production state is driven by platform mode and human approval",()=>{
+  const start=page.indexOf("function SignalView(");
+  assert.ok(start>=0,"SignalView must exist");
+  const signalView=page.slice(start);
   assert.match(signalView,/platformMode==="PRODUCTION"&&humanApproved/);
+  assert.doesNotMatch(signalView,/holdoutMetrics/);
 });
