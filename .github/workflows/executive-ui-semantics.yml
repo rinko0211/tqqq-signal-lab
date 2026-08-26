@@ -1,0 +1,43 @@
+name: Executive UI Semantics Audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/wire-executive-ui-semantics.mjs"
+      - "tests/executive-ui-semantics.test.mjs"
+      - ".github/workflows/executive-ui-semantics.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: node scripts/wire-executive-ui-semantics.mjs
+      - name: Audit change boundary
+        run: |
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          printf '%s\n' "$changed"
+          unexpected="$(printf '%s\n' "$changed" | grep -Ev '^(app/page.tsx|app/phase5-ui.tsx)$' || true)"
+          test -z "$unexpected" || { echo "$unexpected"; exit 1; }
+      - name: Test UI semantics and operational controls
+        run: |
+          node --test tests/executive-ui-semantics.test.mjs
+          npm run test:ops
+      - name: Build integrated Pages
+        run: npm run build:pages
+      - name: Persist tested UI semantics
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx app/phase5-ui.tsx
+          git commit -m "Clarify operational and Forward UI semantics"
+          git pull --rebase origin main
+          git push
