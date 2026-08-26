@@ -34,6 +34,7 @@ const yen = (v: number) =>
     ? new Intl.NumberFormat("ja-JP", { style: "currency", currency: "JPY", maximumFractionDigits: 0 }).format(v)
     : "—";
 const num = (v: number, d = 2) => (Number.isFinite(v) ? v.toFixed(d) : "—");
+const modelIndex=(totalReturn:number)=>Number.isFinite(totalReturn)?(100*(1+totalReturn)).toFixed(2):"—";
 
 function Chip({ tone = "neutral", children }: { tone?: "ok" | "warn" | "bad" | "neutral"; children: React.ReactNode }) {
   return <span className={`status ${tone}`}>{children}</span>;
@@ -88,6 +89,8 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
   const challengers = phase5 ? summarizePhase5(phase5) : [];
   const formalProduction = platformMode === "PRODUCTION" && humanApproved === true;
   const champion = productionForward ? summarizeForward(productionForward).find((x) => x.id === "VS13") : null;
+  const selectedP5=production?.version?challengers.find(x=>x.version===production.version):null;
+  const modelSummary=selectedP5||champion;
   const changed = production ? Math.abs(production.target - production.previousTarget) > 0.001 : false;
   return (
     <>
@@ -99,7 +102,7 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
             <p>{production.date || "—"} 判定 · {production.regime || "Regime未表示"} · Score {production.score ?? "—"}</p>
             <div className="opsNext"><span>次回約定想定</span><strong>{changed ? production.executionDate || "次営業日始値" : "なし"}</strong></div>
           </> : <p>Production Signalを読み込めません。System Statusを確認してください。</p>}
-          <div className="opsMiniGrid"><div><span>Forward仮想元本</span><b>{champion ? yen(champion.currentCapital) : "—"}</b></div><div><span>Forward DD</span><b>{champion ? pct(champion.currentDd) : "—"}</b></div><div><span>Evidence</span><b>{champion?.evidence || "—"}</b></div></div><p className="note">{formalProduction ? "正式ProductionはHuman Approval済みです。" : "このカードはOperational Baselineであり、正式Production承認状態ではありません。"} Forward金額はJPY-normalized仮想元本で、USD/JPY変動・税・broker固有の実コストを含みません。</p>
+          <div className="opsMiniGrid"><div><span>Forward Model指数</span><b>{modelSummary ? modelIndex(modelSummary.totalReturn) : "—"}</b></div><div><span>Forward DD</span><b>{modelSummary ? pct(modelSummary.currentDd) : "—"}</b></div><div><span>Evidence</span><b>{modelSummary?.evidence || "—"}</b></div></div><p className="note">{formalProduction ? "正式ProductionはHuman Approval済みです。" : "このカードはOperational Baselineであり、正式Production承認状態ではありません。"} Model指数は開始=100のUSD価格リターン比較尺度で、FX・税・実broker約定コストを含む実円口座残高ではありません。</p>
         </article>
 
         <article className="decision challengerCard">
@@ -113,7 +116,7 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
       <article className="panel">
         <div className="panelHead"><div><em>DAILY CONTROL BOARD</em><h2>運用基準とChallengerを混同しない</h2></div><span>{formalProduction ? "正式Productionだけが実運用判断。" : "現在はOperational Baselineが日次判断基準。"} Challengerは比較観測。</span></div>
         <SimpleTable heads={["区分", "Ticker / Version", "現在Target", "Position", "次回Action", "観測", "Evidence"]} rows={[
-          [<Chip key="p" tone={formalProduction?"ok":"warn"}>{formalProduction?"PRODUCTION":"BASELINE"}</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", champion?.observations ?? "—", champion?.evidence || "—"],
+          [<Chip key="p" tone={formalProduction?"ok":"warn"}>{formalProduction?"PRODUCTION":"BASELINE"}</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", modelSummary?.observations ?? "—", modelSummary?.evidence || "—"],
           ...challengers.map((x) => {
             const last = phase5!.records.filter((r) => r.strategyVersion === x.version).at(-1);
             return [<Chip key={x.version} tone="warn">RESEARCH</Chip>, `${x.ticker} / ${x.version}`, last ? `${Math.round(last.targetExposure * 100)}%` : "—", last ? `${Math.round(last.position * 100)}%` : "—", last && Math.abs(last.targetExposure - last.position) > 0.001 ? last.intendedExecutionDate : "なし", x.observations, x.evidence];
@@ -141,9 +144,9 @@ export function Phase5ForwardPanel({ productionForward, ledger, status }: {
         const last = ledger.records.filter((r) => r.strategyVersion === freeze.version).at(-1);
         return <article className="panel candidateAccount" key={freeze.version}><div className="panelHead"><div><em>{roleLabel[freeze.role] || freeze.role}</em><h2>{freeze.ticker}</h2></div><Chip tone={s.status === "FORWARD_ACTIVE" ? "ok" : "warn"}>{s.status}</Chip></div><strong className="versionLabel">{freeze.version}</strong><p>{systemDescription[freeze.version]}</p><div className="candidateMetrics"><div><span>Target</span><b>{last ? `${Math.round(last.targetExposure * 100)}%` : "—"}</b></div><div><span>Total Return</span><b>{pct(s.totalReturn)}</b></div><div><span>DD</span><b>{pct(s.currentDd)}</b></div><div><span>Actions</span><b>{s.actionDays}</b></div></div><p className="note">開始 {freeze.startDate} · Evidence {s.evidence} · 観測 {s.observations}</p></article>;
       })}</section>
-      <article className="panel"><div className="panelHead"><div><em>FORWARD FRONTIER</em><h2>既存TQQQ Championとの比較</h2></div><span>短期順位ではなく、壊れていないかを優先</span></div><SimpleTable heads={["System", "役割", "開始", "仮想元本/Return", "Current DD", "Action", "Evidence", "次回Review"]} rows={[
-        ["TQQQ / VS13-v1.0", "Production Champion", productionForward?.freezes[0]?.startDate || "2026-08-21", champion ? `${yen(champion.currentCapital)} / ${pct(champion.totalReturn)}` : "—", champion ? pct(champion.currentDd) : "—", champion?.orders ?? "—", champion?.evidence || "—", productionForward?.reviewSchedule.twelveMonth || "2027-08-23"],
-        ...ledger.freezes.map((f) => { const s = rows.find((x) => x.version === f.version)!; return [`${f.ticker} / ${f.version}`, roleLabel[f.role] || f.role, f.startDate, `${yen(s.currentCapital)} / ${pct(s.totalReturn)}`, pct(s.currentDd), s.actionDays, s.evidence, ledger.reviewSchedule.formal]; }),
+      <article className="panel"><div className="panelHead"><div><em>FORWARD FRONTIER</em><h2>既存TQQQ Operational Baselineとの比較</h2></div><span>短期順位ではなく、壊れていないかを優先</span></div><SimpleTable heads={["System", "役割", "開始", "Model指数/Return", "Current DD", "Action", "Evidence", "Lifecycle Formal Gate"]} rows={[
+        ["TQQQ / VS13-v1.0", "Operational Baseline", productionForward?.freezes[0]?.startDate || "2026-08-21", champion ? `${modelIndex(champion.totalReturn)} / ${pct(champion.totalReturn)}` : "—", champion ? pct(champion.currentDd) : "—", champion?.orders ?? "—", champion?.evidence || "—", ledger.reviewSchedule.formal],
+        ...ledger.freezes.map((f) => { const s = rows.find((x) => x.version === f.version)!; return [`${f.ticker} / ${f.version}`, roleLabel[f.role] || f.role, f.startDate, `${modelIndex(s.totalReturn)} / ${pct(s.totalReturn)}`, pct(s.currentDd), s.actionDays, s.evidence, ledger.reviewSchedule.formal]; }),
       ]} /></article>
       <article className="panel formula"><em>FORWARD GOVERNANCE</em><h2>昇格条件は先に固定</h2><code>{ledger.promotionPolicy}</code><p>ロジックを変更する場合は新Version・新startDateです。既存台帳の上書きは禁止です。</p></article>
     </>
