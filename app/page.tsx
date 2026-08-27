@@ -390,7 +390,7 @@ export default function Home() {
     bt = analysis?.bt,
     signal = dailySignal?.signal||bt?.daily.at(-1)?.signal,
     latestClose=dailySignal?.assetClose||dailySignal?.tqqqClose||latest?.tqqq.close,
-    primaryAction=derivePrimaryAction({signal:dailySignal,status:runtimeStatus,forward:forwardLedger,production:productionConfig,now:now.toISOString(),holdings,freshnessDate:latestDate}),
+    primaryAction=derivePrimaryAction({signal:dailySignal,status:runtimeStatus,forward:forwardLedger,production:productionConfig,now:now.toISOString(),holdings}),
     target = primaryAction.target,
     currentTicker=primaryAction.currentTicker,
     currentVersion=primaryAction.currentVersion,

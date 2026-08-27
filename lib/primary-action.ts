@@ -1,9 +1,9 @@
 import {freshness,nextExecutionDate} from "./engine.ts";
+import {assertForwardLedgerInternalIntegrity,type ForwardLedger} from "./forward.ts";
 import {nyseExecutionWindow,type NyseExecutionWindow} from "./market-calendar.ts";
 import {
   operationalAuthorityBundleIsCoherent,
   type AuthorityBundleResult,
-  type OperationalForwardAuthority,
   type OperationalRuntimeAuthority,
   type OperationalSignalAuthority,
 } from "./operational-authority.ts";
@@ -46,13 +46,14 @@ export type PrimaryActionResult={
 
 /**
  * Product-level primary action boundary used by the actual UI and Audit 8.
- * `freshnessDate` exists only to preserve the pre-Audit-8 UI behavior during
- * instrumentation. Audit 8's independent oracle does not treat it as authority.
+ * Operational freshness is derived only from the operational Signal artifact.
+ * The optional freshnessDate input remains compatibility-only and cannot upgrade
+ * or downgrade operational trading authority.
  */
 export function derivePrimaryAction(args:{
   signal:PrimarySignalArtifact|null|undefined;
   status:OperationalRuntimeAuthority|null|undefined;
-  forward:OperationalForwardAuthority|null|undefined;
+  forward:ForwardLedger|null|undefined;
   production:ProductionConfig|null|undefined;
   now:string;
   holdings:PrimaryHoldings;
@@ -66,17 +67,27 @@ export function derivePrimaryAction(args:{
     ?args.holdings.ticker===currentTicker&&(!args.holdings.version||args.holdings.version===currentVersion)
     :currentTicker==="TQQQ";
   const ratio=holdingsMatch?(args.holdings.ratio??""):"";
-  const actual=ratio===""?null:Number(ratio)/100;
+  const parsedRatio=ratio===""?null:Number(ratio);
+  const holdingsNumericUnsafe=ratio!==""&&(ratio.trim()===""||!Number.isFinite(parsedRatio)||parsedRatio!<0||parsedRatio!>100);
+  const actual=ratio===""||holdingsNumericUnsafe?null:(parsedRatio as number)/100;
+  const signalNumericUnsafe=Boolean(signal&&(
+    signal.date!==args.signal?.dataDate||
+    !Number.isFinite(signal.target)||!Number.isFinite(signal.previousTarget)||
+    signal.target<0||signal.target>1||signal.previousTarget<0||signal.previousTarget>1
+  ));
   const executionDate=signal?.executionDate||(signal?nextExecutionDate(signal.date):undefined);
   const executionWindow=executionDate?nyseExecutionWindow(executionDate,args.now):null;
-  const signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001);
+  const signalChange=Boolean(signal&&!signalNumericUnsafe&&Math.abs(signal.target-signal.previousTarget)>=.001);
   const executionMissed=Boolean(signalChange&&executionWindow==="OPEN_PASSED");
   const executionActionable=Boolean(signalChange&&executionWindow==="UPCOMING_OPEN");
   const authorityBundle=operationalAuthorityBundleIsCoherent({signal:args.signal,status:args.status,production:args.production,forward:args.forward});
   const authorityUnsafe=!authorityBundle.ok;
-  const freshnessDate=args.freshnessDate??args.signal?.dataDate;
+  let forwardIntegrityUnsafe=false;
+  if(args.forward){try{assertForwardLedgerInternalIntegrity(args.forward)}catch{forwardIntegrityUnsafe=true}}
+  void args.freshnessDate;
+  const freshnessDate=args.signal?.dataDate;
   const fresh=freshnessDate?freshness(freshnessDate,args.now):null;
-  const signalUnsafe=Boolean(authorityUnsafe||args.status?.state==="failed"||fresh?.stale);
+  const signalUnsafe=Boolean(authorityUnsafe||forwardIntegrityUnsafe||signalNumericUnsafe||holdingsNumericUnsafe||args.status?.state==="failed"||fresh?.stale);
 
   if(signalUnsafe)return{code:"CHECK_DATA",message:"売買しない：データ/Signalが安全確認できません。System Statusを確認してください",target,currentTicker,currentVersion,holdingsMatch,actual,executionDate,executionWindow,signalChange,executionMissed,executionActionable,authorityBundle,authorityUnsafe,signalUnsafe,freshnessDate};
   if(executionMissed)return{code:"NO_ACTION_EXPIRED",message:`売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`,target,currentTicker,currentVersion,holdingsMatch,actual,executionDate,executionWindow,signalChange,executionMissed,executionActionable,authorityBundle,authorityUnsafe,signalUnsafe,freshnessDate};
