@@ -68,6 +68,19 @@ test("A7 FC-04: DECISION may intentionally retain one complete approved incumben
   const restored=cancelDecision(review);assert.equal(restored.mode,"PRODUCTION");assert.equal(restored.selectedTicker,"UPRO");assert.equal(restored.effectiveDate,p.effectiveDate);
 });
 
+test("A7 FC-04/12: A→B→A Production re-entry starts a fresh A episode without erasing old A health evidence",()=>{
+  const approve=(current:ProductionConfig,ticker:string,system:string,version:string,date:string)=>transitionMode(transitionMode(current,"DECISION"),"PRODUCTION",{ticker,system,version,date,evidence:"Strong",finalReviewComplete:true});
+  const a1=approve(DEFAULT_PRODUCTION_CONFIG,"UPRO","UPRO + S&P Broad Trend","UPRO-SPBT-v1.0","2027-08-25");
+  const la=emptyLifecycleLedger(emptyPhase5Ledger().reviewSchedule,"2027-11-26T21:01:00Z") as LifecycleLedger;la.current.productionHealth={state:"Healthy",version:"UPRO-SPBT-v1.0",reasons:["A1"],nextHealthReview:"2027-11-25"};
+  const oldA=updateProductionHealthLedger({production:a1,lifecycle:la,prior:emptyProductionHealthLedger(),now:"2027-11-26T21:01:00Z"});assert.equal(oldA.events.length,1);
+  const b=approve(a1,"SSO","SSO + S&P Broad Trend + scaled stop","SSO-SPBT-Scaled-v1.0","2028-01-10");
+  const a2=approve(b,"UPRO","UPRO + S&P Broad Trend","UPRO-SPBT-v1.0","2028-04-10");
+  assert.equal(a2.effectiveDate,"2028-04-10");assert.equal(a2.nextHealthReview,"2028-07-10");
+  const la2=emptyLifecycleLedger(emptyPhase5Ledger().reviewSchedule,"2028-04-11T21:00:00Z") as LifecycleLedger;la2.current.productionHealth={state:"Healthy",version:"UPRO-SPBT-v1.0",reasons:["A2"],nextHealthReview:"2028-07-10"};
+  const beforeDue=updateProductionHealthLedger({production:a2,lifecycle:la2,prior:oldA,now:"2028-04-11T21:00:00Z"});
+  assert.equal(beforeDue.events.length,1,"old A evidence remains immutable");assert.equal(beforeDue.current.lastReview,null,"old A episode must not become the last review of re-entered A");assert.equal(beforeDue.current.nextReview,"2028-07-10");
+});
+
 test("A7 FC-01: formal review holiday boundary rolls to the next legal session close",()=>{
   assert.equal(effectiveReviewSession("2027-07-04"),"2027-07-06");
   assert.equal(nyseReviewBoundaryReached("2027-07-04","2027-07-06T19:59:00Z"),false);
