@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-08-26T06:39:50.268Z",
+  "updatedAt": "2026-08-27T11:13:15.625Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -10,7 +10,7 @@
   },
   "events": [],
   "current": {
-    "asOf": "2026-08-26",
+    "asOf": "2026-08-27",
     "stage": "ACCUMULATING",
     "systemDecision": "ACCUMULATING",
     "userAction": "NONE",
@@ -23,7 +23,9 @@
         "eligible": false,
         "promotionSelectable": false,
         "promotionMerit": "INCUMBENT",
-        "reasons": [],
+        "reasons": [
+          "Daily workflow status is stale/failed"
+        ],
         "observations": 3,
         "liveObservations": 3,
         "missingRatio": 0,
@@ -52,19 +54,19 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Only 1 common Forward days; Pareto merit is not yet evaluated"
+          "Only 1 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 1,
-        "liveObservations": 1,
+        "observations": 2,
+        "liveObservations": 2,
         "missingRatio": 0,
-        "executions": 0,
-        "actionDaysPerYear": 0,
+        "executions": 1,
+        "actionDaysPerYear": 126,
         "regimes": 1,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0,
+        "totalReturn": 0.00449137954149359,
         "sortino": 0,
         "calmar": 0,
         "maxDd": 0,
@@ -82,19 +84,19 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Only 1 common Forward days; Pareto merit is not yet evaluated"
+          "Only 1 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 1,
-        "liveObservations": 1,
+        "observations": 2,
+        "liveObservations": 2,
         "missingRatio": 0,
-        "executions": 0,
-        "actionDaysPerYear": 0,
+        "executions": 1,
+        "actionDaysPerYear": 126,
         "regimes": 1,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0,
+        "totalReturn": 0.002629748283752731,
         "sortino": 0,
         "calmar": 0,
         "maxDd": 0,
@@ -112,19 +114,19 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Only 1 common Forward days; Pareto merit is not yet evaluated"
+          "Only 1 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 1,
-        "liveObservations": 1,
+        "observations": 2,
+        "liveObservations": 2,
         "missingRatio": 0,
-        "executions": 0,
-        "actionDaysPerYear": 0,
+        "executions": 1,
+        "actionDaysPerYear": 126,
         "regimes": 1,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0,
+        "totalReturn": 0.005261168404351979,
         "sortino": 0,
         "calmar": 0,
         "maxDd": 0,
@@ -143,6 +145,10 @@
       ],
       "nextHealthReview": null
     },
-    "nextReview": "2027-02-25"
+    "nextReview": "2027-02-25",
+    "incumbentVersion": "VS13-v1.0",
+    "reviewCycleDate": null,
+    "reviewResolved": false,
+    "reviewResolvedAt": null
   }
 }
