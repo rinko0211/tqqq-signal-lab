@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'scripts/audit7-guarded-remediation.mjs'
+      - 'scripts/audit7-remediate-m07.mjs'
       - '.github/workflows/audit7-guarded-remediation.yml'
 
 permissions:
@@ -38,7 +39,9 @@ jobs:
             github-pages/public/data/production-health-review.json \
             > /tmp/a7-protected.before
       - name: Apply deterministic Audit 7 remediation
-        run: node scripts/audit7-guarded-remediation.mjs
+        run: |
+          node scripts/audit7-guarded-remediation.mjs
+          node scripts/audit7-remediate-m07.mjs
       - name: Install exact dependencies
         run: npm ci
       - name: Audit 7 discovery and fault-injection probes
