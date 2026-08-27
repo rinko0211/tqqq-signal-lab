@@ -28,11 +28,18 @@ replace("lib/forward.ts",
 '    if(!Number.isFinite(Date.parse(r.recordedAt)))throw Error(`Forward integrity: invalid recordedAt ${r.key}`);\n    if(!Number.isFinite(Date.parse(ledger.updatedAt))||Date.parse(r.recordedAt)>Date.parse(ledger.updatedAt))throw Error(`Forward integrity: record chronology exceeds ledger generation ${r.key}`);');
 replace("lib/forward.ts",
 '    if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);\n  }\n}',
-'    if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);\n  }\n  for(const freeze of ledger.freezes){\n    const rows=ledger.records.filter(r=>r.strategyVersion===freeze.version);\n    if(!rows.length)continue;\n    const last=rows.at(-1)!;\n    const expectedSessions=countNyseSessions(freeze.startDate,last.marketDataDate);\n    if(rows.length!==expectedSessions)throw Error(`Forward integrity: incomplete session history ${freeze.version}`);\n  }\n}');
+'    if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);\n  }\n  const ledgerStarted=ledger.records.length>0;\n  for(const freeze of ledger.freezes){\n    const rows=ledger.records.filter(r=>r.strategyVersion===freeze.version);\n    if(!rows.length){if(ledgerStarted)throw Error(`Forward integrity: missing started series history ${freeze.version}`);continue}\n    const last=rows.at(-1)!;\n    const expectedSessions=countNyseSessions(freeze.startDate,last.marketDataDate);\n    if(rows.length!==expectedSessions)throw Error(`Forward integrity: incomplete session history ${freeze.version}`);\n  }\n}');
 
 replace("tests/executive-ui-semantics.test.mjs",
 '  assert.match(primary,/signalUnsafe=Boolean\\(authorityUnsafe\\|\\|forwardIntegrityUnsafe\\|\\|signalNumericUnsafe\\|\\|holdingsNumericUnsafe\\|\\|args\\.status\\?\\.state===\"failed\"\\|\\|fresh\\?\\.stale\\)/);',
 '  assert.match(primary,/signalPayloadUnsafe/);\n  assert.match(primary,/futureGenerationUnsafe/);\n  assert.match(primary,/executionContractUnsafe/);\n  assert.match(primary,/approvedIncumbent/);\n  assert.match(primary,/signalUnsafe=Boolean\\(authorityUnsafe\\|\\|forwardIntegrityUnsafe\\|\\|signalPayloadUnsafe\\|\\|signalNumericUnsafe\\|\\|holdingsNumericUnsafe\\|\\|futureGenerationUnsafe\\|\\|executionContractUnsafe\\|\\|args\\.status\\?\\.state===\"failed\"\\|\\|fresh\\?\\.stale\\)/);');
+
+replace("tests/audit8-independent-blackbox.test.ts",
+'  if(changed&&window==="PAST")return "NO_ACTION_EXPIRED";',
+'  if(window==="INVALID")return "CHECK_DATA";\n  if(changed&&window==="PAST")return "NO_ACTION_EXPIRED";');
+replace("tests/audit8-independent-blackbox.test.ts",
+'  f=base("invalid session wait");f.signal.signal.executionDate="2026-08-29";f.expected="WAIT";fixtures.push(f);',
+'  f=base("invalid execution session");f.signal.signal.executionDate="2026-08-29";f.expected="CHECK_DATA";fixtures.push(f);');
 
 const pkgPath="package.json",pkg=JSON.parse(fs.readFileSync(pkgPath,"utf8"));
 for(const key of ["test:core","test:ops"]){
