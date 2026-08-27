@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'scripts/audit8-wave2-remediation.mjs'
+      - 'tests/corporate-action-ledger.test.ts'
+      - 'tests/audit7-corporate-action-interactions.test.ts'
       - '.github/workflows/audit8-wave2-remediation.yml'
 
 permissions:
