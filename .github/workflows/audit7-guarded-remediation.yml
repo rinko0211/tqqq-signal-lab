@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'scripts/audit7-guarded-remediation.mjs'
+      - '.github/workflows/audit7-guarded-remediation.yml'
 
 permissions:
   contents: write
