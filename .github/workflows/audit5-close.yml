@@ -56,6 +56,29 @@ jobs:
           s=s.replace('seedIncumbent(x.forward,260,','seedIncumbent(x.forward,262,')
           p.write_text(s)
           PY
+      - name: Preserve a healthy incumbent when challenger feeds fail
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lib/lifecycle-review.ts')
+          s=p.read_text()
+          old='''  else if(incumbentIssue||candidateIssues){systemDecision=stage==="INTERIM"?"INTERIM_DATA_REVIEW_REQUIRED":"REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="A current data/integrity issue exists. Do not use an older review result for Production changes; restore current upstream state first.";}\n  else if(cycle&&cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&!approvalResolved){'''
+          new='''  else if(incumbentIssue){systemDecision="REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="The current incumbent has a data/integrity issue. Production selection is blocked until the incumbent is current and valid.";}\n  else if(stage==="INTERIM"&&candidateIssues){systemDecision="INTERIM_DATA_REVIEW_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="A challenger data/integrity issue exists during the informational interim review. Continue Forward without Production promotion and restore the affected feed.";}\n  else if(cycle&&cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&!approvalResolved){'''
+          if old not in s:
+            raise SystemExit('lifecycle decision-order target missing')
+          s=s.replace(old,new,1)
+          marker='''  else if(cycle){\n    systemDecision=approvalResolved?"POST_REVIEW_CONTINUE_FORWARD":cycle.systemDecision;'''
+          replacement='''  else if(candidateIssues){systemDecision="REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="No scheduled selectable decision remains while challenger data/integrity issues are unresolved. Restore the affected feeds without changing strategy parameters.";}\n  else if(cycle){\n    systemDecision=approvalResolved?"POST_REVIEW_CONTINUE_FORWARD":cycle.systemDecision;'''
+          if marker not in s:
+            raise SystemExit('lifecycle post-cycle target missing')
+          s=s.replace(marker,replacement,1)
+          p.write_text(s)
+
+          t=Path('tests/audit5-operational-continuity.test.ts')
+          ts=t.read_text()
+          ts += '''\n\ntest("challenger failure is isolated while incumbent failure remains globally fail-closed",()=>{\n  const life=fs.readFileSync("lib/lifecycle-review.ts","utf8");\n  assert.doesNotMatch(life,/else if\\(incumbentIssue\\|\\|candidateIssues\\)/);\n  assert.match(life,/else if\\(incumbentIssue\\)/);\n  assert.match(life,/cycle&&cycle\\.userAction===\\"RUN_PHASE6_HUMAN_DECISION_REQUIRED\\"|cycle&&cycle\\.userAction===\\"RUN_PHASE6_HUMAN_REVIEW\\"/);\n});\n'''
+          t.write_text(ts)
+          PY
       - name: Install exact dependencies
         run: npm ci
       - name: Audit 5 targeted boundary and continuity regression
@@ -115,6 +138,7 @@ jobs:
           5. Formal/Stronger reviews lacked a durable consumed-review cycle and a recurring annual selection-review schedule after the 24-month checkpoint.
           6. The primary UI did not fail closed when the scheduled next-open execution window had already passed while device-local holdings still differed from target.
           7. Manual/off-schedule Daily execution lacked an explicit guard against provider daily bars that were still forming.
+          8. A failed non-incumbent challenger feed could override a healthy incumbent's scheduled human decision and dead-end the review instead of isolating the failed challenger.
 
           ## Remediation implemented
           - Review milestones now use America/New_York time and require the named NYSE session's conservative close boundary before opening the gate.
@@ -124,6 +148,7 @@ jobs:
           - Human Production Approval refreshes Daily + Phase 5 + Lifecycle immediately before approval, then regenerates Daily + Lifecycle + Production Health from the resulting control state before one atomic persistence/deploy.
           - Primary action UI refuses a late execution when the planned NYSE open has passed and tells the user to wait for the next validated Daily update rather than chase/retroactively assume the missed open.
           - Dashboard, Phase 5, Lifecycle and Roadmap semantics distinguish **current Production** from **TQQQ reference baseline** and do not duplicate the same selected Phase 5 version as RESEARCH.
+          - Challenger feed failures are isolated from a healthy incumbent decision; an incumbent integrity failure still blocks all Production selection.
           - Audit 5 boundary/continuity tests are permanently registered in both test:core and test:ops.
 
           ## Validation required for close
