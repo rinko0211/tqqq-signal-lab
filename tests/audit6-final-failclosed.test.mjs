@@ -32,13 +32,13 @@ test("Production config validator rejects malformed or contradictory authority",
 });
 
 test("primary action requires coherent authority bundle plus a new signal change before its legal open",()=>{
- const ui=r("app/page.tsx"),authority=r("lib/operational-authority.ts");
- assert.ok(ui.includes("operationalAuthorityBundleIsCoherent"));
- assert.ok(ui.includes("authorityUnsafe=!authorityBundle.ok"));
+ const primary=r("lib/primary-action.ts"),authority=r("lib/operational-authority.ts");
+ assert.ok(primary.includes("operationalAuthorityBundleIsCoherent"));
+ assert.ok(primary.includes("authorityUnsafe=!authorityBundle.ok"));
  assert.match(authority,/Signal and runtime generations do not match/);
  assert.match(authority,/Signal and Production control modes do not match/);
  assert.match(authority,/Signal identity does not match current operational authority/);
- assert.ok(ui.includes('executionActionable=Boolean(signalChange&&executionWindow==="UPCOMING_OPEN")'));
- assert.match(ui,/!signalChange[\s\S]*現在Signalに新規売買指示はありません/);
- assert.match(ui,/!executionActionable[\s\S]*有効な次回始値の実行ウィンドウ/);
+ assert.ok(primary.includes('executionActionable=Boolean(signalChange&&executionWindow==="UPCOMING_OPEN")'));
+ assert.match(primary,/if\(!signalChange\)[\s\S]*現在Signalに新規売買指示はありません/);
+ assert.match(primary,/if\(!executionActionable\)[\s\S]*有効な次回始値の実行ウィンドウ/);
 });
