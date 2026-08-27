@@ -31,16 +31,20 @@ jobs:
         run: |
           node scripts/audit6-remediate.mjs
           node scripts/audit6-remediate-2.mjs
+          node scripts/audit6-remediate-3.mjs
       - name: Install exact dependencies
         run: npm ci
       - name: Verify permanent Audit 6 registration
         run: |
           node - <<'NODE'
           const p=require('./package.json');
-          for(const k of ['test:core','test:ops']) if(!p.scripts[k].includes('tests/audit6-recurring-failures.test.ts')) throw new Error(`${k} missing Audit 6 regression`);
+          for(const k of ['test:core','test:ops']) {
+            if(!p.scripts[k].includes('tests/audit6-recurring-failures.test.ts')) throw new Error(`${k} missing Audit 6 recurring regression`);
+            if(!p.scripts[k].includes('tests/audit6-final-failclosed.test.mjs')) throw new Error(`${k} missing Audit 6 final fail-closed regression`);
+          }
           NODE
       - name: Focused recurring-failure regression
-        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs tests/re-audit2-phasee.test.ts
+        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit6-final-failclosed.test.mjs tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs tests/re-audit2-phasee.test.ts
       - name: Full core regression
         run: npm run test:core
       - name: Full operational regression
@@ -73,8 +77,9 @@ jobs:
           const f=JSON.parse(fs.readFileSync('github-pages/public/data/forward-ledger.json','utf8'));
           const p5=JSON.parse(fs.readFileSync('github-pages/public/data/phase-5-forward-ledger.json','utf8'));
           const l=JSON.parse(fs.readFileSync('github-pages/public/data/lifecycle-review.json','utf8'));
+          const h=JSON.parse(fs.readFileSync('github-pages/public/data/production-health-review.json','utf8'));
           if(p.mode!=='RESEARCH'||p.approvedByHuman!==false||p.selectedTicker!==null||p.strategyVersion!==null) throw new Error('Audit 6 must not promote Production');
-          if(f.appendOnly!==true||p5.appendOnly!==true||l.appendOnly!==true) throw new Error('Authoritative ledgers must remain append-only');
+          if(f.appendOnly!==true||p5.appendOnly!==true||l.appendOnly!==true||h.appendOnly!==true) throw new Error('Authoritative ledgers must remain append-only');
           if(l.current.stage!=='ACCUMULATING'||l.current.userAction!=='NONE') throw new Error('Audit 6 must not advance Lifecycle');
           NODE
           test -z "$(git status --porcelain github-pages/public/data public/data)"
@@ -82,8 +87,8 @@ jobs:
         run: |
           git diff --check
           ! git diff --name-only | grep -E '^github-pages/public/data/|^public/data/'
-      - name: Remove one-time remediation helpers
-        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs
+      - name: Remove one-time Audit 6 scaffolding
+        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs scripts/audit6-remediate-3.mjs .github/workflows/audit6-verification.yml
       - name: Persist only fully validated Audit 6 remediation
         run: |
           git config user.name "github-actions[bot]"
