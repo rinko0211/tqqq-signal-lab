@@ -21,7 +21,7 @@ permissions:
 jobs:
   state-space:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,3 +42,26 @@ jobs:
       - name: Run full operational regression after discovery probes
         if: always()
         run: npm run test:ops
+      - name: Build user-facing Pages integration
+        run: npm run build:pages
+      - name: Validate current authoritative state through hardened boundaries
+        run: |
+          node --experimental-strip-types - <<'NODE'
+          import fs from 'node:fs';
+          import {assertForwardLedgerInternalIntegrity} from './lib/forward.ts';
+          import {assertPhase5LedgerInternalIntegrity} from './lib/phase5-forward.ts';
+          import {assertLifecycleLedgerInternalIntegrity} from './lib/lifecycle-review.ts';
+          import {assertProductionHealthLedgerInternalIntegrity} from './lib/production-health-review.ts';
+          import {assertProductionConfigIntegrity} from './lib/production.ts';
+          import {operationalAuthorityBundleIsCoherent} from './lib/operational-authority.ts';
+          const j=n=>JSON.parse(fs.readFileSync(`github-pages/public/data/${n}`,'utf8'));
+          const forward=j('forward-ledger.json'),phase5=j('phase-5-forward-ledger.json'),lifecycle=j('lifecycle-review.json'),health=j('production-health-review.json'),production=j('production-config.json'),signal=j('signal.json'),status=j('status.json');
+          assertForwardLedgerInternalIntegrity(forward);
+          assertPhase5LedgerInternalIntegrity(phase5);
+          assertLifecycleLedgerInternalIntegrity(lifecycle);
+          assertProductionHealthLedgerInternalIntegrity(health);
+          assertProductionConfigIntegrity(production);
+          const bundle=operationalAuthorityBundleIsCoherent({signal,status,production,forward});
+          if(!bundle.ok)throw new Error(`Current operational authority bundle is incoherent: ${bundle.reasons.join('; ')}`);
+          console.log('Audit 7 current authoritative-state validation PASS');
+          NODE
