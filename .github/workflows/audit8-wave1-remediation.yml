@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'scripts/audit8-wave1-remediation.mjs'
+      - 'tests/audit6-recurring-failures.test.ts'
+      - 'tests/executive-ui-semantics.test.mjs'
       - '.github/workflows/audit8-wave1-remediation.yml'
 
 permissions:
