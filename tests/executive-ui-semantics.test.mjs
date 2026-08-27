@@ -15,14 +15,19 @@ test("device-local holdings are tagged and invalidated across ticker/version tra
   assert.match(page,/ticker:dailySignal\?\.assetTicker\|\|"TQQQ"/);
 });
 
-test("unsafe stale, failed, or cross-generation authority fails closed at the primary action",()=>{
+test("unsafe stale, failed, cross-generation, malformed numeric, or malformed Forward authority fails closed at the primary action",()=>{
   assert.match(primary,/operationalAuthorityBundleIsCoherent/);
   assert.match(primary,/authorityUnsafe=!authorityBundle\.ok/);
   assert.match(authority,/Signal and runtime generations do not match/);
   assert.match(authority,/Signal and runtime market-data dates do not match/);
   assert.match(authority,/Signal and Production control modes do not match/);
   assert.match(authority,/Signal identity does not match current operational authority/);
-  assert.match(primary,/signalUnsafe=Boolean\(authorityUnsafe\|\|args\.status\?\.state==="failed"\|\|fresh\?\.stale\)/);
+  assert.match(primary,/assertForwardLedgerInternalIntegrity/);
+  assert.match(primary,/forwardIntegrityUnsafe/);
+  assert.match(primary,/signalNumericUnsafe/);
+  assert.match(primary,/holdingsNumericUnsafe/);
+  assert.match(primary,/freshnessDate=args\.signal\?\.dataDate/);
+  assert.match(primary,/signalUnsafe=Boolean\(authorityUnsafe\|\|forwardIntegrityUnsafe\|\|signalNumericUnsafe\|\|holdingsNumericUnsafe\|\|args\.status\?\.state==="failed"\|\|fresh\?\.stale\)/);
   assert.match(primary,/売買しない：データ\/Signalが安全確認できません/);
   assert.match(page,/売買しない・System Status確認/);
 });
