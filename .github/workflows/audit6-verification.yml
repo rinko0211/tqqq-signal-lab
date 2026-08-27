@@ -33,6 +33,7 @@ jobs:
           node scripts/audit6-remediate-2.mjs
           node scripts/audit6-remediate-3.mjs
           node scripts/audit6-remediate-4.mjs
+          node scripts/audit6-remediate-5.mjs
       - name: Install exact dependencies
         run: npm ci
       - name: Verify permanent Audit 6 registration
@@ -45,7 +46,7 @@ jobs:
           }
           NODE
       - name: Focused recurring-failure regression
-        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit6-final-failclosed.test.mjs tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs tests/re-audit2-phasee.test.ts
+        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit6-final-failclosed.test.mjs tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs tests/re-audit2-phasee.test.ts tests/executive-ui-semantics.test.mjs
       - name: Full core regression
         run: npm run test:core
       - name: Full operational regression
@@ -89,7 +90,7 @@ jobs:
           git diff --check
           ! git diff --name-only | grep -E '^github-pages/public/data/|^public/data/'
       - name: Remove one-time Audit 6 scaffolding
-        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs scripts/audit6-remediate-3.mjs scripts/audit6-remediate-4.mjs .github/workflows/audit6-verification.yml
+        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs scripts/audit6-remediate-3.mjs scripts/audit6-remediate-4.mjs scripts/audit6-remediate-5.mjs .github/workflows/audit6-verification.yml
       - name: Persist only fully validated Audit 6 remediation
         run: |
           git config user.name "github-actions[bot]"
