@@ -30,6 +30,16 @@ test("A7 FC-13: current Signal/status plus stale Forward generation fails closed
   assert.equal(r.ok,false);assert.ok(r.reasons.some(x=>x.includes("Forward")&&x.includes("generation")));
 });
 
+test("A7 FC-13/16: missing or malformed Forward generation fails closed",()=>{
+  for(const bad of [
+    {schemaVersion:1,appendOnly:true},
+    {schemaVersion:1,appendOnly:true,updatedAt:"not-a-timestamp"},
+  ]){
+    const r=operationalAuthorityBundleIsCoherent({signal:baselineSignal,status,production:DEFAULT_PRODUCTION_CONFIG,forward:bad});
+    assert.equal(r.ok,false);assert.ok(r.reasons.some(x=>x.includes("Forward")&&x.includes("generation")));
+  }
+});
+
 test("A7 FC-13/15: identical timestamps cannot mask date divergence",()=>{
   const signal={...baselineSignal,dataDate:"2027-08-24"};
   const r=operationalAuthorityBundleIsCoherent({signal,status,production:DEFAULT_PRODUCTION_CONFIG,forward});
