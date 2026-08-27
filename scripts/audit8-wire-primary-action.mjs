@@ -9,7 +9,8 @@ const mustReplace=(from,to,label)=>{
   src=src.replace(from,to);
 };
 
-mustReplace("  nextExecutionDate,\n","","engine nextExecutionDate import");
+// Keep nextExecutionDate imported: the page still uses it for non-authoritative
+// display/dashboard fields. Audit 8 instruments only the final primary action path.
 mustReplace('import {nyseExecutionWindow} from "../lib/market-calendar";\nimport {operationalAuthorityBundleIsCoherent} from "../lib/operational-authority";\n','import {derivePrimaryAction} from "../lib/primary-action";\n',"primary action imports");
 
 const start='    target = signal?.target ?? 0,';
