@@ -14,7 +14,6 @@ type Fixture={
   freshnessDate?:string;
   holdings:{ratio?:string;ticker?:string;version?:string};
   expected?:PrimaryActionCode;
-  safetyOnly?:boolean;
 };
 
 const G="2026-08-26T21:10:00.000Z";
@@ -35,8 +34,7 @@ function oracle(f:Fixture):PrimaryActionCode{
   const validTs=(x:any)=>typeof x==="string"&&!Number.isNaN(Date.parse(x));
   const noIdentity=p.selectedTicker==null&&p.selectedStrategy==null&&p.strategyVersion==null;
   const baselineResearch=p.schemaVersion===1&&p.mode==="RESEARCH"&&p.approvedByHuman===false&&noIdentity&&p.approvalDate==null&&p.effectiveDate==null;
-  const validProductionShape=baselineResearch;
-  if(!validProductionShape)return "CHECK_DATA";
+  if(!baselineResearch)return "CHECK_DATA";
   if(s.assetTicker!==BASE_ID.ticker||s.strategy!==BASE_ID.strategy||s.strategyVersion!==BASE_ID.version||s.platformMode!=="RESEARCH")return "CHECK_DATA";
   if(!validTs(s.generatedAt)||!validTs(r.generatedAt)||!validTs(w.updatedAt)||s.generatedAt!==r.generatedAt||s.generatedAt!==w.updatedAt)return "CHECK_DATA";
   if(s.dataDate!==r.signalDate||s.dataDate!==r.marketDataDate)return "CHECK_DATA";
@@ -74,11 +72,12 @@ function oracle(f:Fixture):PrimaryActionCode{
 
 const run=(f:Fixture)=>derivePrimaryAction({signal:f.signal,status:f.status,forward:f.forward,production:f.production,now:f.now,holdings:f.holdings,freshnessDate:f.freshnessDate});
 
-test("Audit 8 oracle remains independent from the white-box implementation helpers",()=>{
+test("Audit 8 oracle remains independent from white-box implementation imports",()=>{
   const src=fs.readFileSync("tests/audit8-independent-blackbox.test.ts","utf8");
-  for(const forbidden of ["operationalAuthorityBundleIsCoherent","productionConfigIsValid","nyseExecutionWindow","freshness(","assertForwardLedgerInternalIntegrity","assertLifecycleLedgerInternalIntegrity","assertProductionHealthLedgerInternalIntegrity"]){
-    const occurrences=src.split(forbidden).length-1;
-    assert.equal(occurrences,forbidden==="freshness("?0:1,`${forbidden} must appear only in this guard string, never as oracle code`);
+  const imports=src.split("\n").filter(line=>line.startsWith("import ")).join("\n");
+  assert.match(imports,/from "\.\.\/lib\/primary-action\.ts"/);
+  for(const forbiddenModule of ["operational-authority","production.ts","market-calendar","engine.ts","forward.ts","lifecycle-review","production-health-review"]){
+    assert.doesNotMatch(imports,new RegExp(`from [\\"'].*${forbiddenModule}`));
   }
 });
 
@@ -110,7 +109,8 @@ test("Audit 8 malformed holdings can never emit a risk-changing action",()=>{
   for(const raw of ["oops","NaN","Infinity","-1","101"]){
     const f=base(`holdings=${raw}`);f.holdings.ratio=raw;
     assert.equal(oracle(f),"CHECK_DATA",f.name);
-    assert.ok(!["INCREASE","REDUCE"].includes(run(f).code),`${f.name} emitted ${run(f).code}`);
+    const actual=run(f).code;
+    assert.ok(!["INCREASE","REDUCE"].includes(actual),`${f.name} emitted ${actual}`);
   }
 });
 
@@ -118,7 +118,8 @@ test("Audit 8 malformed or out-of-range target can never emit a risk-changing ac
   for(const target of [-.25,1.25]){
     const f=base(`target=${target}`);f.signal.signal.target=target;
     assert.equal(oracle(f),"CHECK_DATA",f.name);
-    assert.ok(!["INCREASE","REDUCE"].includes(run(f).code),`${f.name} emitted ${run(f).code}`);
+    const actual=run(f).code;
+    assert.ok(!["INCREASE","REDUCE"].includes(actual),`${f.name} emitted ${actual}`);
   }
 });
 
