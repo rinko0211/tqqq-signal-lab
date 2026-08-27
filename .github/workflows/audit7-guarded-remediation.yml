@@ -1,0 +1,95 @@
+name: Audit 7 Guarded Remediation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit7-guarded-remediation.mjs'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit7-guarded-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate-verify-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Capture exact validated source head
+        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Capture protected authoritative state
+        run: |
+          sha256sum \
+            github-pages/public/data/production-config.json \
+            github-pages/public/data/forward-ledger.json \
+            github-pages/public/data/phase-5-forward-ledger.json \
+            github-pages/public/data/lifecycle-review.json \
+            github-pages/public/data/production-health-review.json \
+            > /tmp/a7-protected.before
+      - name: Apply deterministic Audit 7 remediation
+        run: node scripts/audit7-guarded-remediation.mjs
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Audit 7 discovery and fault-injection probes
+        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts tests/audit7-authority-bundle.test.ts tests/audit7-ledger-integrity.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Full Pages integration build
+        run: npm run build:pages
+      - name: Validate current authoritative ledgers with hardened boundaries
+        run: |
+          node --experimental-strip-types - <<'NODE'
+          import fs from 'node:fs';
+          import {assertForwardLedgerInternalIntegrity} from './lib/forward.ts';
+          import {assertPhase5LedgerInternalIntegrity} from './lib/phase5-forward.ts';
+          import {assertLifecycleLedgerInternalIntegrity} from './lib/lifecycle-review.ts';
+          import {assertProductionHealthLedgerInternalIntegrity} from './lib/production-health-review.ts';
+          const j=n=>JSON.parse(fs.readFileSync(`github-pages/public/data/${n}`,'utf8'));
+          assertForwardLedgerInternalIntegrity(j('forward-ledger.json'));
+          assertPhase5LedgerInternalIntegrity(j('phase-5-forward-ledger.json'));
+          assertLifecycleLedgerInternalIntegrity(j('lifecycle-review.json'));
+          assertProductionHealthLedgerInternalIntegrity(j('production-health-review.json'));
+          console.log('Authoritative append-only ledgers pass hardened integrity boundaries');
+          NODE
+      - name: Verify protected authoritative state unchanged
+        run: |
+          sha256sum \
+            github-pages/public/data/production-config.json \
+            github-pages/public/data/forward-ledger.json \
+            github-pages/public/data/phase-5-forward-ledger.json \
+            github-pages/public/data/lifecycle-review.json \
+            github-pages/public/data/production-health-review.json \
+            > /tmp/a7-protected.after
+          diff -u /tmp/a7-protected.before /tmp/a7-protected.after
+      - name: Scope guard
+        run: |
+          git diff --name-only | tee /tmp/a7-files
+          test "$(grep -Ev '^(app/page\.tsx|package\.json|lib/forward\.ts|lib/phase5-forward\.ts|lib/lifecycle-review\.ts|lib/production-health-review\.ts)$' /tmp/a7-files | wc -l)" -eq 0
+      - name: Persist only if exact validated source is still authoritative
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::main advanced after validation; refusing to combine validated remediation with unvalidated source"
+            exit 1
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app/page.tsx package.json lib/forward.ts lib/phase5-forward.ts lib/lifecycle-review.ts lib/production-health-review.ts
+          if git diff --cached --quiet; then
+            echo "No remediation diff to persist"
+            exit 0
+          fi
+          git commit -m 'Remediate Audit 7 authority and ledger integrity defects'
+          git push origin HEAD:main
