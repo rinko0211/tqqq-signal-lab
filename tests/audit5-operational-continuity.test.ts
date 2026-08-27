@@ -21,9 +21,10 @@ test("execution window flips exactly at the NYSE core open",()=>{
 });
 
 test("Daily generator and primary UI fail closed around incomplete bars and missed opens",()=>{
-  const daily=fs.readFileSync("scripts/generate-daily.ts","utf8"),page=fs.readFileSync("app/page.tsx","utf8");
+  const daily=fs.readFileSync("scripts/generate-daily.ts","utf8"),page=fs.readFileSync("app/page.tsx","utf8"),primary=fs.readFileSync("lib/primary-action.ts","utf8");
   assert.match(daily,/dailyBarIsComplete/);assert.match(daily,/DATA-003/);
-  assert.match(page,/executionMissed/);assert.match(page,/予定始値.*通過/);assert.match(page,/過去の始値を追認せず/);
+  assert.match(page,/derivePrimaryAction/);assert.match(page,/executionMissed/);assert.match(page,/予定始値.*通過/);
+  assert.match(primary,/executionMissed=Boolean\(signalChange&&executionWindow==="OPEN_PASSED"\)/);assert.match(primary,/過去の始値を追認せず/);
 });
 
 test("Production approval refreshes lifecycle both before and after human transition",()=>{
