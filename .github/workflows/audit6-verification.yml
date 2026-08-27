@@ -1,4 +1,4 @@
-name: Audit 6 Remediation Verification
+name: Audit 6 Closure Verification
 on:
   push:
     paths:
