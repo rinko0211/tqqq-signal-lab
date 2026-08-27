@@ -22,7 +22,8 @@ test("Phase 5 uses the shared strict completed-bar guard",()=>{
 
 test("missed-open UI safety does not depend on browser-local holdings",()=>{
   const p=fs.readFileSync("lib/primary-action.ts","utf8"),line=p.split("\n").find(x=>x.includes("executionMissed=Boolean"))||"";
-  assert.ok(p.includes('signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001)'));
+  assert.ok(p.includes('signalNumericUnsafe=Boolean'));
+  assert.ok(p.includes('signalChange=Boolean(signal&&!signalNumericUnsafe&&Math.abs(signal.target-signal.previousTarget)>=.001)'));
   assert.ok(line.includes('signalChange&&executionWindow==="OPEN_PASSED"'));assert.doesNotMatch(line,/holdingsMatch|actual/);
   const missed=p.indexOf('if(executionMissed)'),holdings=p.indexOf('if(!holdingsMatch)');assert.ok(missed>=0&&holdings>missed,"expired-open guard must precede any browser-local holdings branch");
 });
