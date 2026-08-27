@@ -40,6 +40,14 @@ patch("lib/production-health-review.ts",
 '    out.events.push({key:`${p.strategyVersion}|${due}`,dueDate:due,recordedAt:now,version:p.strategyVersion,state:health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,timing:late?"LATE_CURRENT_STATE_ONLY":"ON_TIME",reasons:[...health.reasons,...(late?["Scheduled health review was missed by more than 7 days; no retrospective health state was fabricated"]:[])]});\n    due=addMonths(due,3);',
 '    out.events.push({key:`${p.strategyVersion}|${due}`,dueDate:due,recordedAt:now,version:p.strategyVersion,state:health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,timing:late?"LATE_CURRENT_STATE_ONLY":"ON_TIME",reasons:[...health.reasons,...(late?["Scheduled health review was missed by more than 7 days; no retrospective health state was fabricated"]:[])]});\n    due=addMonths(due,3);\n    if(late)while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);');
 
+// M06 — Forward is part of the same Daily authority generation as Signal/status.
+patch("lib/operational-authority.ts",
+'export type OperationalForwardAuthority={schemaVersion?:number;appendOnly?:boolean};',
+'export type OperationalForwardAuthority={schemaVersion?:number;appendOnly?:boolean;updatedAt?:string};');
+patch("lib/operational-authority.ts",
+'  if(!validTimestamp(signal.generatedAt)||!validTimestamp(status.generatedAt)||signal.generatedAt!==status.generatedAt)reasons.push("Signal and runtime generations do not match");',
+'  if(!validTimestamp(signal.generatedAt)||!validTimestamp(status.generatedAt)||signal.generatedAt!==status.generatedAt)reasons.push("Signal and runtime generations do not match");\n  if(!validTimestamp(forward.updatedAt)||forward.updatedAt!==signal.generatedAt||forward.updatedAt!==status.generatedAt)reasons.push("Forward generation does not match Signal/runtime generation");');
+
 // Permanent registration of Audit 7 behavioral/fault probes.
 const packagePath="package.json",pkg=JSON.parse(fs.readFileSync(packagePath,"utf8"));
 for(const key of ["test:core","test:ops"]){const marker="tests/audit6-final-failclosed.test.mjs",addition="tests/audit7-state-space.test.ts tests/audit7-authority-bundle.test.ts tests/audit7-ledger-integrity.test.ts";if(typeof pkg.scripts?.[key]!=="string"||!pkg.scripts[key].includes(marker))throw Error(`Audit 7 package guard failed: ${key}`);if(!pkg.scripts[key].includes("tests/audit7-state-space.test.ts"))pkg.scripts[key]=pkg.scripts[key].replace(marker,`${marker} ${addition}`)}
