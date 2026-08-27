@@ -20,7 +20,8 @@ const G="2026-08-26T21:10:00.000Z";
 const BASE_ID={ticker:"TQQQ",strategy:"Volatility Shield 13%",version:"VS13-v1.0"};
 const baseSignal={generatedAt:G,dataDate:"2026-08-26",platformMode:"RESEARCH",assetTicker:BASE_ID.ticker,strategy:BASE_ID.strategy,strategyVersion:BASE_ID.version,state:"latest",signal:{date:"2026-08-26",target:.75,previousTarget:.5,executionDate:"2026-08-27"}};
 const baseStatus={generatedAt:G,actionStatus:"success",marketDataDate:"2026-08-26",signalDate:"2026-08-26",state:"latest",errors:[]};
-const baseForward={schemaVersion:1,appendOnly:true,updatedAt:G,freezes:[],records:[]};
+const authoritativeForward=JSON.parse(fs.readFileSync("public/data/forward-ledger.json","utf8"));
+const baseForward={...authoritativeForward,updatedAt:G};
 const baseProduction={schemaVersion:1,mode:"RESEARCH",selectedTicker:null,selectedStrategy:null,strategyVersion:null,approvedByHuman:false,approvalDate:null,effectiveDate:null,lastHealthReview:null,nextHealthReview:null,updatedAt:"2026-08-24T00:00:00.000Z"};
 const clone=<T>(v:T):T=>structuredClone(v);
 const base=(name:string):Fixture=>({name,signal:clone(baseSignal),status:clone(baseStatus),forward:clone(baseForward),production:clone(baseProduction),now:"2026-08-27T12:00:00.000Z",latestCompletedDate:"2026-08-26",freshnessDate:"2026-08-26",holdings:{ratio:"50"}});
@@ -105,21 +106,19 @@ test("Audit 8 authority corruption and generation mutations all fail closed",()=
   for(const x of fixtures){assert.equal(oracle(x),"CHECK_DATA",x.name);assert.equal(run(x).code,"CHECK_DATA",x.name)}
 });
 
-test("Audit 8 malformed holdings can never emit a risk-changing action",()=>{
+test("Audit 8 malformed holdings require CHECK_DATA",()=>{
   for(const raw of ["oops","NaN","Infinity","-1","101"]){
     const f=base(`holdings=${raw}`);f.holdings.ratio=raw;
     assert.equal(oracle(f),"CHECK_DATA",f.name);
-    const actual=run(f).code;
-    assert.ok(!["INCREASE","REDUCE"].includes(actual),`${f.name} emitted ${actual}`);
+    assert.equal(run(f).code,"CHECK_DATA",f.name);
   }
 });
 
-test("Audit 8 malformed or out-of-range target can never emit a risk-changing action",()=>{
+test("Audit 8 malformed or out-of-range target requires CHECK_DATA",()=>{
   for(const target of [-.25,1.25]){
     const f=base(`target=${target}`);f.signal.signal.target=target;
     assert.equal(oracle(f),"CHECK_DATA",f.name);
-    const actual=run(f).code;
-    assert.ok(!["INCREASE","REDUCE"].includes(actual),`${f.name} emitted ${actual}`);
+    assert.equal(run(f).code,"CHECK_DATA",f.name);
   }
 });
 
@@ -134,10 +133,8 @@ test("Audit 8 stale operational authority cannot be masked by a fresher research
 
 test("Audit 8 malformed Forward history cannot authorize a trade merely from valid top-level metadata",()=>{
   const f=base("duplicate Forward history");
-  f.forward.records=[
-    {key:"VS13-v1.0|2026-08-25",strategyVersion:"VS13-v1.0",marketDataDate:"2026-08-25"},
-    {key:"VS13-v1.0|2026-08-25",strategyVersion:"VS13-v1.0",marketDataDate:"2026-08-25"},
-  ];
+  const row=clone(f.forward.records[0]);
+  f.forward.records=[row,clone(row),...f.forward.records.slice(1)];
   assert.equal(oracle(f),"CHECK_DATA");
   assert.equal(run(f).code,"CHECK_DATA");
 });
