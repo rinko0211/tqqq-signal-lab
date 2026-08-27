@@ -2,28 +2,28 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5-ui.tsx","utf8"),life=fs.readFileSync("app/lifecycle-ui.tsx","utf8"),authority=fs.readFileSync("lib/operational-authority.ts","utf8");
+const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5-ui.tsx","utf8"),life=fs.readFileSync("app/lifecycle-ui.tsx","utf8"),authority=fs.readFileSync("lib/operational-authority.ts","utf8"),primary=fs.readFileSync("lib/primary-action.ts","utf8");
 
 test("holdings action uses selected live ticker and never hardcodes TQQQ trade instruction",()=>{
-  assert.match(page,/currentTicker=dailySignal\?\.assetTicker\|\|"TQQQ"/);
-  assert.doesNotMatch(page,/`TQQQ比率を\$\{target \* 100\}%まで(?:増加|縮小)`/);
+  assert.match(primary,/currentTicker=args\.signal\?\.assetTicker\|\|"TQQQ"/);
+  assert.doesNotMatch(primary,/`TQQQ比率を\$\{target\*100\}%まで(?:増加|縮小)`/);
 });
 
 test("device-local holdings are tagged and invalidated across ticker/version transitions",()=>{
   assert.match(page,/ticker\?: string/);assert.match(page,/version\?: string/);
-  assert.match(page,/holdingsMatch=/);assert.match(page,/旧Tickerの保有値は流用しません/);
+  assert.match(primary,/holdingsMatch=/);assert.match(primary,/旧Tickerの保有値は流用しません/);
   assert.match(page,/ticker:dailySignal\?\.assetTicker\|\|"TQQQ"/);
 });
 
 test("unsafe stale, failed, or cross-generation authority fails closed at the primary action",()=>{
-  assert.match(page,/operationalAuthorityBundleIsCoherent/);
-  assert.match(page,/authorityUnsafe=!authorityBundle\.ok/);
+  assert.match(primary,/operationalAuthorityBundleIsCoherent/);
+  assert.match(primary,/authorityUnsafe=!authorityBundle\.ok/);
   assert.match(authority,/Signal and runtime generations do not match/);
   assert.match(authority,/Signal and runtime market-data dates do not match/);
   assert.match(authority,/Signal and Production control modes do not match/);
   assert.match(authority,/Signal identity does not match current operational authority/);
-  assert.match(page,/signalUnsafe=Boolean\(authorityUnsafe\|\|runtimeStatus\?\.state==="failed"\|\|fresh\?\.stale\)/);
-  assert.match(page,/売買しない：データ\/Signalが安全確認できません/);
+  assert.match(primary,/signalUnsafe=Boolean\(authorityUnsafe\|\|args\.status\?\.state==="failed"\|\|fresh\?\.stale\)/);
+  assert.match(primary,/売買しない：データ\/Signalが安全確認できません/);
   assert.match(page,/売買しない・System Status確認/);
 });
 
