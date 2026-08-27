@@ -41,6 +41,21 @@ jobs:
           p.write_text(s)
           PY
           node scripts/audit5-remediate.mjs
+      - name: Align lifecycle healthy fixtures with the reviewed NYSE session
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tests/lifecycle-review.test.ts')
+          s=p.read_text()
+          old='seedPhase5(x.phase5,f.version,130,6);seedIncumbent(x.forward,130,6);'
+          new='seedPhase5(x.phase5,f.version,133,6);seedIncumbent(x.forward,133,6);'
+          if old not in s:
+            raise SystemExit('interim lifecycle fixture target missing')
+          s=s.replace(old,new,1)
+          s=s.replace('seedPhase5(x.phase5,f.version,260,','seedPhase5(x.phase5,f.version,262,')
+          s=s.replace('seedIncumbent(x.forward,260,','seedIncumbent(x.forward,262,')
+          p.write_text(s)
+          PY
       - name: Install exact dependencies
         run: npm ci
       - name: Audit 5 targeted boundary and continuity regression
