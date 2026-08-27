@@ -1,0 +1,52 @@
+name: Audit 8 Wave 2 Independent Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/audit8-wave2-adversarial.test.ts'
+      - '.github/workflows/audit8-wave2-discovery.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit8-wave2-discovery
+  cancel-in-progress: false
+
+jobs:
+  independent-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify frozen Audit 8 charter
+        run: test "$(git hash-object research/audit-8-charter-2026-08-27.md)" = "a58a9373516028d5e2add08dbb2e134a0ec4ca17"
+      - name: Run Wave 2 independent adversarial discovery
+        run: |
+          set +e
+          node --experimental-strip-types --test tests/audit8-wave2-adversarial.test.ts
+          code=$?
+          echo "$code" > /tmp/a8-wave2-discovery-exit
+          exit 0
+      - name: Full core regression remains green
+        run: npm run test:core
+      - name: Full operational regression remains green
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Verify test execution did not mutate authoritative state
+        run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Publish discovery conclusion
+        run: |
+          code="$(cat /tmp/a8-wave2-discovery-exit)"
+          if [ "$code" != "0" ]; then
+            echo "::error::Audit 8 Wave 2 found independent oracle/product mismatches"
+            exit "$code"
+          fi
