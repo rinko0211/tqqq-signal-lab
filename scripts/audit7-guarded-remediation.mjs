@@ -34,6 +34,9 @@ patch("lib/production-health-review.ts",
 
 // M05 — after one late current-state recovery observation, skip every unobserved expired quarter.
 patch("lib/production-health-review.ts",
+'  const last=episodeEvents.at(-1),firstDue=p.nextHealthReview??(p.effectiveDate?addMonths(p.effectiveDate,3):null);let due=last?addMonths(last.dueDate,3):firstDue;\n  if(!due)throw Error("HEALTH-002: Production review schedule is missing");',
+'  const last=episodeEvents.at(-1),firstDue=p.nextHealthReview??(p.effectiveDate?addMonths(p.effectiveDate,3):null);let due=last?addMonths(last.dueDate,3):firstDue;\n  if(!due)throw Error("HEALTH-002: Production review schedule is missing");\n  if(last?.timing==="LATE_CURRENT_STATE_ONLY")while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);');
+patch("lib/production-health-review.ts",
 '    out.events.push({key:`${p.strategyVersion}|${due}`,dueDate:due,recordedAt:now,version:p.strategyVersion,state:health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,timing:late?"LATE_CURRENT_STATE_ONLY":"ON_TIME",reasons:[...health.reasons,...(late?["Scheduled health review was missed by more than 7 days; no retrospective health state was fabricated"]:[])]});\n    due=addMonths(due,3);',
 '    out.events.push({key:`${p.strategyVersion}|${due}`,dueDate:due,recordedAt:now,version:p.strategyVersion,state:health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,timing:late?"LATE_CURRENT_STATE_ONLY":"ON_TIME",reasons:[...health.reasons,...(late?["Scheduled health review was missed by more than 7 days; no retrospective health state was fabricated"]:[])]});\n    due=addMonths(due,3);\n    if(late)while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);');
 
