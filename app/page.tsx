@@ -27,8 +27,7 @@ import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,productionConfigIsVal
 import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
-import {nyseExecutionWindow} from "../lib/market-calendar";
-import {operationalAuthorityBundleIsCoherent} from "../lib/operational-authority";
+import {derivePrimaryAction} from "../lib/primary-action";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -391,38 +390,22 @@ export default function Home() {
     bt = analysis?.bt,
     signal = dailySignal?.signal||bt?.daily.at(-1)?.signal,
     latestClose=dailySignal?.assetClose||dailySignal?.tqqqClose||latest?.tqqq.close,
-    target = signal?.target ?? 0,
-    currentTicker=dailySignal?.assetTicker||"TQQQ",
-    currentVersion=dailySignal?.strategyVersion||"VS13-v1.0",
-    holdingsMatch=holdings.ticker?holdings.ticker===currentTicker&&(!holdings.version||holdings.version===currentVersion):currentTicker==="TQQQ",
+    primaryAction=derivePrimaryAction({signal:dailySignal,status:runtimeStatus,forward:forwardLedger,production:productionConfig,now:now.toISOString(),holdings,freshnessDate:latestDate}),
+    target = primaryAction.target,
+    currentTicker=primaryAction.currentTicker,
+    currentVersion=primaryAction.currentVersion,
+    holdingsMatch=primaryAction.holdingsMatch,
     displayHoldings=holdingsMatch?holdings:{...EMPTY,ticker:currentTicker,version:currentVersion},
-    actual = displayHoldings.ratio === "" ? null : Number(displayHoldings.ratio) / 100,
-    executionDate=signal?.executionDate||(signal?nextExecutionDate(signal.date):undefined),
-    executionWindow=executionDate?nyseExecutionWindow(executionDate,now.toISOString()):null,
-    signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001),
-    executionMissed=Boolean(signalChange&&executionWindow==="OPEN_PASSED"),
-    executionActionable=Boolean(signalChange&&executionWindow==="UPCOMING_OPEN"),
-    authorityBundle=operationalAuthorityBundleIsCoherent({signal:dailySignal,status:runtimeStatus,production:productionConfig,forward:forwardLedger}),
-    authorityUnsafe=!authorityBundle.ok,
-    signalUnsafe=Boolean(authorityUnsafe||runtimeStatus?.state==="failed"||fresh?.stale),
-    action =
-      signalUnsafe
-        ? "売買しない：データ/Signalが安全確認できません。System Statusを確認してください"
-        : executionMissed
-          ? `売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`
-          : !holdingsMatch
-            ? `運用Tickerが${currentTicker}へ切り替わりました。旧Tickerの保有値は流用しません。${currentTicker}の保有状況を再入力してください`
-            : actual === null
-              ? "保有状況未入力：目標のみ表示"
-              : !signalChange
-                ? "変更なし：現在Signalに新規売買指示はありません"
-                : !executionActionable
-                  ? "売買しない：有効な次回始値の実行ウィンドウを確認できません。次のDaily Signal更新後に再確認してください"
-                  : Math.abs(actual - target) < 0.001
-                    ? "変更なし"
-                    : actual < target
-                      ? `${currentTicker}比率を${target * 100}%まで増加`
-                      : `${currentTicker}比率を${target * 100}%まで縮小`;
+    actual = primaryAction.actual,
+    executionDate=primaryAction.executionDate,
+    executionWindow=primaryAction.executionWindow,
+    signalChange=primaryAction.signalChange,
+    executionMissed=primaryAction.executionMissed,
+    executionActionable=primaryAction.executionActionable,
+    authorityBundle=primaryAction.authorityBundle,
+    authorityUnsafe=primaryAction.authorityUnsafe,
+    signalUnsafe=primaryAction.signalUnsafe,
+    action = primaryAction.message;
   const sourceLabel =
     dataset?.source === "auto"
       ? "実データ・自動取得"
