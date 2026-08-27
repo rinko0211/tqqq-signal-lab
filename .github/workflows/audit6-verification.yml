@@ -28,7 +28,9 @@ jobs:
           echo "AUDIT6_START_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           cp -a github-pages/public/data /tmp/audit6-authoritative-data
       - name: Apply deterministic Audit 6 remediation
-        run: node scripts/audit6-remediate.mjs
+        run: |
+          node scripts/audit6-remediate.mjs
+          node scripts/audit6-remediate-2.mjs
       - name: Install exact dependencies
         run: npm ci
       - name: Verify permanent Audit 6 registration
@@ -38,7 +40,7 @@ jobs:
           for(const k of ['test:core','test:ops']) if(!p.scripts[k].includes('tests/audit6-recurring-failures.test.ts')) throw new Error(`${k} missing Audit 6 regression`);
           NODE
       - name: Focused recurring-failure regression
-        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs
+        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs tests/re-audit2-phasee.test.ts
       - name: Full core regression
         run: npm run test:core
       - name: Full operational regression
@@ -80,8 +82,8 @@ jobs:
         run: |
           git diff --check
           ! git diff --name-only | grep -E '^github-pages/public/data/|^public/data/'
-      - name: Remove one-time remediation helper
-        run: rm scripts/audit6-remediate.mjs
+      - name: Remove one-time remediation helpers
+        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs
       - name: Persist only fully validated Audit 6 remediation
         run: |
           git config user.name "github-actions[bot]"
