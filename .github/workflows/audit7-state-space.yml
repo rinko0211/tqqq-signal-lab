@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - 'package.json'
       - 'tests/audit7-state-space.test.ts'
       - 'tests/audit7-authority-bundle.test.ts'
       - 'tests/audit7-ledger-integrity.test.ts'
