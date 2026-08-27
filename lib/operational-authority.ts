@@ -6,7 +6,7 @@ export type OperationalSignalAuthority={
 export type OperationalRuntimeAuthority={
   generatedAt?:string;actionStatus?:string;marketDataDate?:string;signalDate?:string;state?:string;errors?:string[];
 };
-export type OperationalForwardAuthority={schemaVersion?:number;appendOnly?:boolean};
+export type OperationalForwardAuthority={schemaVersion?:number;appendOnly?:boolean;updatedAt?:string};
 export type AuthorityBundleResult={ok:boolean;reasons:string[]};
 
 const BASELINE={ticker:"TQQQ",strategy:"Volatility Shield 13%",version:"VS13-v1.0"};
@@ -33,6 +33,7 @@ export function operationalAuthorityBundleIsCoherent(args:{
 
   if(status.actionStatus!=="success"||status.state==="failed"||(status.errors?.length??0)>0)reasons.push("Daily runtime status is failed or incomplete");
   if(!validTimestamp(signal.generatedAt)||!validTimestamp(status.generatedAt)||signal.generatedAt!==status.generatedAt)reasons.push("Signal and runtime generations do not match");
+  if(!validTimestamp(forward.updatedAt)||forward.updatedAt!==signal.generatedAt||forward.updatedAt!==status.generatedAt)reasons.push("Forward generation does not match Signal/runtime generation");
   if(!signal.dataDate||signal.dataDate!==status.signalDate||signal.dataDate!==status.marketDataDate)reasons.push("Signal and runtime market-data dates do not match");
   if(signal.state!==status.state)reasons.push("Signal and runtime state do not match");
   if(signal.platformMode!==production.mode)reasons.push("Signal and Production control modes do not match");
