@@ -7,6 +7,7 @@ on:
       - 'tests/audit7-state-space.test.ts'
       - 'tests/audit7-authority-bundle.test.ts'
       - 'tests/audit7-ledger-integrity.test.ts'
+      - 'tests/audit7-interactions.test.ts'
       - '.github/workflows/audit7-state-space.yml'
       - 'research/multi-audit-assurance-protocol-v1.0-2026-08-27.md'
 
@@ -30,7 +31,7 @@ jobs:
           test -f research/multi-audit-assurance-protocol-v1.0-2026-08-27.md
           grep -q 'IMMUTABLE BASELINE FOR AUDIT 7' research/multi-audit-assurance-protocol-v1.0-2026-08-27.md
       - name: Run Audit 7 discovery probes
-        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts tests/audit7-authority-bundle.test.ts tests/audit7-ledger-integrity.test.ts
+        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts tests/audit7-authority-bundle.test.ts tests/audit7-ledger-integrity.test.ts tests/audit7-interactions.test.ts
       - name: Run full core regression after discovery probes
         if: always()
         run: npm run test:core
