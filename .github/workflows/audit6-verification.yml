@@ -32,6 +32,7 @@ jobs:
           node scripts/audit6-remediate.mjs
           node scripts/audit6-remediate-2.mjs
           node scripts/audit6-remediate-3.mjs
+          node scripts/audit6-remediate-4.mjs
       - name: Install exact dependencies
         run: npm ci
       - name: Verify permanent Audit 6 registration
@@ -88,7 +89,7 @@ jobs:
           git diff --check
           ! git diff --name-only | grep -E '^github-pages/public/data/|^public/data/'
       - name: Remove one-time Audit 6 scaffolding
-        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs scripts/audit6-remediate-3.mjs .github/workflows/audit6-verification.yml
+        run: rm scripts/audit6-remediate.mjs scripts/audit6-remediate-2.mjs scripts/audit6-remediate-3.mjs scripts/audit6-remediate-4.mjs .github/workflows/audit6-verification.yml
       - name: Persist only fully validated Audit 6 remediation
         run: |
           git config user.name "github-actions[bot]"
