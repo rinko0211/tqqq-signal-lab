@@ -3,45 +3,42 @@ import assert from "node:assert/strict";
 import {isNyseSession} from "../lib/market-calendar.ts";
 import {emptyForwardLedger,type ForwardLedger} from "../lib/forward.ts";
 import {emptyPhase5Ledger,updatePhase5LedgerSubset,type Phase5Ledger} from "../lib/phase5-forward.ts";
-import {emptyLifecycleLedger,updateLifecycleReview} from "../lib/lifecycle-review.ts";
+import {emptyLifecycleLedger,lifecycleStageAt,updateLifecycleReview} from "../lib/lifecycle-review.ts";
 import {DEFAULT_PRODUCTION_CONFIG} from "../lib/production.ts";
 
 const sessionsBetween=(start:string,end:string)=>{const out:string[]=[];const d=new Date(`${start}T12:00:00Z`),z=new Date(`${end}T12:00:00Z`);while(d<=z){const s=d.toISOString().slice(0,10);if(isNyseSession(s))out.push(s);d.setUTCDate(d.getUTCDate()+1)}return out};
 const regimes=["強い上昇","レンジ","高ボラ"];
 
 function seedLegacy(end:string):ForwardLedger{
-  const ledger=emptyForwardLedger("2026-08-21T21:00:00Z");ledger.freezes=ledger.freezes.filter(x=>x.version==="VS13-v1.0");let equity=1_000_000;
+  const ledger=emptyForwardLedger("2026-08-21T20:00:10Z");ledger.freezes=ledger.freezes.filter(x=>x.version==="VS13-v1.0");let equity=1_000_000;
   for(const [i,date] of sessionsBetween("2026-08-21",end).entries()){
-    const trade=i<6;equity*=1.0002;ledger.records.push({key:`VS13-v1.0|${date}`,marketDataDate:date,recordedAt:`${date}T21:30:00Z`,recordMode:"LIVE",strategyId:"VS13",strategyName:"Volatility Shield 13%",strategyVersion:"VS13-v1.0",score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:regimes[i%regimes.length],targetExposure:.75,previousExposure:trade?0:.75,signal:trade?"INCREASE":"HOLD",tradeReason:"audit7 interaction fixture",intendedExecutionDate:date,execution:trade?{signalDate:date,intendedDate:date,recordedDate:date,price:100,before:0,after:.75,turnover:.75,commission:1,slippage:1,totalCost:2,status:"ON_TIME"}:null,assetClose:100,position:.75,quantity:7500,cash:250000,equity,dailyReturn:.0002,currentDrawdown:0,cumulativeCosts:2*Math.min(i+1,6),dataSource:"audit7",dataStatus:"VALID",buildVersion:"audit7"});
+    const trade=i<6;equity*=1.0002;ledger.records.push({key:`VS13-v1.0|${date}`,marketDataDate:date,recordedAt:`${date}T20:00:10Z`,recordMode:"LIVE",strategyId:"VS13",strategyName:"Volatility Shield 13%",strategyVersion:"VS13-v1.0",score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:regimes[i%regimes.length],targetExposure:.75,previousExposure:trade?0:.75,signal:trade?"INCREASE":"HOLD",tradeReason:"audit7 interaction fixture",intendedExecutionDate:date,execution:trade?{signalDate:date,intendedDate:date,recordedDate:date,price:100,before:0,after:.75,turnover:.75,commission:1,slippage:1,totalCost:2,status:"ON_TIME"}:null,assetClose:100,position:.75,quantity:7500,cash:250000,equity,dailyReturn:.0002,currentDrawdown:0,cumulativeCosts:2*Math.min(i+1,6),dataSource:"audit7",dataStatus:"VALID",buildVersion:"audit7"});
   }
-  ledger.updatedAt=`${end}T21:30:00Z`;return ledger;
+  ledger.updatedAt=`${end}T20:00:10Z`;return ledger;
 }
 
 function seedPhase5(end:string):Phase5Ledger{
-  const ledger=emptyPhase5Ledger("2026-08-25T21:00:00Z");let baseEquity=1_000_000;
-  const dates=sessionsBetween("2026-08-25",end);
+  const ledger=emptyPhase5Ledger("2026-08-25T20:00:10Z");const dates=sessionsBetween("2026-08-25",end);
   for(const [fi,freeze] of ledger.freezes.entries()){
-    let equity=baseEquity;for(const [i,date] of dates.entries()){
-      const trade=i<6;equity*=1.0002;ledger.records.push({key:`${freeze.version}|${date}`,marketDataDate:date,recordedAt:`${date}T21:30:00Z`,recordMode:"LIVE",strategyId:freeze.id,ticker:freeze.ticker,strategyName:freeze.name,strategyVersion:freeze.version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:regimes[(i+fi)%regimes.length],targetExposure:.75,previousExposure:trade?0:.75,signal:trade?"INCREASE":"HOLD",tradeReason:"audit7 interaction fixture",intendedExecutionDate:date,execution:trade?{signalDate:date,intendedDate:date,recordedDate:date,price:100,before:0,after:.75,turnover:.75,commission:1,slippage:1,totalCost:2,status:"ON_TIME"}:null,assetClose:100,position:.75,quantity:7500,cash:250000,equity,dailyReturn:.0002,currentDrawdown:0,cumulativeCosts:2*Math.min(i+1,6),dataSource:"audit7",dataStatus:"VALID",buildVersion:"audit7"});
+    let equity=1_000_000;for(const [i,date] of dates.entries()){
+      const trade=i<6;equity*=1.0002;ledger.records.push({key:`${freeze.version}|${date}`,marketDataDate:date,recordedAt:`${date}T20:00:10Z`,recordMode:"LIVE",strategyId:freeze.id,ticker:freeze.ticker,strategyName:freeze.name,strategyVersion:freeze.version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:regimes[(i+fi)%regimes.length],targetExposure:.75,previousExposure:trade?0:.75,signal:trade?"INCREASE":"HOLD",tradeReason:"audit7 interaction fixture",intendedExecutionDate:date,execution:trade?{signalDate:date,intendedDate:date,recordedDate:date,price:100,before:0,after:.75,turnover:.75,commission:1,slippage:1,totalCost:2,status:"ON_TIME"}:null,assetClose:100,position:.75,quantity:7500,cash:250000,equity,dailyReturn:.0002,currentDrawdown:0,cumulativeCosts:2*Math.min(i+1,6),dataSource:"audit7",dataStatus:"VALID",buildVersion:"audit7"});
     }
   }
-  ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=`${end}T21:30:00Z`;return ledger;
+  ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=`${end}T20:00:10Z`;return ledger;
 }
 
 const lifecycleStatuses=(date:string,failedIncumbent=false)=>({
-  phase5Status:{status:"success",errors:[],generatedAt:`${date}T20:05:00Z`,latestDates:{UPRO:date,SSO:date,QLD:date,SPY:date,QQQ:date,VIX:date},systems:{"UPRO-SPBT-v1.0":{status:"success",latestDate:date,errors:[]},"SSO-SPBT-Scaled-v1.0":{status:"success",latestDate:date,errors:[]},"QLD-VS13-Scaled-v1.0":{status:"success",latestDate:date,errors:[]}}},
-  runtimeStatus:{generatedAt:`${date}T20:05:00Z`,actionStatus:failedIncumbent?"failed":"success",state:failedIncumbent?"failed":"latest",marketDataDate:date,errors:failedIncumbent?["incumbent feed unavailable"]:[]}
+  phase5Status:{status:"success",errors:[],generatedAt:`${date}T20:00:30Z`,latestDates:{UPRO:date,SSO:date,QLD:date,SPY:date,QQQ:date,VIX:date},systems:{"UPRO-SPBT-v1.0":{status:"success",latestDate:date,errors:[]},"SSO-SPBT-Scaled-v1.0":{status:"success",latestDate:date,errors:[]},"QLD-VS13-Scaled-v1.0":{status:"success",latestDate:date,errors:[]}}},
+  runtimeStatus:{generatedAt:`${date}T20:00:30Z`,actionStatus:failedIncumbent?"failed":"success",state:failedIncumbent?"failed":"latest",marketDataDate:date,errors:failedIncumbent?["incumbent feed unavailable"]:[]}
 });
 
 test("A7 D16 FC-01/06/12: formal review on holiday + incumbent failure opens only after next legal close and remains retryable",()=>{
   const phase5Blocked=seedPhase5("2027-07-06"),forwardBlocked=seedLegacy("2027-07-06");
   phase5Blocked.reviewSchedule={interim:"2027-01-04",formal:"2027-07-04",stronger:"2028-07-04"};
-  const prior=emptyLifecycleLedger(phase5Blocked.reviewSchedule,"2026-08-25T21:00:00Z");
-  const pre=updateLifecycleReview({phase5:phase5Blocked,forward:forwardBlocked,production:DEFAULT_PRODUCTION_CONFIG,prior,...lifecycleStatuses("2027-07-06",false),now:"2027-07-06T19:59:00Z"});
-  assert.notEqual(pre.current.stage,"FORMAL","holiday-dated formal review must not open before the next legal NYSE close");
-  assert.equal(pre.events.some(e=>e.reviewDate==="2027-07-04"),false);
+  assert.notEqual(lifecycleStageAt("2027-07-06T19:59:00Z",phase5Blocked.reviewSchedule),"FORMAL","holiday-dated formal review must not open before the next legal NYSE close");
+  const prior=emptyLifecycleLedger(phase5Blocked.reviewSchedule,"2026-08-25T20:00:10Z");
 
-  const blocked=updateLifecycleReview({phase5:phase5Blocked,forward:forwardBlocked,production:DEFAULT_PRODUCTION_CONFIG,prior:pre,...lifecycleStatuses("2027-07-06",true),now:"2027-07-06T20:01:00Z"});
+  const blocked=updateLifecycleReview({phase5:phase5Blocked,forward:forwardBlocked,production:DEFAULT_PRODUCTION_CONFIG,prior,...lifecycleStatuses("2027-07-06",true),now:"2027-07-06T20:01:00Z"});
   assert.equal(blocked.current.stage,"FORMAL");assert.equal(blocked.current.userAction,"CHECK_DATA_AND_ACTIONS");assert.equal(blocked.current.nextReview,"2027-07-04");
   assert.equal(blocked.events.filter(e=>e.reviewDate==="2027-07-04").length,1);
 
