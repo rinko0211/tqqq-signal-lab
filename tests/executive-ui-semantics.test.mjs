@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5-ui.tsx","utf8"),life=fs.readFileSync("app/lifecycle-ui.tsx","utf8");
+const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5-ui.tsx","utf8"),life=fs.readFileSync("app/lifecycle-ui.tsx","utf8"),authority=fs.readFileSync("lib/operational-authority.ts","utf8");
 
 test("holdings action uses selected live ticker and never hardcodes TQQQ trade instruction",()=>{
   assert.match(page,/currentTicker=dailySignal\?\.assetTicker\|\|"TQQQ"/);
@@ -15,8 +15,13 @@ test("device-local holdings are tagged and invalidated across ticker/version tra
   assert.match(page,/ticker:dailySignal\?\.assetTicker\|\|"TQQQ"/);
 });
 
-test("unsafe stale or failed signal fails closed at the primary action",()=>{
-  assert.match(page,/authorityUnsafe=Boolean\(!dailySignal\|\|!runtimeStatus\|\|!productionConfigIsValid\(productionConfig\)\|\|!forwardLedger\)/);
+test("unsafe stale, failed, or cross-generation authority fails closed at the primary action",()=>{
+  assert.match(page,/operationalAuthorityBundleIsCoherent/);
+  assert.match(page,/authorityUnsafe=!authorityBundle\.ok/);
+  assert.match(authority,/Signal and runtime generations do not match/);
+  assert.match(authority,/Signal and runtime market-data dates do not match/);
+  assert.match(authority,/Signal and Production control modes do not match/);
+  assert.match(authority,/Signal identity does not match current operational authority/);
   assert.match(page,/signalUnsafe=Boolean\(authorityUnsafe\|\|runtimeStatus\?\.state==="failed"\|\|fresh\?\.stale\)/);
   assert.match(page,/売買しない：データ\/Signalが安全確認できません/);
   assert.match(page,/売買しない・System Status確認/);
