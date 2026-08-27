@@ -115,9 +115,12 @@ function selectionDecision(reviews:CandidateReview[]){
   return{systemDecision:"CONTINUE_FORWARD_INSUFFICIENT_EVIDENCE",userAction:"NONE" as UserAction,message:"Scheduled review completed but no system has sufficient selectable Forward evidence. Continue Forward without changing parameters until the next scheduled review."};
 }
 
+export function assertLifecycleLedgerInternalIntegrity(ledger:LifecycleLedger){
+  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");const keys=new Set<string>();for(const e of ledger.events){if(!e.key||keys.has(e.key))throw Error(`Lifecycle integrity: duplicate/invalid event key ${e.key}`);if(!DATE_RE.test(e.reviewDate)||!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Lifecycle integrity: invalid event chronology ${e.key}`);keys.add(e.key);}
+}
 export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardLedger;production:ProductionConfig;phase5Status?:LifecycleInputStatus|null;runtimeStatus?:RuntimeStatus|null;prior?:LifecycleLedger|null;now?:string}):LifecycleLedger{
   const now=args.now??new Date().toISOString(),asOf=marketDate(now);if(!DATE_RE.test(asOf))throw Error("Invalid lifecycle review date");
-  if(args.prior&&(args.prior.schemaVersion!==1||args.prior.appendOnly!==true))throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");
+  if(args.prior)assertLifecycleLedgerInternalIntegrity(args.prior);
   const schedule={interim:args.phase5.reviewSchedule.interim,formal:args.phase5.reviewSchedule.formal,stronger:args.phase5.reviewSchedule.stronger},out=args.prior?.schemaVersion===1?structuredClone(args.prior):emptyLifecycleLedger(schedule,now);if(JSON.stringify(out.schedule)!==JSON.stringify(schedule))throw Error("Lifecycle review schedule drift blocked");
   const stage=lifecycleStageAt(now,schedule),p5Summaries=summarizePhase5(args.phase5),legacySummary=summarizeForward(args.forward).find(x=>x.id==="VS13"),frontierVersions=new Set(["VS13-v1.0",...p5Summaries.map(x=>x.version)]),configuredIncumbent=hasActiveProduction(args.production)&&args.production.strategyVersion&&frontierVersions.has(args.production.strategyVersion)?args.production.strategyVersion:"VS13-v1.0";
   const reviews=applyPareto([

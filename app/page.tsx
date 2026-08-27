@@ -28,6 +28,7 @@ import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
 import {nyseExecutionWindow} from "../lib/market-calendar";
+import {operationalAuthorityBundleIsCoherent} from "../lib/operational-authority";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -401,7 +402,8 @@ export default function Home() {
     signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001),
     executionMissed=Boolean(signalChange&&executionWindow==="OPEN_PASSED"),
     executionActionable=Boolean(signalChange&&executionWindow==="UPCOMING_OPEN"),
-    authorityUnsafe=Boolean(!dailySignal||!runtimeStatus||!productionConfigIsValid(productionConfig)||!forwardLedger),
+    authorityBundle=operationalAuthorityBundleIsCoherent({signal:dailySignal,status:runtimeStatus,production:productionConfig,forward:forwardLedger}),
+    authorityUnsafe=!authorityBundle.ok,
     signalUnsafe=Boolean(authorityUnsafe||runtimeStatus?.state==="failed"||fresh?.stale),
     action =
       signalUnsafe

@@ -102,7 +102,9 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
   const allRows=()=>ledger.records.filter(r=>r.strategyVersion===freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
   const prior=allRows();
   const last=prior.at(-1);
-  const startIndex=last?ds.days.findIndex(d=>d.date===last.marketDataDate)+1:ds.days.findIndex(d=>d.date>=freeze.startDate);
+  const anchorIndex=last?ds.days.findIndex(d=>d.date===last.marketDataDate):-1;
+  if(last&&anchorIndex<0)throw new Error(`Phase 5 prior anchor missing from provider dataset: ${freeze.version} ${last.marketDataDate}`);
+  const startIndex=last?anchorIndex+1:ds.days.findIndex(d=>d.date>=freeze.startDate);
   if(startIndex<0)return;
   for(let i=startIndex;i<ds.days.length;i++){
     const day=ds.days[i];
@@ -141,9 +143,13 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
 }
 
 function assertPhase5FreezeIntegrity(ledger:Phase5Ledger){for(const frozen of PHASE5_FREEZES){const existing=ledger.freezes.find(x=>x.version===frozen.version);if(!existing)throw new Error(`Phase 5 freeze missing: ${frozen.version}`);if(JSON.stringify(existing)!==JSON.stringify(frozen))throw new Error(`Phase 5 freeze drift blocked: ${frozen.version}`)}if(ledger.freezes.length!==PHASE5_FREEZES.length)throw new Error("Phase 5 unexpected freeze definition")};
+export function assertPhase5LedgerInternalIntegrity(ledger:Phase5Ledger){
+  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");assertPhase5FreezeIntegrity(ledger);
+  const keys=new Set<string>(),logical=new Set<string>();for(const r of ledger.records){const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw new Error(`Phase 5 integrity: unknown version ${r.strategyVersion}`);const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw new Error(`Phase 5 integrity: record key mismatch ${r.key}`);if(r.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: pre-start record ${r.key}`);if(keys.has(r.key)||logical.has(expected))throw new Error(`Phase 5 integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);}
+}
 export function updatePhase5LedgerSubset(payload:Payload,input:Phase5Ledger|null|undefined,versions:string[],generatedAt=new Date().toISOString()):Phase5Ledger{
-  if(input&&(input.schemaVersion!==1||input.appendOnly!==true))throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");
-  const ledger=input?structuredClone(input):emptyPhase5Ledger(generatedAt);assertPhase5FreezeIntegrity(ledger);const wanted=new Set(versions);
+  if(input)assertPhase5LedgerInternalIntegrity(input);
+  const ledger=input?structuredClone(input):emptyPhase5Ledger(generatedAt);assertPhase5LedgerInternalIntegrity(ledger);const wanted=new Set(versions);
   for(const version of wanted)if(!PHASE5_FREEZES.some(f=>f.version===version))throw new Error(`Phase 5 unknown frozen version: ${version}`);
   for(const freeze of ledger.freezes.filter(f=>wanted.has(f.version)))appendFreeze(datasetFor(payload,freeze),ledger,freeze,payload.source||"official",generatedAt);
   if(ledger.records.some(r=>r.marketDataDate<PHASE5_FORWARD_START))throw new Error("Phase 5 ledger contains pre-start record");

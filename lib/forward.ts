@@ -189,7 +189,9 @@ const keyOf = (version: string, date: string) => `${version}|${date}`;
 function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFreeze, generatedAt: string, source: string) {
   const priorRecords = ledger.records.filter(r => r.strategyVersion === freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
   const last = priorRecords.at(-1);
-  const startIndex = last ? ds.days.findIndex(d => d.date === last.marketDataDate) + 1 : ds.days.findIndex(d => d.date >= freeze.startDate);
+  const anchorIndex=last?ds.days.findIndex(d=>d.date===last.marketDataDate):-1;
+  if(last&&anchorIndex<0)throw Error(`Forward prior anchor missing from provider dataset: ${freeze.version} ${last.marketDataDate}`);
+  const startIndex = last ? anchorIndex + 1 : ds.days.findIndex(d => d.date >= freeze.startDate);
   if (startIndex < 0) return;
   const endIndex = ds.days.length - 1;
   for (let i = startIndex; i <= endIndex; i++) {
@@ -254,10 +256,22 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
   }
 }
 
-export function updateForwardLedger(ds: Dataset, input: ForwardLedger | null | undefined, source: string, generatedAt = new Date().toISOString()) {
-  if(input&&(input.schemaVersion!==FORWARD_SCHEMA_VERSION||input.appendOnly!==true))throw Error("Forward prior ledger is invalid; refusing append-only reset");
-  const ledger = input ? structuredClone(input) : emptyForwardLedger(generatedAt);
+export function assertForwardLedgerInternalIntegrity(ledger:ForwardLedger){
+  if(ledger.schemaVersion!==FORWARD_SCHEMA_VERSION||ledger.appendOnly!==true)throw Error("Forward prior ledger is invalid; refusing append-only reset");
   assertForwardFreezeIntegrity(ledger);
+  const keys=new Set<string>(),logical=new Set<string>();
+  for(const r of ledger.records){
+    const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw Error(`Forward integrity: unknown strategy version ${r.strategyVersion}`);
+    const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw Error(`Forward integrity: record key mismatch ${r.key}`);
+    if(r.marketDataDate<freeze.startDate)throw Error(`Forward integrity: pre-start record ${r.key}`);
+    if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);
+  }
+}
+
+export function updateForwardLedger(ds: Dataset, input: ForwardLedger | null | undefined, source: string, generatedAt = new Date().toISOString()) {
+  if(input)assertForwardLedgerInternalIntegrity(input);
+  const ledger = input ? structuredClone(input) : emptyForwardLedger(generatedAt);
+  assertForwardLedgerInternalIntegrity(ledger);
   for (const freeze of ledger.freezes) appendForFreeze(ds, ledger, freeze, generatedAt, source);
   ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
   ledger.updatedAt = generatedAt;
