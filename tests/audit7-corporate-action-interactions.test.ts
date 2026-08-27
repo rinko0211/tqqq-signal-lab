@@ -14,9 +14,17 @@ const forwardDs:Dataset={days:[
   {date:"2027-01-04",tqqq:bar("2027-01-04",50),qqq:bar("2027-01-04",100),spy:bar("2027-01-04",100),vix:bar("2027-01-04",20)},
   {date:"2027-01-05",tqqq:bar("2027-01-05",52),qqq:bar("2027-01-05",101),spy:bar("2027-01-05",101),vix:bar("2027-01-05",20)},
 ],issues:[],source:"audit7",precision:"next-open",tickers:{} as Dataset["tickers"]};
+const sessions=(start:string,end:string)=>{const out:string[]=[];for(const d=new Date(`${start}T12:00:00Z`);d<=new Date(`${end}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+1)){const date=d.toISOString().slice(0,10);if(isNyseSession(date))out.push(date)}return out};
+const genericForward=(freeze:ReturnType<typeof emptyForwardLedger>["freezes"][number],date:string):ForwardRecord=>({key:`${freeze.version}|${date}`,marketDataDate:date,recordedAt:"2027-01-04T21:30:00Z",recordMode:date==="2027-01-04"?"LIVE":"BACKFILLED_OBSERVATION",strategyId:freeze.id,strategyName:freeze.name,strategyVersion:freeze.version,score:80,components:{trend:80,momentum:80,volatility:80,market:80},regime:"強い上昇",targetExposure:1,previousExposure:1,signal:"HOLD",tradeReason:"complete Audit 7 corporate-action fixture",intendedExecutionDate:"2027-01-05",execution:null,assetClose:freeze.asset==="QQQ"?100:50,position:1,quantity:1,cash:0,equity:1_000_000,dailyReturn:0,currentDrawdown:0,cumulativeCosts:0,dataSource:"audit7",dataStatus:date==="2027-01-04"?"VALID":"BACKFILLED_NO_SIGNAL",buildVersion:"audit7"});
+const completeForwardPrior=()=>{
+  const ledger=emptyForwardLedger("2027-01-04T21:30:00Z"),start=ledger.freezes.map(f=>f.startDate).sort()[0];
+  for(const date of sessions(start,"2027-01-04"))for(const freeze of ledger.freezes)ledger.records.push(freeze.version==="VS13-v1.0"&&date==="2027-01-04"?priorForward():genericForward(freeze,date));
+  ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
+  return ledger;
+};
 
 test("A7 D10 FC-14/10: split continuity and pending Forward execution share one economic price scale",()=>{
-  const ledger=emptyForwardLedger("2027-01-04T21:30:00Z");ledger.records=[priorForward()];
+  const ledger=completeForwardPrior();
   const out=updateForwardLedger(forwardDs,ledger,"audit7","2027-01-05T21:30:00Z"),row=out.records.find(r=>r.strategyVersion==="VS13-v1.0"&&r.marketDataDate==="2027-01-05")!;
   assert.equal(row.corporateActionKind,"SPLIT");assert.equal(row.corporateActionFactor,2);
   assert.ok(row.execution);assert.equal(row.execution!.before,.5);assert.equal(row.execution!.after,1);assert.equal(row.execution!.turnover,.5);assert.equal(row.execution!.recordedDate,"2027-01-05");
