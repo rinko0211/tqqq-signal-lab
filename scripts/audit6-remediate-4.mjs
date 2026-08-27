@@ -37,7 +37,7 @@ replaceOnce(
   let s=read(p);
   const needle='assert.match(line,/signal&&Math\\.abs\\(signal\\.target-signal\\.previousTarget\\)/);';
   if(!s.includes(needle))throw Error("Audit6-4 missing old missed-open assertion");
-  s=s.replace(needle,'assert.ok(page.includes(\'signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001)\'));\n  assert.ok(line.includes(\'signalChange&&executionWindow==="OPEN_PASSED"\'));');
+  s=s.replace(needle,'assert.ok(p.includes(\'signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001)\'));\n  assert.ok(line.includes(\'signalChange&&executionWindow==="OPEN_PASSED"\'));');
   write(p,s);
 }
 
