@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Capture validated source head
+        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '22.13.0'
@@ -48,13 +50,19 @@ jobs:
         run: |
           git diff --name-only | tee /tmp/a7-files
           test "$(grep -Ev '^(app/page\.tsx|package\.json)$' /tmp/a7-files | wc -l)" -eq 0
-          grep -qx 'app/page.tsx' /tmp/a7-files
-          grep -qx 'package.json' /tmp/a7-files
-      - name: Persist validated M03 remediation
+      - name: Persist only if the exact validated source is still authoritative
         run: |
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::main advanced after validation; refusing to rebase validated remediation onto unvalidated source"
+            exit 1
+          fi
+          if git diff --quiet -- app/page.tsx package.json; then
+            echo "M03 remediation already persisted; validation-only run complete"
+            exit 0
+          fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add app/page.tsx package.json
           git commit -m 'Remediate Audit 7 UI authority bundle coherence'
-          git pull --rebase origin main
           git push origin HEAD:main
