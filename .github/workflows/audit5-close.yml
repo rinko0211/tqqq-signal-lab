@@ -30,7 +30,17 @@ jobs:
           echo "AUDIT5_START_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           cp -a github-pages/public/data /tmp/audit5-authoritative-data
       - name: Apply Audit 5 remediation
-        run: node scripts/audit5-remediate.mjs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/audit5-remediate.mjs')
+          s=p.read_text()
+          s=s.replace('Passing Layer 1 only: `CODE/CONTROL-PLANE CLEAN 2/2`','Passing Layer 1 only: "CODE/CONTROL-PLANE CLEAN 2/2"')
+          s=s.replace('Passing Layers 1+2 but not soak: `PRE-SOAK RELIABILITY QUALIFIED`','Passing Layers 1+2 but not soak: "PRE-SOAK RELIABILITY QUALIFIED"')
+          s=s.replace('Passing all three layers: `FINAL UNATTENDED OPERATIONS CERTIFIED`','Passing all three layers: "FINAL UNATTENDED OPERATIONS CERTIFIED"')
+          p.write_text(s)
+          PY
+          node scripts/audit5-remediate.mjs
       - name: Install exact dependencies
         run: npm ci
       - name: Audit 5 targeted boundary and continuity regression
