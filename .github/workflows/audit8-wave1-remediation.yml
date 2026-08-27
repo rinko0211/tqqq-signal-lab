@@ -1,0 +1,72 @@
+name: Audit 8 Wave 1 Guarded Remediation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit8-wave1-remediation.mjs'
+      - '.github/workflows/audit8-wave1-remediation.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit8-wave1-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate-verify-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Capture exact remediation source head
+        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify frozen Audit 8 charter and finding record
+        run: |
+          test "$(git hash-object research/audit-8-charter-2026-08-27.md)" = "a58a9373516028d5e2add08dbb2e134a0ec4ca17"
+          test -f research/audit-8-findings-wave1-2026-08-27.md
+          grep -q 'Audit 8 is permanently NOT CLEAN' research/audit-8-findings-wave1-2026-08-27.md
+      - name: Capture authoritative state
+        run: |
+          find public/data github-pages/public/data -type f -print0 2>/dev/null | sort -z | xargs -0 sha256sum > /tmp/a8-authority.before
+      - name: Apply deterministic wave 1 remediation
+        run: node scripts/audit8-wave1-remediation.mjs
+      - name: Independent Audit 8 regression
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts
+      - name: Full core regression with permanent Audit 8 guard
+        run: npm run test:core
+      - name: Full operational regression with permanent Audit 8 guard
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Verify authoritative state unchanged
+        run: |
+          find public/data github-pages/public/data -type f -print0 2>/dev/null | sort -z | xargs -0 sha256sum > /tmp/a8-authority.after
+          diff -u /tmp/a8-authority.before /tmp/a8-authority.after
+          git diff --exit-code -- public/data github-pages/public/data
+      - name: Enforce remediation scope
+        run: |
+          git diff --name-only | tee /tmp/a8-wave1-files
+          test "$(grep -Ev '^(lib/primary-action\.ts|app/page\.tsx|package\.json)$' /tmp/a8-wave1-files | wc -l)" -eq 0
+          grep -q 'tests/audit8-independent-blackbox.test.ts' package.json
+      - name: Persist only the exact validated remediation
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::main advanced after validation; refusing unvalidated persistence"
+            exit 1
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/primary-action.ts app/page.tsx package.json
+          git commit -m 'Remediate Audit 8 wave 1 action-boundary defects'
+          git push origin HEAD:main
