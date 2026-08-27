@@ -87,6 +87,19 @@ test("A7 FC-01/12: quarterly Production Health due on an NYSE holiday waits for 
   assert.equal(afterClose.events.length,1);assert.equal(afterClose.events[0].dueDate,"2027-11-25");
 });
 
+test("A7 FC-12/16: multi-quarter Health recovery records one late current-state event and jumps schedule to the first future quarter",()=>{
+  const decision=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION");
+  const production=transitionMode(decision,"PRODUCTION",{ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2027-08-25",evidence:"Strong",finalReviewComplete:true});
+  const lifecycle=emptyLifecycleLedger(emptyPhase5Ledger().reviewSchedule,"2028-08-30T21:00:00Z") as LifecycleLedger;
+  lifecycle.current.productionHealth={state:"Watch",version:"UPRO-SPBT-v1.0",reasons:["current observation only"],nextHealthReview:"2027-11-25"};
+  const recovered=updateProductionHealthLedger({production,lifecycle,prior:emptyProductionHealthLedger(),now:"2028-08-30T21:00:00Z"});
+  assert.equal(recovered.events.length,1,"one recovery run may record at most one late current-state observation");
+  assert.equal(recovered.events[0].timing,"LATE_CURRENT_STATE_ONLY");
+  assert.ok(recovered.current.nextReview!>"2028-08-30","recovery must advance directly to the first future quarterly review instead of replaying missed historical quarters");
+  const nextDay=updateProductionHealthLedger({production,lifecycle,prior:recovered,now:"2028-08-31T21:00:00Z"});
+  assert.equal(nextDay.events.length,1,"subsequent daily runs must not fabricate additional missed historical quarterly reviews from the same current health snapshot");
+});
+
 test("A7 FC-01/09: partial Daily data cannot become complete before close+grace",()=>{
   assert.equal(dailyBarIsComplete("2026-08-27","2026-08-27T19:59:00Z"),false);
   assert.equal(dailyBarIsComplete("2026-08-27","2026-08-27T20:14:00Z"),false);
