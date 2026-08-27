@@ -4,26 +4,27 @@ import { fetchOfficialData, fetchProductionData } from "../lib/official-data.ts"
 import { datasetFromPayload, runBacktest } from "../lib/engine.ts";
 import { earliestLegalExecutionDate } from "../lib/execution-integrity.ts";
 import {assertPlausibleTransition,corporateActionContinuity} from "../lib/corporate-actions.ts";
-import { emptyForwardLedger, summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
+import { summarizeForward, updateForwardLedger, type ForwardLedger } from "../lib/forward.ts";
 import type { LiveSnapshot } from "../lib/paper.ts";
-import {DEFAULT_PRODUCTION_CONFIG,hasActiveProduction,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
+import {assertProductionConfigIntegrity,hasActiveProduction,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
 import {SCREENING,makeCrossTickerDataset} from "../lib/cross-ticker.ts";
 import {dailyBarIsComplete,isNyseSession} from "../lib/market-calendar.ts";
 
 const pagesRoot = new URL("../github-pages/public/data/", import.meta.url);
 const roots = process.env.GITHUB_ACTIONS === "true" ? [pagesRoot] : [pagesRoot, new URL("../public/data/", import.meta.url)];
 const root = roots[0];
-const readJson = async <T>(name: string, fallback: T) => { try { return JSON.parse(await readFile(new URL(name, root), "utf8")) as T; } catch { return fallback; } };
+const readRequiredJson=async<T>(name:string):Promise<T>=>{try{return JSON.parse(await readFile(new URL(name,root),"utf8")) as T}catch(error){throw Error(`STATE-001: required ${name} is missing/corrupt; refusing operational state reset (${error instanceof Error?error.message:String(error)})`)}};
 const writeJson = (name: string, value: unknown) => Promise.all(roots.map(dir => writeFile(new URL(name, dir), `${JSON.stringify(value, null, 2)}\n`)));
 
 const generatedAt = new Date().toISOString();
 const nyDate = new Intl.DateTimeFormat("en-CA", { timeZone:"America/New_York", year:"numeric", month:"2-digit", day:"2-digit" }).format(new Date());
 const nyHour = Number(new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", hour:"2-digit", hourCycle:"h23" }).format(new Date()));
 await Promise.all(roots.map(dir => mkdir(dir, { recursive:true })));
-const priorSignal = await readJson<{dataDate?:string;assetTicker?:string;strategyVersion?:string}|null>("signal.json", null);
-const history = await readJson<LiveSnapshot[]>("live-history.json", []);
-const priorForward = await readJson<ForwardLedger>("forward-ledger.json", emptyForwardLedger(generatedAt));
-const production = await readJson<ProductionConfig>("production-config.json", DEFAULT_PRODUCTION_CONFIG);
+const priorSignal=await readRequiredJson<{dataDate?:string;assetTicker?:string;strategyVersion?:string}>("signal.json");
+const history=await readRequiredJson<LiveSnapshot[]>("live-history.json");
+const priorForward=await readRequiredJson<ForwardLedger>("forward-ledger.json");
+const production=await readRequiredJson<ProductionConfig>("production-config.json");
+if(priorForward.schemaVersion!==1||priorForward.appendOnly!==true)throw Error("STATE-002: Forward ledger authority is invalid");if(!Array.isArray(history))throw Error("STATE-003: live history is invalid");assertProductionConfigIntegrity(production);
 
 try {
   const productionTicker=hasActiveProduction(production)?production.selectedTicker:null;
@@ -36,7 +37,7 @@ try {
   const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload as Parameters<typeof makeCrossTickerDataset>[0],productionRow):trackADataset;
   if(!dataset)throw Error(`CONFIG-001: selected ticker ${productionTicker} data unavailable`);
   const errors = dataset.issues.filter(x=>x.severity==="error"); if (errors.length) throw Error(errors.map(x=>x.message).join("; "));
-  const keepCompleteBars=(ds:typeof trackADataset)=>{while(ds.days.length&&!dailyBarIsComplete(ds.days.at(-1)!.date,generatedAt))ds.days.pop();if(ds.days.length<201)throw Error("DATA-003: no sufficiently long completed NYSE daily-bar history is available; no Signal was generated")};
+  const keepCompleteBars=(ds:typeof trackADataset)=>{const complete=ds.days.filter(d=>dailyBarIsComplete(d.date,generatedAt));ds.days.splice(0,ds.days.length,...complete);if(ds.days.length<201)throw Error("DATA-003: no sufficiently long completed NYSE daily-bar history is available; no Signal was generated")};
   keepCompleteBars(trackADataset);if(dataset!==trackADataset)keepCompleteBars(dataset);
   const bt = runBacktest(dataset, selected.config),latest = bt.daily.at(-1)!,bar = dataset.days.at(-1)!;
   const updated = priorSignal?.dataDate !== latest.date||priorSignal?.assetTicker!==selected.ticker||priorSignal?.strategyVersion!==selected.version;

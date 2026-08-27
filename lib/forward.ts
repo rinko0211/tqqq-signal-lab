@@ -255,7 +255,8 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
 }
 
 export function updateForwardLedger(ds: Dataset, input: ForwardLedger | null | undefined, source: string, generatedAt = new Date().toISOString()) {
-  const ledger = input?.schemaVersion === FORWARD_SCHEMA_VERSION ? structuredClone(input) : emptyForwardLedger(generatedAt);
+  if(input&&(input.schemaVersion!==FORWARD_SCHEMA_VERSION||input.appendOnly!==true))throw Error("Forward prior ledger is invalid; refusing append-only reset");
+  const ledger = input ? structuredClone(input) : emptyForwardLedger(generatedAt);
   assertForwardFreezeIntegrity(ledger);
   for (const freeze of ledger.freezes) appendForFreeze(ds, ledger, freeze, generatedAt, source);
   ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));

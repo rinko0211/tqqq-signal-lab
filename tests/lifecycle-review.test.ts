@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { emptyLifecycleLedger, productionEligibleVersions, updateLifecycleReview } from "../lib/lifecycle-review.ts";
 import { emptyPhase5Ledger, type Phase5Ledger } from "../lib/phase5-forward.ts";
 import { emptyForwardLedger, type ForwardLedger } from "../lib/forward.ts";
-import { DEFAULT_PRODUCTION_CONFIG } from "../lib/production.ts";
+import { DEFAULT_PRODUCTION_CONFIG, transitionMode } from "../lib/production.ts";
 
 const weekdays=(start:string,count:number)=>{const out:string[]=[];const d=new Date(`${start}T00:00:00Z`);while(out.length<count){if(![0,6].includes(d.getUTCDay()))out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1)}return out};
 const regimes=["強い上昇","レンジ","高ボラ"];
@@ -68,4 +68,23 @@ test("review events are append-only and not duplicated after due date",()=>{
   const x=base();for(const f of x.phase5.freezes)seedPhase5(x.phase5,f.version,262,6);seedIncumbent(x.forward,262,6);
   const a=updateLifecycleReview({...x,prior:null}),b=updateLifecycleReview({...x,prior:a,now:"2027-08-26T12:00:00Z",phase5Status:{...x.phase5Status,generatedAt:"2027-08-26T11:00:00Z",latestDates:Object.fromEntries(Object.keys(x.phase5Status.latestDates).map(k=>[k,"2027-08-25"]))},runtimeStatus:{...x.runtimeStatus,generatedAt:"2027-08-26T11:00:00Z",marketDataDate:"2027-08-25"}});
   assert.equal(a.events.length,b.events.length);assert.deepEqual(a.events,b.events);
+});
+
+
+test("transient incumbent failure at a scheduled review is retryable after current data recovers",()=>{
+  const x=base();for(const f of x.phase5.freezes)seedPhase5(x.phase5,f.version,262,6);seedIncumbent(x.forward,262,6);
+  x.runtimeStatus.generatedAt="2027-08-20T22:00:00Z";
+  const blocked=updateLifecycleReview({...x,prior:null});
+  assert.equal(blocked.current.userAction,"CHECK_DATA_AND_ACTIONS");assert.equal(blocked.current.nextReview,"2027-08-25");assert.equal(blocked.current.reviewResolved,false);assert.equal(blocked.events.length,1);
+  const recovered=updateLifecycleReview({...x,prior:blocked,now:"2027-08-26T12:00:00Z",runtimeStatus:{...x.runtimeStatus,generatedAt:"2027-08-26T11:00:00Z",marketDataDate:"2027-08-25"},phase5Status:{...x.phase5Status,generatedAt:"2027-08-26T11:00:00Z"}});
+  assert.equal(recovered.current.systemDecision,"PHASE6_HUMAN_DECISION_REQUIRED");assert.equal(recovered.current.userAction,"RUN_PHASE6_HUMAN_REVIEW");assert.equal(recovered.current.nextReview,"2027-08-25");assert.equal(recovered.events.length,2);assert.match(recovered.events[1].key,/RECOVERY/);
+});
+
+
+test("failed unrelated Phase5 challenger does not poison healthy Phase5 Production",()=>{
+  const x=base();for(const f of x.phase5.freezes)seedPhase5(x.phase5,f.version,262,6);seedIncumbent(x.forward,262,6);
+  const d=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION"),p=transitionMode(d,"PRODUCTION",{ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2027-08-25",evidence:"Strong",finalReviewComplete:true});x.production=p;
+  x.phase5Status={...x.phase5Status,status:"partial",systems:{"UPRO-SPBT-v1.0":{status:"success",latestDate:"2027-08-25",errors:[]},"SSO-SPBT-Scaled-v1.0":{status:"failed",latestDate:"2027-08-24",errors:["SSO feed failed"]},"QLD-VS13-Scaled-v1.0":{status:"success",latestDate:"2027-08-25",errors:[]}}};
+  const r=updateLifecycleReview({...x,prior:null});const incumbent=r.current.candidateReviews.find(c=>c.incumbent)!;
+  assert.equal(incumbent.version,"UPRO-SPBT-v1.0");assert.equal(incumbent.eligible,true);assert.ok(!incumbent.reasons.some(s=>s.includes("stale/failed")));assert.notEqual(r.current.productionHealth.state,"Critical");assert.notEqual(r.current.productionHealth.state,"Revalidation Required");
 });

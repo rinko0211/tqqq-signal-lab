@@ -177,21 +177,18 @@ export async function fetchUproForwardData() {
 }
 
 export async function fetchPhase5ForwardData() {
-  const [UPRO, SSO, QLD, SPY, QQQ, VIX] = await Promise.all([
-    fetchNasdaq("UPRO"),
-    fetchNasdaq("SSO"),
-    fetchNasdaq("QLD"),
-    fetchNasdaq("SPY"),
-    fetchNasdaq("QQQ"),
-    fetchVix(),
-  ]);
+  const keys=["UPRO","SSO","QLD","SPY","QQQ","VIX"] as const;
+  const settled=await Promise.allSettled([fetchNasdaq("UPRO"),fetchNasdaq("SSO"),fetchNasdaq("QLD"),fetchNasdaq("SPY"),fetchNasdaq("QQQ"),fetchVix()]);
+  const series:Record<string,Bar[]>={},errors:Record<string,string[]>={};
+  for(let i=0;i<keys.length;i++){const r=settled[i],k=keys[i];if(r.status==="fulfilled")series[k]=r.value;else errors[k]=[r.reason instanceof Error?r.reason.message:String(r.reason)];}
   return {
     source: "Nasdaq Historical + Cboe VIX History · Phase 5 Forward Gate",
     retrievedAt: new Date().toISOString(),
-    series: { UPRO, SSO, QLD, SPY, QQQ, VIX },
+    series,errors,
     warnings: [
       "Phase 5 Forward Gate is isolated from the main Daily TQQQ workflow and legacy UPRO Track B.",
       "Actual ETF OHLC only; synthetic leveraged history is not used.",
+      "A failed Phase 5 challenger feed is isolated; healthy frozen systems continue independently and the failed system remains non-selectable.",
       "No Phase 5 record may predate the frozen 2026-08-25 Forward start date.",
     ],
   };

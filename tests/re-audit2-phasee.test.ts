@@ -41,7 +41,9 @@ test("Phase 5 persists status on generation failure and then reports red",()=>{
   assert.match(phase5,/Update true Forward ledger[\s\S]*continue-on-error: true/);
   assert.match(phase5,/Persist append-only Phase 5 ledger\/status[\s\S]*if: always\(\)/);
   assert.match(phase5,/phase-5-forward-ledger\.json github-pages\/public\/data\/phase-5-forward-status\.json/);
-  assert.match(phase5,/Enforce Phase 5 generation and build success[\s\S]*test "\$\{\{ steps\.generate\.outcome \}\}" = "success"/);
+  assert.match(phase5,/Enforce Phase 5 generation, persistence, authority and build success[\s\S]*test "\$\{\{ steps\.generate\.outcome \}\}" = "success"/);
+  assert.match(phase5,/id: persist/);assert.match(phase5,/id: authority/);
+  assert.match(phase5,/Build integrated PWA[\s\S]*steps\.persist\.outcome == 'success'[\s\S]*steps\.authority\.outcome == 'success'/);
 });
 
 test("Human Approval preflight is serialized and deploys persisted validated state explicitly",()=>{

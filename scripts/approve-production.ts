@@ -1,11 +1,11 @@
 import{readFile,mkdir,writeFile}from"node:fs/promises";
-import{DEFAULT_PRODUCTION_CONFIG,cancelDecision,hasActiveProduction,transitionMode,type ProductionConfig}from"../lib/production.ts";
+import{assertProductionConfigIntegrity,cancelDecision,hasActiveProduction,transitionMode,type ProductionConfig}from"../lib/production.ts";
 import{productionEligibleVersions,type LifecycleLedger}from"../lib/lifecycle-review.ts";
 import{lifecycleReviewCoversUpstreams,lifecycleReviewIsFresh}from"../lib/lifecycle-approval.ts";
 import{marketDate}from"../lib/market-calendar.ts";
 const action=process.env.MODE||"DECISION",confirmation=process.env.CONFIRMATION||"";
-const root=new URL("../github-pages/public/data/",import.meta.url),path=new URL("production-config.json",root);let current:ProductionConfig=DEFAULT_PRODUCTION_CONFIG;
-try{current=JSON.parse(await readFile(path,"utf8"))}catch{}
+const root=new URL("../github-pages/public/data/",import.meta.url),path=new URL("production-config.json",root);let current:ProductionConfig;
+try{current=JSON.parse(await readFile(path,"utf8")) as ProductionConfig}catch(error){throw Error(`STATE-010: production-config.json missing/corrupt; refusing authority bootstrap (${error instanceof Error?error.message:String(error)})`)}assertProductionConfigIntegrity(current);
 let next:ProductionConfig;
 if(action==="CANCEL_DECISION"){
   next=cancelDecision(current);

@@ -23,6 +23,15 @@ export function resolveProductionSystem(ticker:string,version:string,strategy?:s
   return found;
 }
 export const DEFAULT_PRODUCTION_CONFIG:ProductionConfig={schemaVersion:1,mode:"RESEARCH",selectedTicker:null,selectedStrategy:null,strategyVersion:null,approvedByHuman:false,approvalDate:null,effectiveDate:null,lastHealthReview:null,nextHealthReview:null,updatedAt:"2026-08-24T00:00:00.000Z"};
+export function assertProductionConfigIntegrity(value:unknown):asserts value is ProductionConfig{
+  if(!value||typeof value!=="object")throw Error("CONFIG-003: Production config is missing or malformed");const p=value as Partial<ProductionConfig>;
+  if(p.schemaVersion!==1||!["RESEARCH","DECISION","PRODUCTION"].includes(p.mode||""))throw Error("CONFIG-003: Production config schema/mode is invalid");
+  const selected=Boolean(p.selectedTicker&&p.selectedStrategy&&p.strategyVersion);
+  if(p.mode==="RESEARCH"&&(p.approvedByHuman||selected))throw Error("CONFIG-004: RESEARCH cannot carry approved Production authority");
+  if(p.mode==="PRODUCTION"&&(!p.approvedByHuman||!selected))throw Error("CONFIG-005: PRODUCTION requires complete human-approved authority");
+  if(p.approvedByHuman){if(!selected||!p.approvalDate||!p.effectiveDate)throw Error("CONFIG-006: approved authority is incomplete");resolveProductionSystem(p.selectedTicker!,p.strategyVersion!,p.selectedStrategy)}else if(selected)throw Error("CONFIG-007: unapproved config cannot select a Production system");
+}
+export function productionConfigIsValid(value:unknown){try{assertProductionConfigIntegrity(value);return true}catch{return false}}
 export function hasActiveProduction(p:ProductionConfig){return p.mode!=="RESEARCH"&&p.approvedByHuman&&Boolean(p.selectedTicker&&p.selectedStrategy&&p.strategyVersion)}
 export const HEALTH_POLICY={version:"health-policy-1.1",recommended:"Hybrid",operational:"Daily automated",strategy:"Quarterly",formal:"Annual",eventDriven:"Immediate",reason:"低頻度の中期戦略では短期成績だけで戦略変更しない。自動Healthは実際に観測できるIntegrity・データ鮮度・DD・Action Daysを監視し、四半期Reviewでbroker実約定コスト・税・FX・商品構造など自動取得できない項目を人間が確認する。",alternatives:[{frequency:"Monthly",benefit:"問題を早く発見",cost:"取引標本が少なくNoiseが大きい",adopt:false},{frequency:"Quarterly",benefit:"運用劣化と手動確認項目の定期レビュー",cost:"単独で戦略変更は行わない",adopt:true},{frequency:"Annual",benefit:"Forward比較と正式再検証",cost:"日常障害の検知には遅い",adopt:true},{frequency:"Event-driven",benefit:"Integrity・商品構造異常へ即応",cost:"客観Triggerが必要",adopt:true},{frequency:"Hybrid",benefit:"日次自動監視＋四半期手動確認＋年次判断",cost:"状態管理が必要",adopt:true}]};
 export const DEGRADATION_RULES=[

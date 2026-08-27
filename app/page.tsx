@@ -23,7 +23,7 @@ import {summarizeForward,type ForwardLedger} from "../lib/forward";
 import type {CrossBundle} from "../lib/cross-ticker";
 import type {TickerForwardLedger} from "../lib/ticker-forward";
 import type {NativeResearchBundle} from "../lib/native-research";
-import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,type ProductionConfig} from "../lib/production";
+import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,productionConfigIsValid,type ProductionConfig} from "../lib/production";
 import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
@@ -242,7 +242,8 @@ export default function Home() {
       fetchJson(new URL("phase-5-forward-ledger.json",staticData)).then(setPhase5Ledger),
       fetchJson(new URL("phase-5-forward-status.json",staticData)).then(setPhase5Status),
     ]).then((results)=>{
-      if(results[0].status==="rejected")setMessage("最新Signalを取得できません。System Statusを確認してください。");
+      if([0,1,3,4].some(i=>results[i]?.status==="rejected"))setMessage("運用authorityを確認できません。売買せずSystem Statusを確認してください。");
+      else if(results[0].status==="rejected")setMessage("最新Signalを取得できません。System Statusを確認してください。");
       setLoading(false);
     });
   }, []);
@@ -397,22 +398,29 @@ export default function Home() {
     actual = displayHoldings.ratio === "" ? null : Number(displayHoldings.ratio) / 100,
     executionDate=signal?.executionDate||(signal?nextExecutionDate(signal.date):undefined),
     executionWindow=executionDate?nyseExecutionWindow(executionDate,now.toISOString()):null,
-    executionMissed=Boolean(holdingsMatch&&actual!==null&&Math.abs(actual-target)>=.001&&executionWindow==="OPEN_PASSED"),
-    signalUnsafe=Boolean(runtimeStatus?.state==="failed"||fresh?.stale),
+    signalChange=Boolean(signal&&Math.abs(signal.target-signal.previousTarget)>=.001),
+    executionMissed=Boolean(signalChange&&executionWindow==="OPEN_PASSED"),
+    executionActionable=Boolean(signalChange&&executionWindow==="UPCOMING_OPEN"),
+    authorityUnsafe=Boolean(!dailySignal||!runtimeStatus||!productionConfigIsValid(productionConfig)||!forwardLedger),
+    signalUnsafe=Boolean(authorityUnsafe||runtimeStatus?.state==="failed"||fresh?.stale),
     action =
       signalUnsafe
         ? "売買しない：データ/Signalが安全確認できません。System Statusを確認してください"
-        : !holdingsMatch
-          ? `運用Tickerが${currentTicker}へ切り替わりました。旧Tickerの保有値は流用しません。${currentTicker}の保有状況を再入力してください`
-          : actual === null
-            ? "保有状況未入力：目標のみ表示"
-            : executionMissed
-              ? `売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`
-              : Math.abs(actual - target) < 0.001
-                ? "変更なし"
-                : actual < target
-                  ? `${currentTicker}比率を${target * 100}%まで増加`
-                  : `${currentTicker}比率を${target * 100}%まで縮小`;
+        : executionMissed
+          ? `売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`
+          : !holdingsMatch
+            ? `運用Tickerが${currentTicker}へ切り替わりました。旧Tickerの保有値は流用しません。${currentTicker}の保有状況を再入力してください`
+            : actual === null
+              ? "保有状況未入力：目標のみ表示"
+              : !signalChange
+                ? "変更なし：現在Signalに新規売買指示はありません"
+                : !executionActionable
+                  ? "売買しない：有効な次回始値の実行ウィンドウを確認できません。次のDaily Signal更新後に再確認してください"
+                  : Math.abs(actual - target) < 0.001
+                    ? "変更なし"
+                    : actual < target
+                      ? `${currentTicker}比率を${target * 100}%まで増加`
+                      : `${currentTicker}比率を${target * 100}%まで縮小`;
   const sourceLabel =
     dataset?.source === "auto"
       ? "実データ・自動取得"

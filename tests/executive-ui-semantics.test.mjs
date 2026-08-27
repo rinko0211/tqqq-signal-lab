@@ -16,7 +16,8 @@ test("device-local holdings are tagged and invalidated across ticker/version tra
 });
 
 test("unsafe stale or failed signal fails closed at the primary action",()=>{
-  assert.match(page,/signalUnsafe=Boolean\(runtimeStatus\?\.state==="failed"\|\|fresh\?\.stale\)/);
+  assert.match(page,/authorityUnsafe=Boolean\(!dailySignal\|\|!runtimeStatus\|\|!productionConfigIsValid\(productionConfig\)\|\|!forwardLedger\)/);
+  assert.match(page,/signalUnsafe=Boolean\(authorityUnsafe\|\|runtimeStatus\?\.state==="failed"\|\|fresh\?\.stale\)/);
   assert.match(page,/売買しない：データ\/Signalが安全確認できません/);
   assert.match(page,/売買しない・System Status確認/);
 });

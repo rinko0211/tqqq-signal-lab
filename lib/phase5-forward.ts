@@ -140,14 +140,16 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
   }
 }
 
-export function updatePhase5Ledger(payload:Payload,input?:Phase5Ledger|null,generatedAt=new Date().toISOString()):Phase5Ledger{
-  const ledger=input?.schemaVersion===1?structuredClone(input):emptyPhase5Ledger(generatedAt);
-  // Never mutate an existing freeze definition after Forward has started.
-  for(const frozen of PHASE5_FREEZES){const existing=ledger.freezes.find(x=>x.version===frozen.version);if(!existing)throw new Error(`Phase 5 freeze missing: ${frozen.version}`);if(JSON.stringify(existing)!==JSON.stringify(frozen))throw new Error(`Phase 5 freeze drift blocked: ${frozen.version}`)}
-  for(const freeze of ledger.freezes)appendFreeze(datasetFor(payload,freeze),ledger,freeze,payload.source||"official",generatedAt);
+function assertPhase5FreezeIntegrity(ledger:Phase5Ledger){for(const frozen of PHASE5_FREEZES){const existing=ledger.freezes.find(x=>x.version===frozen.version);if(!existing)throw new Error(`Phase 5 freeze missing: ${frozen.version}`);if(JSON.stringify(existing)!==JSON.stringify(frozen))throw new Error(`Phase 5 freeze drift blocked: ${frozen.version}`)}if(ledger.freezes.length!==PHASE5_FREEZES.length)throw new Error("Phase 5 unexpected freeze definition")};
+export function updatePhase5LedgerSubset(payload:Payload,input:Phase5Ledger|null|undefined,versions:string[],generatedAt=new Date().toISOString()):Phase5Ledger{
+  if(input&&(input.schemaVersion!==1||input.appendOnly!==true))throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");
+  const ledger=input?structuredClone(input):emptyPhase5Ledger(generatedAt);assertPhase5FreezeIntegrity(ledger);const wanted=new Set(versions);
+  for(const version of wanted)if(!PHASE5_FREEZES.some(f=>f.version===version))throw new Error(`Phase 5 unknown frozen version: ${version}`);
+  for(const freeze of ledger.freezes.filter(f=>wanted.has(f.version)))appendFreeze(datasetFor(payload,freeze),ledger,freeze,payload.source||"official",generatedAt);
   if(ledger.records.some(r=>r.marketDataDate<PHASE5_FORWARD_START))throw new Error("Phase 5 ledger contains pre-start record");
   ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=generatedAt;return ledger;
 }
+export function updatePhase5Ledger(payload:Payload,input?:Phase5Ledger|null,generatedAt=new Date().toISOString()):Phase5Ledger{return updatePhase5LedgerSubset(payload,input,PHASE5_FREEZES.map(f=>f.version),generatedAt)}
 
 export type Phase5Summary={version:string;ticker:Phase5Ticker;role:Phase5Role;observations:number;liveObservations:number;missing:number;executions:number;actionDays:number;currentCapital:number;totalReturn:number;currentDd:number;metrics:Metrics;evidence:"INSUFFICIENT"|"LOW"|"MODERATE"|"FORMAL_READY";status:"FORWARD_ACTIVE"|"AWAITING_FIRST_BAR"|"DATA_REVIEW_REQUIRED"};
 export function summarizePhase5(ledger:Phase5Ledger):Phase5Summary[]{return ledger.freezes.map(f=>{const rows=ledger.records.filter(r=>r.strategyVersion===f.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)),live=rows.filter(r=>r.dataStatus==="VALID"),expectedSessions=rows.length?countNyseSessions(f.startDate,rows.at(-1)!.marketDataDate):0,missing=Math.max(0,expectedSessions-live.length),missingRatio=missing/Math.max(expectedSessions,1),executions=rows.filter(r=>r.execution&&r.execution.turnover>0),actionDays=new Set(executions.map(r=>r.execution!.recordedDate)).size,m=metricSet(rows.map(r=>r.dailyReturn),[],[],rows.map(r=>r.marketDataDate),rows.map(r=>r.position)),months=live.length/21;let evidence:Phase5Summary["evidence"]="INSUFFICIENT";if(months>=12&&executions.length>=6&&missingRatio<=.01)evidence="FORMAL_READY";else if(months>=6)evidence="MODERATE";else if(months>=3)evidence="LOW";const status:Phase5Summary["status"]=rows.length===0?"AWAITING_FIRST_BAR":missingRatio>.01&&expectedSessions>=20?"DATA_REVIEW_REQUIRED":"FORWARD_ACTIVE";return{version:f.version,ticker:f.ticker,role:f.role,observations:rows.length,liveObservations:live.length,missing,executions:executions.length,actionDays,currentCapital:rows.at(-1)?.equity??f.initialCapital,totalReturn:(rows.at(-1)?.equity??f.initialCapital)/f.initialCapital-1,currentDd:rows.at(-1)?.currentDrawdown??0,metrics:m,evidence,status}})}

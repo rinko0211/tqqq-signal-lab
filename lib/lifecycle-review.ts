@@ -8,7 +8,7 @@ import {marketDataLagSessions,marketDate,nyseReviewBoundaryReached,upstreamWorkf
 export type LifecycleStage="ACCUMULATING"|"INTERIM"|"FORMAL"|"STRONGER";
 export type CandidateDecision="CONTINUE_FORWARD"|"DATA_REVIEW_REQUIRED"|"REVALIDATION_REQUIRED"|"PHASE6_ELIGIBLE"|"INSUFFICIENT_EVIDENCE";
 export type UserAction="NONE"|"CHECK_DATA_AND_ACTIONS"|"RUN_PHASE6_HUMAN_REVIEW"|"REVALIDATE_PRODUCTION"|"URGENT_INTEGRITY_REVIEW";
-export type LifecycleInputStatus={status?:string;errors?:string[];generatedAt?:string;latestDates?:Record<string,string>};
+export type LifecycleInputStatus={status?:string;errors?:string[];generatedAt?:string;latestDates?:Record<string,string>;systems?:Record<string,{status?:string;latestDate?:string|null;errors?:string[]}>};
 export type RuntimeStatus={generatedAt?:string;actionStatus?:string;state?:string;marketDataDate?:string;errors?:string[]};
 export type CandidateReview={
   version:string;ticker:string;decision:CandidateDecision;eligible:boolean;incumbent:boolean;promotionSelectable:boolean;promotionMerit:ParetoMerit|"INCUMBENT";reasons:string[];
@@ -25,11 +25,11 @@ const yearsObserved=(n:number)=>Math.max(n/252,1/252);
 const addYears=(date:string,n=1)=>{const d=new Date(`${date}T12:00:00Z`);d.setUTCFullYear(d.getUTCFullYear()+n);return d.toISOString().slice(0,10)};
 
 function minDate(values:string[]){return values.filter(Boolean).sort()[0]}
-function phase5StatusQuality(status:LifecycleInputStatus|null|undefined,now:string,strictCurrent:boolean){
-  const commonDate=status?.latestDates?minDate(Object.values(status.latestDates)):undefined;
-  const lag=marketDataLagSessions(commonDate,now),fresh=Boolean(status?.status==="success"&&!(status?.errors?.length)&&upstreamWorkflowFresh(status?.generatedAt,now));
+function phase5StatusQuality(status:LifecycleInputStatus|null|undefined,now:string,strictCurrent:boolean,version?:string){
+  const system=version?status?.systems?.[version]:undefined,commonDate=system?.latestDate??(status?.latestDates?minDate(Object.values(status.latestDates)):undefined),systemStatus=system?.status??status?.status,errors=system?.errors??status?.errors;
+  const lag=marketDataLagSessions(commonDate||undefined,now),fresh=Boolean(systemStatus==="success"&&!(errors?.length)&&upstreamWorkflowFresh(status?.generatedAt,now));
   const dataCurrent=strictCurrent?lag===0:lag<=1;
-  return{ok:fresh&&dataCurrent,fresh,lag,commonDate,reasons:[...(!fresh?["Phase 5 workflow status is stale/failed"]:[]),...(!dataCurrent?[`Phase 5 common market data lags ${lag} completed NYSE session(s)`]:[])]};
+  return{ok:fresh&&dataCurrent,fresh,lag,commonDate,reasons:[...(!fresh?[`Phase 5 ${version??"workflow"} status is stale/failed`]:[]),...(!dataCurrent?[`Phase 5 ${version??"common"} market data lags ${lag} completed NYSE session(s)`]:[])]};
 }
 function runtimeStatusQuality(status:RuntimeStatus|null|undefined,now:string){
   const fresh=Boolean(status?.actionStatus==="success"&&status?.state!=="failed"&&!(status?.errors?.length)&&upstreamWorkflowFresh(status?.generatedAt,now));
@@ -60,7 +60,7 @@ function baseDecision(args:{version:string;ticker:string;incumbent:boolean;obser
 }
 
 function reviewPhase5(summary:Phase5Summary,ledger:Phase5Ledger,stage:LifecycleStage,status:LifecycleInputStatus|null|undefined,now:string,incumbent:boolean):CandidateReview{
-  const strict=stage==="FORMAL"||stage==="STRONGER",q=phase5StatusQuality(status,now,strict),labels=ledger.records.filter(r=>r.strategyVersion===summary.version&&r.dataStatus==="VALID").map(r=>r.regime);
+  const strict=stage==="FORMAL"||stage==="STRONGER",q=phase5StatusQuality(status,now,strict,summary.version),labels=ledger.records.filter(r=>r.strategyVersion===summary.version&&r.dataStatus==="VALID").map(r=>r.regime);
   return baseDecision({version:summary.version,ticker:summary.ticker,incumbent,observations:summary.observations,liveObservations:summary.liveObservations,missing:summary.missing,executions:summary.executions,actionDays:summary.actionDays,regimes:labels,totalReturn:summary.totalReturn,sortino:summary.metrics.sortino,calmar:summary.metrics.calmar,maxDd:summary.metrics.maxDd,evidence:summary.evidence,stage,integrity:q.ok,integrityReasons:q.reasons});
 }
 function reviewLegacy(summary:ForwardSummary|undefined,ledger:ForwardLedger,stage:LifecycleStage,status:RuntimeStatus|null|undefined,now:string,incumbent:boolean):CandidateReview{
@@ -85,7 +85,7 @@ function healthForProduction(production:ProductionConfig,phase5:Phase5Ledger,pha
   if(!hasActiveProduction(production)||!production.strategyVersion)return{state:"NOT_IN_PRODUCTION",version:null,reasons:["No human-approved Production system is active"],nextHealthReview:production.nextHealthReview};
   const version=production.strategyVersion,p5=summarizePhase5(phase5).find(x=>x.version===version),legacy=summarizeForward(forward).find(x=>x.version===version);
   if(!p5&&!legacy)return{state:"Critical",version,reasons:["Selected Production version has no matching Forward ledger"],nextHealthReview:production.nextHealthReview};
-  const quality=p5?phase5StatusQuality(phase5Status,now,false):legacyStatusQuality(runtimeStatus,forward,now,false),historicalDd=HIST_DD[version]??-.40;
+  const quality=p5?phase5StatusQuality(phase5Status,now,false,version):legacyStatusQuality(runtimeStatus,forward,now,false),historicalDd=HIST_DD[version]??-.40;
   const dd=p5?p5.metrics.maxDd:legacy!.metrics.maxDd,live=p5?p5.liveObservations:legacy!.observations,actionDays=p5?p5.actionDays:legacy!.orders,apy=actionDays/yearsObserved(live);
   const state=assessHealth({integrity:quality.fresh,dataFresh:quality.ok,dd,historicalDd,actionDaysPerYear:apy});
   const reasons=[...quality.reasons];if(dd<historicalDd-.10)reasons.push("Forward drawdown is >10pt worse than frozen historical Max DD");if(apy>40)reasons.push(`Action Days/year ${apy.toFixed(1)} exceeds hard cap 40`);else if(apy>24)reasons.push(`Action Days/year ${apy.toFixed(1)} is above preferred 24 upper watch boundary`);if(state==="Healthy")reasons.push("Measured automated health controls are healthy; broker cost/tax/FX remain manual-review items");
@@ -117,6 +117,7 @@ function selectionDecision(reviews:CandidateReview[]){
 
 export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardLedger;production:ProductionConfig;phase5Status?:LifecycleInputStatus|null;runtimeStatus?:RuntimeStatus|null;prior?:LifecycleLedger|null;now?:string}):LifecycleLedger{
   const now=args.now??new Date().toISOString(),asOf=marketDate(now);if(!DATE_RE.test(asOf))throw Error("Invalid lifecycle review date");
+  if(args.prior&&(args.prior.schemaVersion!==1||args.prior.appendOnly!==true))throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");
   const schedule={interim:args.phase5.reviewSchedule.interim,formal:args.phase5.reviewSchedule.formal,stronger:args.phase5.reviewSchedule.stronger},out=args.prior?.schemaVersion===1?structuredClone(args.prior):emptyLifecycleLedger(schedule,now);if(JSON.stringify(out.schedule)!==JSON.stringify(schedule))throw Error("Lifecycle review schedule drift blocked");
   const stage=lifecycleStageAt(now,schedule),p5Summaries=summarizePhase5(args.phase5),legacySummary=summarizeForward(args.forward).find(x=>x.id==="VS13"),frontierVersions=new Set(["VS13-v1.0",...p5Summaries.map(x=>x.version)]),configuredIncumbent=hasActiveProduction(args.production)&&args.production.strategyVersion&&frontierVersions.has(args.production.strategyVersion)?args.production.strategyVersion:"VS13-v1.0";
   const reviews=applyPareto([
@@ -132,14 +133,23 @@ export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardL
     out.events.push({key:`INTERIM|${schedule.interim}`,stage:"INTERIM",reviewDate:schedule.interim,recordedAt:now,systemDecision:interimIssue?"INTERIM_DATA_REVIEW_REQUIRED":"INTERIM_CONTINUE_FORWARD",userAction:interimIssue?"CHECK_DATA_AND_ACTIONS":"NONE",candidateReviews:structuredClone(reviews)});
   }
 
-  const cycleDate=latestSelectionCycle(now,schedule),existingCycle=cycleDate?out.events.find(e=>e.reviewDate===cycleDate):undefined;
-  if(cycleDate&&!existingCycle){
+  const cycleDate=latestSelectionCycle(now,schedule);
+  let cycle=cycleDate?out.events.filter(e=>e.reviewDate===cycleDate).at(-1):undefined;
+  if(cycleDate&&!cycle){
     const d=selectionDecision(reviews),cycleStage=cycleDate===schedule.formal?"FORMAL":"STRONGER";
     out.events.push({key:`${cycleStage}|${cycleDate}`,stage:cycleStage,reviewDate:cycleDate,recordedAt:now,systemDecision:d.systemDecision,userAction:d.userAction,message:d.message,candidateReviews:structuredClone(reviews)});
+    cycle=out.events.filter(e=>e.reviewDate===cycleDate).at(-1);
   }
-  const cycle=cycleDate?out.events.find(e=>e.reviewDate===cycleDate):undefined;
+  if(cycleDate&&cycle?.userAction==="CHECK_DATA_AND_ACTIONS"){
+    const recovered=selectionDecision(reviews);
+    if(recovered.userAction!=="CHECK_DATA_AND_ACTIONS"){
+      const cycleStage=cycleDate===schedule.formal?"FORMAL":"STRONGER";
+      out.events.push({key:`${cycleStage}|${cycleDate}|RECOVERY|${now}`,stage:cycleStage,reviewDate:cycleDate,recordedAt:now,systemDecision:recovered.systemDecision,userAction:recovered.userAction,message:recovered.message,candidateReviews:structuredClone(reviews)});
+      cycle=out.events.at(-1);
+    }
+  }
   const approvalResolved=Boolean(cycle&&cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&hasActiveProduction(args.production)&&args.production.approvalDate&&args.production.approvalDate>=cycle.reviewDate);
-  const cycleResolved=Boolean(cycle&&(cycle.userAction!=="RUN_PHASE6_HUMAN_REVIEW"||approvalResolved));
+  const cycleResolved=Boolean(cycle&&(cycle.userAction==="NONE"||approvalResolved));
   let systemDecision="ACCUMULATING",userAction:UserAction="NONE",message="Forward evidence is accumulating. No user action is required.",currentReviews=reviews;
 
   if(prodHealth.state==="Critical"){systemDecision="PRODUCTION_INTEGRITY_CRITICAL";userAction="URGENT_INTEGRITY_REVIEW";message="Production integrity requires immediate review. Do not change strategy automatically.";}
@@ -164,7 +174,8 @@ export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardL
   }
   else if(stage==="INTERIM"){systemDecision="INTERIM_CONTINUE_FORWARD";message="Six-month interim review is informational only. Continue Forward; Production promotion remains prohibited.";}
 
-  const nextReview=cycle&&cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&!approvalResolved?cycle.reviewDate:cycle?nextSelectionCycle(cycle.reviewDate,schedule):stage==="ACCUMULATING"?schedule.interim:schedule.formal;
+  const cyclePending=Boolean(cycle&&((cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&!approvalResolved)||cycle.userAction==="CHECK_DATA_AND_ACTIONS"));
+  const nextReview=cyclePending?cycle!.reviewDate:cycle?nextSelectionCycle(cycle.reviewDate,schedule):stage==="ACCUMULATING"?schedule.interim:schedule.formal;
   out.updatedAt=now;out.current={asOf,stage,systemDecision,userAction,message,candidateReviews:currentReviews,productionHealth:prodHealth,nextReview,incumbentVersion:configuredIncumbent,reviewCycleDate:cycle?.reviewDate??null,reviewResolved:cycleResolved,reviewResolvedAt:approvalResolved?args.production.approvalDate:null};return out;
 }
 
