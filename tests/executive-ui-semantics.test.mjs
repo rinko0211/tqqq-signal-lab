@@ -27,7 +27,11 @@ test("unsafe stale, failed, cross-generation, malformed numeric, or malformed Fo
   assert.match(primary,/signalNumericUnsafe/);
   assert.match(primary,/holdingsNumericUnsafe/);
   assert.match(primary,/freshnessDate=args\.signal\?\.dataDate/);
-  assert.match(primary,/signalUnsafe=Boolean\(authorityUnsafe\|\|forwardIntegrityUnsafe\|\|signalNumericUnsafe\|\|holdingsNumericUnsafe\|\|args\.status\?\.state==="failed"\|\|fresh\?\.stale\)/);
+  assert.match(primary,/signalPayloadUnsafe/);
+  assert.match(primary,/futureGenerationUnsafe/);
+  assert.match(primary,/executionContractUnsafe/);
+  assert.match(primary,/approvedIncumbent/);
+  assert.match(primary,/signalUnsafe=Boolean\(authorityUnsafe\|\|forwardIntegrityUnsafe\|\|signalPayloadUnsafe\|\|signalNumericUnsafe\|\|holdingsNumericUnsafe\|\|futureGenerationUnsafe\|\|executionContractUnsafe\|\|args\.status\?\.state==="failed"\|\|fresh\?\.stale\)/);
   assert.match(primary,/売買しない：データ\/Signalが安全確認できません/);
   assert.match(page,/売買しない・System Status確認/);
 });

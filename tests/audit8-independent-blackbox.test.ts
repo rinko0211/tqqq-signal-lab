@@ -57,6 +57,7 @@ function oracle(f:Fixture):PrimaryActionCode{
   }
   const changed=Math.abs(q.target-q.previousTarget)>=.001;
   const window=(q.executionDate==="2026-08-27"&&f.now==="2026-08-27T12:00:00.000Z")?"FUTURE":(q.executionDate==="2026-08-27"&&f.now==="2026-08-27T14:00:00.000Z")?"PAST":q.executionDate==="2026-08-29"?"INVALID":"UNKNOWN";
+  if(window==="INVALID")return "CHECK_DATA";
   if(changed&&window==="PAST")return "NO_ACTION_EXPIRED";
   const tagMismatch=Boolean(f.holdings.ticker&&(f.holdings.ticker!==BASE_ID.ticker||(f.holdings.version&&f.holdings.version!==BASE_ID.version)));
   if(tagMismatch)return "REENTER_HOLDINGS";
@@ -90,7 +91,7 @@ test("Audit 8 independent oracle agrees on the normal finite action surface",()=
   f=base("no holdings");f.holdings.ratio="";f.expected="TARGET_ONLY";fixtures.push(f);
   f=base("expired");f.now="2026-08-27T14:00:00.000Z";f.expected="NO_ACTION_EXPIRED";fixtures.push(f);
   f=base("re-enter holdings");f.holdings={ratio:"50",ticker:"UPRO",version:"UPRO-SPBT-v1.0"};f.expected="REENTER_HOLDINGS";fixtures.push(f);
-  f=base("invalid session wait");f.signal.signal.executionDate="2026-08-29";f.expected="WAIT";fixtures.push(f);
+  f=base("invalid execution session");f.signal.signal.executionDate="2026-08-29";f.expected="CHECK_DATA";fixtures.push(f);
   f=base("no target change");f.signal.signal.previousTarget=.75;f.expected="HOLD";fixtures.push(f);
   for(const x of fixtures){assert.equal(oracle(x),x.expected,x.name);assert.equal(run(x).code,x.expected,x.name)}
 });

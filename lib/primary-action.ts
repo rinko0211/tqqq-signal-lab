@@ -1,4 +1,5 @@
-import {freshness,nextExecutionDate} from "./engine.ts";
+import {freshness} from "./engine.ts";
+import {earliestLegalExecutionDate} from "./execution-integrity.ts";
 import {assertForwardLedgerInternalIntegrity,type ForwardLedger} from "./forward.ts";
 import {nyseExecutionWindow,type NyseExecutionWindow} from "./market-calendar.ts";
 import {
@@ -7,7 +8,7 @@ import {
   type OperationalRuntimeAuthority,
   type OperationalSignalAuthority,
 } from "./operational-authority.ts";
-import type {ProductionConfig} from "./production.ts";
+import {hasActiveProduction,type ProductionConfig} from "./production.ts";
 
 export type PrimaryActionCode=
   |"INCREASE"
@@ -63,19 +64,31 @@ export function derivePrimaryAction(args:{
   const target=signal?.target??0;
   const currentTicker=args.signal?.assetTicker||"TQQQ";
   const currentVersion=args.signal?.strategyVersion||"VS13-v1.0";
-  const holdingsMatch=args.holdings.ticker
-    ?args.holdings.ticker===currentTicker&&(!args.holdings.version||args.holdings.version===currentVersion)
-    :currentTicker==="TQQQ";
+  const approvedIncumbent=Boolean(args.production&&hasActiveProduction(args.production));
+  const holdingsMatch=approvedIncumbent
+    ?args.holdings.ticker===currentTicker&&args.holdings.version===currentVersion
+    :args.holdings.ticker
+      ?args.holdings.ticker===currentTicker&&(!args.holdings.version||args.holdings.version===currentVersion)
+      :currentTicker==="TQQQ";
   const ratio=holdingsMatch?(args.holdings.ratio??""):"";
   const parsedRatio=ratio===""?null:Number(ratio);
   const holdingsNumericUnsafe=ratio!==""&&(ratio.trim()===""||!Number.isFinite(parsedRatio)||parsedRatio!<0||parsedRatio!>100);
   const actual=ratio===""||holdingsNumericUnsafe?null:(parsedRatio as number)/100;
+  const signalPayloadUnsafe=!signal;
   const signalNumericUnsafe=Boolean(signal&&(
     signal.date!==args.signal?.dataDate||
     !Number.isFinite(signal.target)||!Number.isFinite(signal.previousTarget)||
     signal.target<0||signal.target>1||signal.previousTarget<0||signal.previousTarget>1
   ));
-  const executionDate=signal?.executionDate||(signal?nextExecutionDate(signal.date):undefined);
+  const nowMs=Date.parse(args.now);
+  const generationTimes=[args.signal?.generatedAt,args.status?.generatedAt,args.forward?.updatedAt].map(x=>typeof x==="string"?Date.parse(x):NaN);
+  const futureGenerationUnsafe=!Number.isFinite(nowMs)||generationTimes.some(t=>Number.isFinite(t)&&t>nowMs);
+  let expectedExecutionDate:string|undefined,executionContractUnsafe=false;
+  if(signal&&args.signal?.generatedAt){
+    try{expectedExecutionDate=earliestLegalExecutionDate(signal.date,args.signal.generatedAt);if(signal.executionDate&&signal.executionDate!==expectedExecutionDate)executionContractUnsafe=true}
+    catch{executionContractUnsafe=true}
+  }
+  const executionDate=signal?.executionDate||expectedExecutionDate;
   const executionWindow=executionDate?nyseExecutionWindow(executionDate,args.now):null;
   const signalChange=Boolean(signal&&!signalNumericUnsafe&&Math.abs(signal.target-signal.previousTarget)>=.001);
   const executionMissed=Boolean(signalChange&&executionWindow==="OPEN_PASSED");
@@ -87,7 +100,7 @@ export function derivePrimaryAction(args:{
   void args.freshnessDate;
   const freshnessDate=args.signal?.dataDate;
   const fresh=freshnessDate?freshness(freshnessDate,args.now):null;
-  const signalUnsafe=Boolean(authorityUnsafe||forwardIntegrityUnsafe||signalNumericUnsafe||holdingsNumericUnsafe||args.status?.state==="failed"||fresh?.stale);
+  const signalUnsafe=Boolean(authorityUnsafe||forwardIntegrityUnsafe||signalPayloadUnsafe||signalNumericUnsafe||holdingsNumericUnsafe||futureGenerationUnsafe||executionContractUnsafe||args.status?.state==="failed"||fresh?.stale);
 
   if(signalUnsafe)return{code:"CHECK_DATA",message:"売買しない：データ/Signalが安全確認できません。System Statusを確認してください",target,currentTicker,currentVersion,holdingsMatch,actual,executionDate,executionWindow,signalChange,executionMissed,executionActionable,authorityBundle,authorityUnsafe,signalUnsafe,freshnessDate};
   if(executionMissed)return{code:"NO_ACTION_EXPIRED",message:`売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`,target,currentTicker,currentVersion,holdingsMatch,actual,executionDate,executionWindow,signalChange,executionMissed,executionActionable,authorityBundle,authorityUnsafe,signalUnsafe,freshnessDate};

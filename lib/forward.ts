@@ -266,9 +266,18 @@ export function assertForwardLedgerInternalIntegrity(ledger:ForwardLedger){
     const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw Error(`Forward integrity: unknown strategy version ${r.strategyVersion}`);
     if(!isNyseSession(r.marketDataDate))throw Error(`Forward integrity: invalid/non-session market date ${r.marketDataDate}`);
     if(!Number.isFinite(Date.parse(r.recordedAt)))throw Error(`Forward integrity: invalid recordedAt ${r.key}`);
+    if(!Number.isFinite(Date.parse(ledger.updatedAt))||Date.parse(r.recordedAt)>Date.parse(ledger.updatedAt))throw Error(`Forward integrity: record chronology exceeds ledger generation ${r.key}`);
     const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw Error(`Forward integrity: record key mismatch ${r.key}`);
     if(r.marketDataDate<freeze.startDate)throw Error(`Forward integrity: pre-start record ${r.key}`);
     if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);
+  }
+  const ledgerStarted=ledger.records.length>0;
+  for(const freeze of ledger.freezes){
+    const rows=ledger.records.filter(r=>r.strategyVersion===freeze.version);
+    if(!rows.length){if(ledgerStarted)throw Error(`Forward integrity: missing started series history ${freeze.version}`);continue}
+    const last=rows.at(-1)!;
+    const expectedSessions=countNyseSessions(freeze.startDate,last.marketDataDate);
+    if(rows.length!==expectedSessions)throw Error(`Forward integrity: incomplete session history ${freeze.version}`);
   }
 }
 
