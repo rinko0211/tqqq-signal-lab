@@ -15,7 +15,7 @@ export type CandidateReview={
   observations:number;liveObservations:number;missingRatio:number;executions:number;actionDaysPerYear:number;regimes:number;regimeFamilies:string[];regimeCoverageOk:boolean;
   totalReturn:number;sortino:number;calmar:number;maxDd:number;historicalDd:number;adverseDdFloor:number;evidence:string;paretoCommonDays:number;
 };
-export type ReviewEvent={key:string;stage:Exclude<LifecycleStage,"ACCUMULATING">;reviewDate:string;recordedAt:string;systemDecision:string;userAction:UserAction;candidateReviews:CandidateReview[]};
+export type ReviewEvent={key:string;stage:Exclude<LifecycleStage,"ACCUMULATING">;reviewDate:string;recordedAt:string;systemDecision:string;userAction:UserAction;message?:string;candidateReviews:CandidateReview[]};
 export type ProductionHealth={state:"NOT_IN_PRODUCTION"|HealthState;version:string|null;reasons:string[];nextHealthReview:string|null};
 export type LifecycleLedger={schemaVersion:1;createdAt:string;updatedAt:string;appendOnly:true;schedule:{interim:string;formal:string;stronger:string};events:ReviewEvent[];current:{asOf:string;stage:LifecycleStage;systemDecision:string;userAction:UserAction;message:string;candidateReviews:CandidateReview[];productionHealth:ProductionHealth;nextReview:string|null;incumbentVersion?:string;reviewCycleDate?:string|null;reviewResolved?:boolean;reviewResolvedAt?:string|null}};
 
@@ -135,7 +135,7 @@ export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardL
   const cycleDate=latestSelectionCycle(now,schedule),existingCycle=cycleDate?out.events.find(e=>e.reviewDate===cycleDate):undefined;
   if(cycleDate&&!existingCycle){
     const d=selectionDecision(reviews),cycleStage=cycleDate===schedule.formal?"FORMAL":"STRONGER";
-    out.events.push({key:`${cycleStage}|${cycleDate}`,stage:cycleStage,reviewDate:cycleDate,recordedAt:now,systemDecision:d.systemDecision,userAction:d.userAction,candidateReviews:structuredClone(reviews)});
+    out.events.push({key:`${cycleStage}|${cycleDate}`,stage:cycleStage,reviewDate:cycleDate,recordedAt:now,systemDecision:d.systemDecision,userAction:d.userAction,message:d.message,candidateReviews:structuredClone(reviews)});
   }
   const cycle=cycleDate?out.events.find(e=>e.reviewDate===cycleDate):undefined;
   const approvalResolved=Boolean(cycle&&cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&hasActiveProduction(args.production)&&args.production.approvalDate&&args.production.approvalDate>=cycle.reviewDate);
@@ -144,7 +144,8 @@ export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardL
 
   if(prodHealth.state==="Critical"){systemDecision="PRODUCTION_INTEGRITY_CRITICAL";userAction="URGENT_INTEGRITY_REVIEW";message="Production integrity requires immediate review. Do not change strategy automatically.";}
   else if(prodHealth.state==="Revalidation Required"){systemDecision="PRODUCTION_REVALIDATION_REQUIRED";userAction="REVALIDATE_PRODUCTION";message="Production measured-health trigger fired. Keep automatic strategy replacement disabled and perform revalidation.";}
-  else if(incumbentIssue||candidateIssues){systemDecision=stage==="INTERIM"?"INTERIM_DATA_REVIEW_REQUIRED":"REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="A current data/integrity issue exists. Do not use an older review result for Production changes; restore current upstream state first.";}
+  else if(incumbentIssue){systemDecision="REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="The current incumbent has a data/integrity issue. Production selection is blocked until the incumbent is current and valid.";}
+  else if(stage==="INTERIM"&&candidateIssues){systemDecision="INTERIM_DATA_REVIEW_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="A challenger data/integrity issue exists during the informational interim review. Continue Forward without Production promotion and restore the affected feed.";}
   else if(cycle&&cycle.userAction==="RUN_PHASE6_HUMAN_REVIEW"&&!approvalResolved){
     // Freeze the selection snapshot at the scheduled review. Later data may
     // invalidate a frozen choice, but it cannot create a new opportunistic
@@ -155,6 +156,7 @@ export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardL
     if(safeSelectable.length){systemDecision="PHASE6_HUMAN_DECISION_REQUIRED";userAction="RUN_PHASE6_HUMAN_REVIEW";message=`Scheduled review ${cycle.reviewDate} remains awaiting Human Approval. Only the frozen, still-operational candidates shown below may be selected.`;}
     else{systemDecision="REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="The frozen scheduled-review candidates are no longer operationally safe. Do not approve Production; wait for the next scheduled review after restoring data integrity.";}
   }
+  else if(candidateIssues){systemDecision="REVALIDATION_REQUIRED";userAction="CHECK_DATA_AND_ACTIONS";message="No scheduled selectable decision remains while challenger data/integrity issues are unresolved. Restore the affected feeds without changing strategy parameters.";}
   else if(cycle){
     systemDecision=approvalResolved?"POST_REVIEW_CONTINUE_FORWARD":cycle.systemDecision;
     userAction="NONE";

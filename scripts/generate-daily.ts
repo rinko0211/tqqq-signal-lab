@@ -8,7 +8,7 @@ import { emptyForwardLedger, summarizeForward, updateForwardLedger, type Forward
 import type { LiveSnapshot } from "../lib/paper.ts";
 import {DEFAULT_PRODUCTION_CONFIG,hasActiveProduction,resolveProductionSystem,type ProductionConfig} from "../lib/production.ts";
 import {SCREENING,makeCrossTickerDataset} from "../lib/cross-ticker.ts";
-import {isNyseSession} from "../lib/market-calendar.ts";
+import {dailyBarIsComplete,isNyseSession} from "../lib/market-calendar.ts";
 
 const pagesRoot = new URL("../github-pages/public/data/", import.meta.url);
 const roots = process.env.GITHUB_ACTIONS === "true" ? [pagesRoot] : [pagesRoot, new URL("../public/data/", import.meta.url)];
@@ -36,6 +36,8 @@ try {
   const dataset = productionRow&&productionTicker!=="TQQQ"?makeCrossTickerDataset(payload as Parameters<typeof makeCrossTickerDataset>[0],productionRow):trackADataset;
   if(!dataset)throw Error(`CONFIG-001: selected ticker ${productionTicker} data unavailable`);
   const errors = dataset.issues.filter(x=>x.severity==="error"); if (errors.length) throw Error(errors.map(x=>x.message).join("; "));
+  const keepCompleteBars=(ds:typeof trackADataset)=>{while(ds.days.length&&!dailyBarIsComplete(ds.days.at(-1)!.date,generatedAt))ds.days.pop();if(ds.days.length<201)throw Error("DATA-003: no sufficiently long completed NYSE daily-bar history is available; no Signal was generated")};
+  keepCompleteBars(trackADataset);if(dataset!==trackADataset)keepCompleteBars(dataset);
   const bt = runBacktest(dataset, selected.config),latest = bt.daily.at(-1)!,bar = dataset.days.at(-1)!;
   const updated = priorSignal?.dataDate !== latest.date||priorSignal?.assetTicker!==selected.ticker||priorSignal?.strategyVersion!==selected.version;
   const nyWeekday = new Date(`${nyDate}T12:00:00Z`).getUTCDay(),closed = [0,6].includes(nyWeekday) || !isNyseSession(nyDate),state = updated ? "latest" : closed ? "market_closed" : nyHour < 18 ? "market_pending" : "not_updated";

@@ -78,13 +78,15 @@ export function ResearchLineage() {
   );
 }
 
-export function IntegratedDashboard({ production, productionForward, phase5, phase5Status, platformMode, humanApproved }: {
+export function IntegratedDashboard({ production, productionForward, phase5, phase5Status, platformMode, humanApproved, productionTicker, productionVersion }: {
   production: ProductionSnapshot | null;
   productionForward: ForwardLedger | null;
   phase5: Phase5Ledger | null;
   phase5Status: Phase5StatusFile | null;
   platformMode?: string;
   humanApproved?: boolean;
+  productionTicker?: string;
+  productionVersion?: string;
 }) {
   const challengers = phase5 ? summarizePhase5(phase5) : [];
   const activeProduction = humanApproved === true && platformMode !== "RESEARCH";
@@ -108,8 +110,8 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
         </article>
 
         <article className="decision challengerCard">
-          <div className="panelHead"><div><em>PHASE 5 · RESEARCH OBSERVATION ONLY</em><h2>Productionとは別の候補群</h2></div><Chip tone={phase5Status?.status === "success" ? "warn" : "bad"}>{phase5Status?.status === "success" ? "ACTIVE" : "要確認"}</Chip></div>
-          <p>ここに表示されるUPRO / SSO / QLDは、現在の売買指示ではありません。Phase 6までは独立Forwardで観測します。</p>
+          <div className="panelHead"><div><em>PHASE 5 · FROZEN FORWARD REFERENCE SET</em><h2>現Productionを含み得る比較台帳</h2></div><Chip tone={phase5Status?.status === "success" ? "warn" : "bad"}>{phase5Status?.status === "success" ? "ACTIVE" : "要確認"}</Chip></div>
+          <p>{activeProduction&&productionVersion&&challengers.some(x=>x.version===productionVersion)?`${productionTicker||production?.ticker||"選択Ticker"} / ${productionVersion} は現在の正式Productionです。残りは比較用Forwardで、ここから売買指示は出しません。`:"UPRO / SSO / QLDは凍結Forward候補です。正式Production承認前は比較観測のみで、ここから売買指示は出しません。"}</p>
           <div className="opsMiniGrid"><div><span>新規候補</span><b>{challengers.length || 3}本</b></div><div><span>Forward記録</span><b>{phase5?.records.length ?? 0}件</b></div><div><span>Formal Review</span><b>{phase5?.reviewSchedule.formal || "2027-08-25"}</b></div></div>
           <div className="opsNext"><span>現在の状態</span><strong>{challengers.length ? challengers.map((x) => `${x.ticker}: ${x.status}`).join(" · ") : "最初の確定Bar待ち"}</strong></div>
         </article>
@@ -119,9 +121,9 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
         <div className="panelHead"><div><em>DAILY CONTROL BOARD</em><h2>運用基準とChallengerを混同しない</h2></div><span>{decisionPending ? "Decision review中も既存Productionが実運用判断を継続。" : activeProduction ? "正式Productionだけが実運用判断。" : "現在はOperational Baselineが日次判断基準。"} Challengerは比較観測。</span></div>
         <SimpleTable heads={["区分", "Ticker / Version", "現在Target", "Position", "次回Action", "観測", "Evidence"]} rows={[
           [<Chip key="p" tone={activeProduction?"ok":"warn"}>{activeProduction?"PRODUCTION":"BASELINE"}</Chip>, `${production?.ticker || "TQQQ"} / ${production?.version || production?.strategy || "VS13"}`, production ? `${Math.round(production.target * 100)}%` : "—", "実保有は今日のシグナルで確認", changed ? production?.executionDate || "次営業日" : "なし", modelSummary?.observations ?? "—", modelSummary?.evidence || "—"],
-          ...challengers.map((x) => {
+          ...challengers.filter(x=>!(activeProduction&&x.version===productionVersion)).map((x) => {
             const last = phase5!.records.filter((r) => r.strategyVersion === x.version).at(-1);
-            return [<Chip key={x.version} tone="warn">RESEARCH</Chip>, `${x.ticker} / ${x.version}`, last ? `${Math.round(last.targetExposure * 100)}%` : "—", last ? `${Math.round(last.position * 100)}%` : "—", last && Math.abs(last.targetExposure - last.position) > 0.001 ? last.intendedExecutionDate : "なし", x.observations, x.evidence];
+            return [<Chip key={x.version} tone="warn">REFERENCE</Chip>, `${x.ticker} / ${x.version}`, last ? `${Math.round(last.targetExposure * 100)}%` : "—", last ? `${Math.round(last.position * 100)}%` : "—", last && Math.abs(last.targetExposure - last.position) > 0.001 ? last.intendedExecutionDate : "なし", x.observations, x.evidence];
           }),
         ]} />
       </article>
@@ -130,10 +132,11 @@ export function IntegratedDashboard({ production, productionForward, phase5, pha
   );
 }
 
-export function Phase5ForwardPanel({ productionForward, ledger, status }: {
+export function Phase5ForwardPanel({ productionForward, ledger, status, productionVersion }: {
   productionForward: ForwardLedger | null;
   ledger: Phase5Ledger | null;
   status: Phase5StatusFile | null;
+  productionVersion?: string;
 }) {
   if (!ledger) return <article className="panel"><em>PHASE 5 FORWARD</em><h2>Phase 5台帳を読み込めません</h2><p className="warningNote">既存Production Forwardには影響しません。Phase 5 Workflowとstatus JSONを確認してください。</p></article>;
   const rows = summarizePhase5(ledger);
@@ -146,16 +149,16 @@ export function Phase5ForwardPanel({ productionForward, ledger, status }: {
         const last = ledger.records.filter((r) => r.strategyVersion === freeze.version).at(-1);
         return <article className="panel candidateAccount" key={freeze.version}><div className="panelHead"><div><em>{roleLabel[freeze.role] || freeze.role}</em><h2>{freeze.ticker}</h2></div><Chip tone={s.status === "FORWARD_ACTIVE" ? "ok" : "warn"}>{s.status}</Chip></div><strong className="versionLabel">{freeze.version}</strong><p>{systemDescription[freeze.version]}</p><div className="candidateMetrics"><div><span>Target</span><b>{last ? `${Math.round(last.targetExposure * 100)}%` : "—"}</b></div><div><span>Total Return</span><b>{pct(s.totalReturn)}</b></div><div><span>DD</span><b>{pct(s.currentDd)}</b></div><div><span>Actions</span><b>{s.actionDays}</b></div></div><p className="note">開始 {freeze.startDate} · Evidence {s.evidence} · 観測 {s.observations}</p></article>;
       })}</section>
-      <article className="panel"><div className="panelHead"><div><em>FORWARD FRONTIER</em><h2>既存TQQQ Operational Baselineとの比較</h2></div><span>短期順位ではなく、壊れていないかを優先</span></div><SimpleTable heads={["System", "役割", "開始", "Model指数/Return", "Current DD", "Action", "Evidence", "Lifecycle Formal Gate"]} rows={[
+      <article className="panel"><div className="panelHead"><div><em>FORWARD FRONTIER</em><h2>TQQQ Reference Baselineと凍結Frontierの比較</h2></div><span>短期順位ではなく、壊れていないかを優先</span></div><SimpleTable heads={["System", "役割", "開始", "Model指数/Return", "Current DD", "Action", "Evidence", "Lifecycle Formal Gate"]} rows={[
         ["TQQQ / VS13-v1.0", "Operational Baseline", productionForward?.freezes[0]?.startDate || "2026-08-21", champion ? `${modelIndex(champion.totalReturn)} / ${pct(champion.totalReturn)}` : "—", champion ? pct(champion.currentDd) : "—", champion?.orders ?? "—", champion?.evidence || "—", ledger.reviewSchedule.formal],
-        ...ledger.freezes.map((f) => { const s = rows.find((x) => x.version === f.version)!; return [`${f.ticker} / ${f.version}`, roleLabel[f.role] || f.role, f.startDate, `${modelIndex(s.totalReturn)} / ${pct(s.totalReturn)}`, pct(s.currentDd), s.actionDays, s.evidence, ledger.reviewSchedule.formal]; }),
+        ...ledger.freezes.map((f) => { const s = rows.find((x) => x.version === f.version)!; return [`${f.ticker} / ${f.version}`, f.version===productionVersion?"CURRENT PRODUCTION":roleLabel[f.role] || f.role, f.startDate, `${modelIndex(s.totalReturn)} / ${pct(s.totalReturn)}`, pct(s.currentDd), s.actionDays, s.evidence, ledger.reviewSchedule.formal]; }),
       ]} /></article>
       <article className="panel formula"><em>FORWARD GOVERNANCE</em><h2>昇格条件は先に固定</h2><code>{ledger.promotionPolicy}</code><p>ロジックを変更する場合は新Version・新startDateです。既存台帳の上書きは禁止です。</p></article>
     </>
   );
 }
 
-export function Phase5PaperPanel({ ledger }: { ledger: Phase5Ledger | null }) {
+export function Phase5PaperPanel({ ledger, productionVersion }: { ledger: Phase5Ledger | null; productionVersion?: string }) {
   const [paperConfig, setPaperConfig] = useState<{ initialJpy: number; fxRate: number } | null>(null);
   useEffect(() => {
     const load = () => {
@@ -171,7 +174,7 @@ export function Phase5PaperPanel({ ledger }: { ledger: Phase5Ledger | null }) {
   const accounts = useMemo(() => ledger && paperConfig ? phase5PaperAccounts(ledger, paperConfig.initialJpy, paperConfig.fxRate) : [], [ledger, paperConfig]);
   return (
     <article className="panel phase5Paper">
-      <div className="panelHead"><div><em>PHASE 5 · PARALLEL PAPER ACCOUNTS</em><h2>候補ごとに独立100%比較</h2></div><Chip tone={ledger ? "warn" : "bad"}>Research only</Chip></div>
+      <div className="panelHead"><div><em>PHASE 5 · PARALLEL PAPER ACCOUNTS</em><h2>候補ごとに独立100%比較</h2></div><Chip tone={ledger ? "warn" : "bad"}>{productionVersion&&ledger?.freezes.some(f=>f.version===productionVersion)?"Production reference paper · no broker orders":"Research reference only"}</Chip></div>
       <p className="note">既存Production Paperの初期資金・固定USD/JPY設定を共有します。ただし各候補の開始日は凍結された真のForward開始日から変更できません。3口座を同時保有する提案ではなく、比較用の独立仮想口座です。固定FXレートで表示するため、為替・税・broker固有コストを含む実円建て口座損益ではありません。</p>
       {!paperConfig && <div className="emptyMini">上のProduction Paper Tradingを開始すると、同じ初期資金条件でPhase 5候補も自動表示します。</div>}
       {paperConfig && !ledger && <div className="emptyMini">Phase 5 Forward台帳を読み込めません。</div>}

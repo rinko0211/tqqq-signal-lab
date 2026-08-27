@@ -27,6 +27,7 @@ import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,type ProductionConfig
 import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
+import {nyseExecutionWindow} from "../lib/market-calendar";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
@@ -394,6 +395,9 @@ export default function Home() {
     holdingsMatch=holdings.ticker?holdings.ticker===currentTicker&&(!holdings.version||holdings.version===currentVersion):currentTicker==="TQQQ",
     displayHoldings=holdingsMatch?holdings:{...EMPTY,ticker:currentTicker,version:currentVersion},
     actual = displayHoldings.ratio === "" ? null : Number(displayHoldings.ratio) / 100,
+    executionDate=signal?.executionDate||(signal?nextExecutionDate(signal.date):undefined),
+    executionWindow=executionDate?nyseExecutionWindow(executionDate,now.toISOString()):null,
+    executionMissed=Boolean(holdingsMatch&&actual!==null&&Math.abs(actual-target)>=.001&&executionWindow==="OPEN_PASSED"),
     signalUnsafe=Boolean(runtimeStatus?.state==="failed"||fresh?.stale),
     action =
       signalUnsafe
@@ -402,11 +406,13 @@ export default function Home() {
           ? `運用Tickerが${currentTicker}へ切り替わりました。旧Tickerの保有値は流用しません。${currentTicker}の保有状況を再入力してください`
           : actual === null
             ? "保有状況未入力：目標のみ表示"
-            : Math.abs(actual - target) < 0.001
-              ? "変更なし"
-              : actual < target
-                ? `${currentTicker}比率を${target * 100}%まで増加`
-                : `${currentTicker}比率を${target * 100}%まで縮小`;
+            : executionMissed
+              ? `売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`
+              : Math.abs(actual - target) < 0.001
+                ? "変更なし"
+                : actual < target
+                  ? `${currentTicker}比率を${target * 100}%まで増加`
+                  : `${currentTicker}比率を${target * 100}%まで縮小`;
   const sourceLabel =
     dataset?.source === "auto"
       ? "実データ・自動取得"
@@ -556,12 +562,13 @@ export default function Home() {
             platformMode={productionConfig?.mode||"RESEARCH"}
             humanApproved={Boolean(productionConfig?.approvedByHuman)}
             signalUnsafe={signalUnsafe}
+            executionMissed={executionMissed}
             ticker={dailySignal?.assetTicker||"TQQQ"}
           />
         </>)}
-        {tab==="dashboard" && <IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status} platformMode={productionConfig?.mode} humanApproved={productionConfig?.approvedByHuman}/>}
+        {tab==="dashboard" && <IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status} platformMode={productionConfig?.mode} humanApproved={productionConfig?.approvedByHuman} productionTicker={productionConfig?.selectedTicker||undefined} productionVersion={productionConfig?.strategyVersion||undefined}/>}
         {tab==="lifecycle" && <LifecycleActionCenter/>}
-        {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status}/></>}
+        {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status} productionVersion={productionConfig?.strategyVersion||undefined}/></>}
         {compareAnalysis && tab === "compare" && (
           <CompareView
             analysis={compareAnalysis}
@@ -601,10 +608,10 @@ export default function Home() {
           latestDate={latestDate}
           source={dataset?.source||(dailySignal?"auto":undefined)}
           ticker={dailySignal?.assetTicker||"TQQQ"}
-        /><Phase5PaperPanel ledger={phase5Ledger}/></>}
+        /><Phase5PaperPanel ledger={phase5Ledger} productionVersion={productionConfig?.strategyVersion||undefined}/></>}
         {tab === "status" && <><SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/><Phase5SystemStatus ledger={phase5Ledger} status={phase5Status}/></>}
         {tab === "guide" && <><GuideView/><LifecycleGuide/><RecoveryPromptPack/></>}
-        {tab === "roadmap" && <RoadmapV2/>}
+        {tab === "roadmap" && <RoadmapV2 config={productionConfig}/>}
         {tab === "glossary" && <GlossaryView/>}
         {tab === "spec" && <SpecView />}
       </section>
@@ -636,6 +643,7 @@ function SignalView({
   platformMode,
   humanApproved,
   signalUnsafe,
+  executionMissed,
   ticker,
 }: {
   bt?: Backtest;
@@ -653,6 +661,7 @@ function SignalView({
   platformMode:string;
   humanApproved:boolean;
   signalUnsafe:boolean;
+  executionMissed:boolean;
   ticker:string;
 }) {
   const execute = signal.executionDate || nextExecutionDate(signal.date);
@@ -666,12 +675,12 @@ function SignalView({
       <section className="todayCall">
         <span>本日の判断</span>
         <h2>{changed?`${signal.previousTarget*100}% → ${signal.target*100}%`:`${signal.target*100}%維持`}</h2>
-        <strong>{signalUnsafe?"売買しない・System Status確認":changed?`次回始値で${Math.abs(signal.target-signal.previousTarget)*100}%${direction}`:"売買なし"}</strong>
+        <strong>{signalUnsafe?"売買しない・System Status確認":executionMissed?"予定始値通過・新規売買しない":changed?`次回始値で${Math.abs(signal.target-signal.previousTarget)*100}%${direction}`:"売買なし"}</strong>
         <Status kind={signal.regime==="急落・危機"?"bad":"ok"}>危機判定：{signal.regime==="急落・危機"?"発動中":"なし"}</Status>
       </section>
       <section className="signal">
         <article className="decision">
-          <Status kind={signalUnsafe?"bad":activeProduction?"ok":"warn"}>{signalUnsafe?"データ安全確認待ち・売買禁止":decisionPending?"正式Production継続中 · Decision Review Pending":activeProduction?"正式Production · Human Approved":"Operational Baseline · Research"}</Status>
+          <Status kind={signalUnsafe||executionMissed?"bad":activeProduction?"ok":"warn"}>{signalUnsafe?"データ安全確認待ち・売買禁止":executionMissed?"予定始値通過 · 次回判定待ち":decisionPending?"正式Production継続中 · Decision Review Pending":activeProduction?"正式Production · Human Approved":"Operational Baseline · Research"}</Status>
           <div className="decisionHead">
             <div>
               <span>現在の目標ポジション</span>
@@ -1280,7 +1289,7 @@ const modelIndex=(totalReturn:number)=>Number.isFinite(totalReturn)?(100*(1+tota
 
 function ForwardMini({ledger}:{ledger:ForwardLedger}){
   const rows=summarizeForward(ledger),champ=rows.find(x=>x.id==="VS13")!;
-  return <article className="panel health"><div className="panelHead"><div><em>FORWARD VALIDATION · IMMUTABLE</em><h2>現在のChampion：VS13-v1.0</h2></div><Status kind="warn">{champ.evidence} Evidence</Status></div><section className="metrics compact"><Metric label="Forward Model指数" value={modelIndex(champ.totalReturn)} sub={`${pct(champ.totalReturn)} · 開始=100 / FX・税・実brokerコスト除外`}/><Metric label="現在DD" value={pct(champ.currentDd)}/><Metric label="注文" value={String(champ.orders)+"回"}/><Metric label="Legacy checkpoint" value={ledger.reviewSchedule.sixMonth} sub="正式GateはReview / 次のActionを参照"/></section><p className="note">まだForward期間が短いため順位は確定していません。Championの自動変更は行いません。金額はJPY-normalized比較用仮想元本で、FX・税・broker固有コストを含む実口座損益ではありません。</p></article>;
+  return <article className="panel health"><div className="panelHead"><div><em>FORWARD VALIDATION · IMMUTABLE</em><h2>TQQQ Reference Baseline：VS13-v1.0</h2></div><Status kind="warn">{champ.evidence} Evidence</Status></div><section className="metrics compact"><Metric label="Forward Model指数" value={modelIndex(champ.totalReturn)} sub={`${pct(champ.totalReturn)} · 開始=100 / FX・税・実brokerコスト除外`}/><Metric label="現在DD" value={pct(champ.currentDd)}/><Metric label="注文" value={String(champ.orders)+"回"}/><Metric label="Legacy checkpoint" value={ledger.reviewSchedule.sixMonth} sub="正式GateはReview / 次のActionを参照"/></section><p className="note">まだForward期間が短いため順位は確定していません。Championの自動変更は行いません。金額はJPY-normalized比較用仮想元本で、FX・税・broker固有コストを含む実口座損益ではありません。</p></article>;
 }
 
 function ForwardView({ledger}:{ledger:ForwardLedger}){
@@ -1288,11 +1297,11 @@ function ForwardView({ledger}:{ledger:ForwardLedger}){
   return <>
     <article className="guideHero"><em>STRATEGY FORWARD TEST · APPEND ONLY</em><h2>未来データで戦略を正式比較</h2><p>2026-08-21以降、その日に公開されたSignalだけを保存します。後日の再計算で当時のSignalを上書きしません。</p><p className="warningNote">表示する円額はJPY-normalized比較用仮想元本です。USD ETF価格リターンを追跡し、FX・税・broker固有の実約定摩擦は含みません。</p></article>
     <section className="glossaryGrid">
-      <article className="panel"><em>BALANCED CHAMPION</em><h2>VS13 — バランス型</h2><p>相場が悪化した時、保有後のTQQQ高値から13%下がることを防御条件の一つにします。成長力と下落抑制の釣り合いが最も安定していたため、現在の基準戦略です。</p><p className="note">平易に言えば「上昇には参加し、危険が強まれば段階的に現金へ逃げる」戦略です。</p></article>
+      <article className="panel"><em>TQQQ REFERENCE BASELINE</em><h2>VS13 — バランス型Reference</h2><p>相場が悪化した時、保有後のTQQQ高値から13%下がることを防御条件の一つにします。成長力と下落抑制の釣り合いが最も安定していたため、現在の基準戦略です。</p><p className="note">平易に言えば「上昇には参加し、危険が強まれば段階的に現金へ逃げる」戦略です。</p></article>
       <article className="panel"><em>GROWTH CHALLENGER</em><h2>VS12 — やや早く守る成長候補</h2><p>基本ロジックはVS13と同じですが、高値から12%下がった段階で防御を強めます。過去成績は少し良好でも、12%を過去データを見て選んだ影響を否定できません。</p><p className="note">数字だけで昇格させず、これからの日々で本当に再現するか競わせます。</p></article>
       <article className="panel"><em>DEFENSIVE CANDIDATE</em><h2>VT30 — 値動きを抑える守備型</h2><p>危険な相場ではTQQQの比率をより細かく落とし、ポートフォリオ全体の年率変動を約30%へ近づけます。上昇利益は減りやすい一方、大きな下落を抑える目的です。</p><p className="note">VS13の単純な敗者ではなく「眠りやすさを重視する別目的の候補」です。</p></article>
     </section>
-    <section className="metrics"><Metric label="Balanced Champion" value="VS13-v1.0"/><Metric label="Model指数開始" value="100.00" sub="実円口座残高ではありません"/><Metric label="開始日" value={ledger.freezes[0]?.startDate||"—"}/><Metric label="Legacy 6M checkpoint" value={ledger.reviewSchedule.sixMonth}/><Metric label="Legacy 12M checkpoint" value={ledger.reviewSchedule.twelveMonth}/><Metric label="Legacy 24M checkpoint" value={ledger.reviewSchedule.twentyFourMonth}/></section>
+    <section className="metrics"><Metric label="TQQQ Reference" value="VS13-v1.0"/><Metric label="Model指数開始" value="100.00" sub="実円口座残高ではありません"/><Metric label="開始日" value={ledger.freezes[0]?.startDate||"—"}/><Metric label="Legacy 6M checkpoint" value={ledger.reviewSchedule.sixMonth}/><Metric label="Legacy 12M checkpoint" value={ledger.reviewSchedule.twelveMonth}/><Metric label="Legacy 24M checkpoint" value={ledger.reviewSchedule.twentyFourMonth}/></section>
     <article className="panel"><em>FORWARD LEADERBOARD</em><h2>Historicalとは分離した現在順位</h2><Table heads={["Strategy","Version","区分","Model指数","Total Return","Max DD","Sortino","Calmar","注文","Evidence","判定"]} rows={rows.map(x=>[x.name,x.version,x.category,modelIndex(x.totalReturn),pct(x.totalReturn),pct(x.metrics.maxDd),x.observations<20?"—":num(x.metrics.sortino),x.observations<63?"—":num(x.metrics.calmar),x.orders,x.evidence,x.status])}/><p className="warningNote">1年未満は年率値を強調しません。Total Return・DD・実注文・経験Regimeを優先します。</p></article>
     <section className="split"><article className="panel"><em>FORWARD EQUITY CURVES</em><h2>Model指数100を同時スタート</h2>{ledger.freezes.map(f=>{const points=ledger.records.filter(r=>r.strategyVersion===f.version).map(r=>({equity:r.equity}));return <div key={f.version}><strong>{f.version}</strong><Curve points={points} label={f.version+" Forward Equity"}/></div>})}</article><article className="panel"><em>UNDERWATER STATUS</em><h2>最高値からの下落</h2><Table heads={["Version","現在DD","最大DD","回復日数"]} rows={rows.map(x=>[x.version,pct(x.currentDd),pct(x.metrics.maxDd),x.metrics.recoveryDays===null?"未回復":String(x.metrics.recoveryDays)+"日"])}/></article></section>
     <article className="panel"><em>EVIDENCE METER · LEGACY TRACK</em><h2>期間だけで昇格させない</h2><Table heads={["Strategy","経過観測","注文","Regime label数","欠測","Legacy Evidence","現在DD","モデル累積コスト"]} rows={rows.map(x=>[x.version,x.observations,x.orders,x.regimes,x.missing,x.evidence,pct(x.currentDd),yen(x.transactionCosts)])}/><p className="note">このLegacy Evidence表示は旧Forward trackの参考値です。最終Production可否は「Review / 次のAction」の共通semantic regime・upstream freshness・Pareto gateが権威ある判定です。</p></article>
@@ -1548,4 +1557,9 @@ const GLOSSARY=[
 ] as const;
 function GlossaryView(){return <><article className="guideHero"><em>BEGINNER GLOSSARY</em><h2>用語集</h2><p>各指標は単独で良し悪しを決めず、OOS・DD・コスト・Live成績と組み合わせて見ます。</p></article><section className="glossaryGrid">{GLOSSARY.map(([term,body])=><article className="panel" key={term}><em>{term}</em><h2>{term}</h2><p className="note">{body}</p></article>)}</section></>}
 
-function RoadmapV2(){const phases=[["Phase 0","Freeze / Audit / Charter","COMPLETE","既存Production・Forwardを保護して研究境界を固定"],["Phase 1","Underlying × Leverage Screening","COMPLETE","Core 4本を選抜"],["Phase 1.5","Leverage-Neutral Check","COMPLETE","2x Stopを13%×2/3へ機械換算"],["Phase 2","Common Robustness","COMPLETE","TQQQ/QLD/UPRO/SSOのFrontierを確認"],["Phase 3","Native Research","COMPLETE","S&P Broad Trend採用・NasdaqはCommon維持"],["Phase 4","Winner + Cash Allocator","REJECTED","Ticker swing v1は単体UPRO Nativeを上回らず"],["Phase 5","True Forward Gate","ACTIVE","UPRO/SSO/QLDを2026-08-25から凍結観測"],["Phase 6","Final Decision / Production","WAIT","12か月以上のForward Evidence＋Human Approval"]];return <><article className="guideHero"><em>INTEGRATED PRODUCT ROADMAP</em><h2>Research → Forward → Production</h2><p>Historical探索はPhase 4で停止しました。現在はTQQQ VS13をOperational Baselineとして日次運用し、正式Production承認前のPhase 5候補を別台帳で未来観測しています。</p></article><article className="panel"><Table heads={["段階","テーマ","状態","結論 / 完了条件"]} rows={phases}/></article><article className="panel formula"><em>CURRENT OPERATING BOUNDARY</em><h2>現在地</h2><code>OPERATE: TQQQ VS13 · VALIDATE: UPRO SPBT / SSO SPBT / QLD scaled · RESEARCH: frozen archive</code><p>Phase 5候補はPaper/Forward比較には表示しますが、Phase 6承認までは「今日のシグナル」へ昇格しません。</p></article></>}
+function RoadmapV2({config}:{config:ProductionConfig|null}){
+  const active=Boolean(config?.approvedByHuman&&config?.mode!=="RESEARCH"&&config?.selectedTicker&&config?.strategyVersion);
+  const operate=active?`${config!.selectedTicker} ${config!.strategyVersion} · HUMAN APPROVED PRODUCTION`:"TQQQ VS13 · OPERATIONAL REFERENCE BASELINE";
+  const phases=[["Phase 0","Freeze / Audit / Charter","COMPLETE","既存Production・Forwardを保護して研究境界を固定"],["Phase 1","Underlying × Leverage Screening","COMPLETE","Core 4本を選抜"],["Phase 1.5","Leverage-Neutral Check","COMPLETE","2x Stopを13%×2/3へ機械換算"],["Phase 2","Common Robustness","COMPLETE","TQQQ/QLD/UPRO/SSOのFrontierを確認"],["Phase 3","Native Research","COMPLETE","S&P Broad Trend採用・NasdaqはCommon維持"],["Phase 4","Winner + Cash Allocator","REJECTED","Ticker swing v1は単体UPRO Nativeを上回らず"],["Phase 5","True Forward Gate","ACTIVE","凍結ForwardはProduction選択後も比較Referenceとして継続"],["Phase 6","Periodic Human Review / Production","ACTIVE WHEN DUE","12か月Gate後も年次再レビュー。変更はHuman Approvalのみ"]];
+  return <><article className="guideHero"><em>INTEGRATED PRODUCT ROADMAP</em><h2>Research → Forward → Periodic Review → Production</h2><p>{active?`現在の正式Productionは ${config!.selectedTicker} / ${config!.strategyVersion} です。TQQQ VS13とPhase 5台帳は比較Referenceとして継続します。`:"現在はTQQQ VS13をOperational Reference Baselineとして日次観測し、Phase 5候補を別台帳で未来観測しています。"}</p></article><article className="panel"><Table heads={["段階","テーマ","状態","結論 / 完了条件"]} rows={phases}/></article><article className="panel formula"><em>CURRENT OPERATING BOUNDARY</em><h2>現在地</h2><code>OPERATE: {operate} · VALIDATE: frozen Forward frontier · RESEARCH: frozen archive</code><p>正式Productionが変わってもReference Forwardを削除・改名せず、次回年次Reviewの比較材料として継続します。</p></article></>;
+}
