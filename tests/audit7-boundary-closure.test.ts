@@ -4,6 +4,7 @@ import {dailyBarIsComplete,earliestLegalNyseOpen,nyseReviewBoundaryReached} from
 import {lifecycleReviewCoversUpstreams,lifecycleReviewIsFresh} from "../lib/lifecycle-approval.ts";
 import {emptyLifecycleLedger} from "../lib/lifecycle-review.ts";
 import {emptyPhase5Ledger} from "../lib/phase5-forward.ts";
+import {DEFAULT_PRODUCTION_CONFIG,cancelDecision,transitionMode} from "../lib/production.ts";
 
 test("A7 D04 FC-01: early-close session remains conservatively closed until the normal 16:00/16:15 ET gates",()=>{
   // 2027-11-26 is the Friday after Thanksgiving and is ordinarily a 13:00 ET early close.
@@ -29,4 +30,26 @@ test("A7 D21 FC-02/11: fresh upstream regeneration invalidates an older Lifecycl
   assert.equal(lifecycleReviewCoversUpstreams(stale,["2027-08-25T20:05:00Z","2027-08-25T20:06:00Z"]),false,"newer upstream authority must invalidate the older review even within the 48h age window");
   const refreshed={...stale,updatedAt:"2027-08-25T20:07:00Z"};
   assert.equal(lifecycleReviewCoversUpstreams(refreshed,["2027-08-25T20:05:00Z","2027-08-25T20:06:00Z"]),true);
+});
+
+test("A7 transition graph: direct RESEARCH→PRODUCTION and Production(A)→Production(B) are forbidden",()=>{
+  const approvalA={ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2027-08-25",evidence:"Strong",finalReviewComplete:true} as const;
+  const approvalB={ticker:"SSO",system:"SSO + S&P Broad Trend + scaled stop",version:"SSO-SPBT-Scaled-v1.0",date:"2028-01-10",evidence:"Strong",finalReviewComplete:true} as const;
+  assert.throws(()=>transitionMode(DEFAULT_PRODUCTION_CONFIG,"PRODUCTION",approvalA),/DECISION/);
+  const a=transitionMode(transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION"),"PRODUCTION",approvalA);
+  assert.throws(()=>transitionMode(a,"PRODUCTION",approvalB),/DECISION/);
+});
+
+test("A7 transition graph: first DECISION cancellation returns clean RESEARCH with no latent authority",()=>{
+  const d=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION"),cancelled=cancelDecision(d);
+  assert.equal(cancelled.mode,"RESEARCH");assert.equal(cancelled.approvedByHuman,false);assert.equal(cancelled.selectedTicker,null);assert.equal(cancelled.strategyVersion,null);
+});
+
+test("A7 transition graph: same-system reaffirmation preserves episode start while a real replacement resets it",()=>{
+  const approve=(current:any,ticker:string,system:string,version:string,date:string)=>transitionMode(transitionMode(current,"DECISION"),"PRODUCTION",{ticker,system,version,date,evidence:"Strong",finalReviewComplete:true});
+  const a1=approve(DEFAULT_PRODUCTION_CONFIG,"UPRO","UPRO + S&P Broad Trend","UPRO-SPBT-v1.0","2027-08-25");
+  const reaffirmed=approve(a1,"UPRO","UPRO + S&P Broad Trend","UPRO-SPBT-v1.0","2028-01-10");
+  assert.equal(reaffirmed.effectiveDate,"2027-08-25");assert.equal(reaffirmed.nextHealthReview,a1.nextHealthReview);
+  const b=approve(reaffirmed,"SSO","SSO + S&P Broad Trend + scaled stop","SSO-SPBT-Scaled-v1.0","2028-01-10");
+  assert.equal(b.effectiveDate,"2028-01-10");assert.equal(b.nextHealthReview,"2028-04-10");
 });
