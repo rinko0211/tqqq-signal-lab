@@ -76,9 +76,12 @@ jobs:
 
           t=Path('tests/audit5-operational-continuity.test.ts')
           ts=t.read_text()
-          ts += '''\n\ntest("challenger failure is isolated while incumbent failure remains globally fail-closed",()=>{\n  const life=fs.readFileSync("lib/lifecycle-review.ts","utf8");\n  assert.doesNotMatch(life,/else if\\(incumbentIssue\\|\\|candidateIssues\\)/);\n  assert.match(life,/else if\\(incumbentIssue\\)/);\n  assert.match(life,/cycle&&cycle\\.userAction===\\"RUN_PHASE6_HUMAN_DECISION_REQUIRED\\"|cycle&&cycle\\.userAction===\\"RUN_PHASE6_HUMAN_REVIEW\\"/);\n});\n'''
+          ts += '''\n\ntest("challenger failure is isolated while incumbent failure remains globally fail-closed",()=>{\n  const life=fs.readFileSync("lib/lifecycle-review.ts","utf8");\n  assert.doesNotMatch(life,/else if\\(incumbentIssue\\|\\|candidateIssues\\)/);\n  assert.match(life,/else if\\(incumbentIssue\\)/);\n  assert.match(life,/cycle&&cycle\\.userAction===\\"RUN_PHASE6_HUMAN_DECISION_REQUIRED\\"|cycle&&cycle\\.userAction===\\"RUN_PHASE6_HUMAN_REVIEW\\"/);\n});\n\ntest("Daily runtime contains no one-shot Audit 5 bootstrap",()=>{\n  const daily=fs.readFileSync("scripts/generate-daily.ts","utf8");\n  assert.doesNotMatch(daily,/AUDIT5_BOOTSTRAP|audit5-remediate|Applying approved Audit 5 remediation/);\n});\n'''
           t.write_text(ts)
           PY
+      - name: Reject transient remediation bootstrap from runtime
+        run: |
+          ! grep -qE 'AUDIT5_BOOTSTRAP|audit5-remediate|Applying approved Audit 5 remediation' scripts/generate-daily.ts
       - name: Install exact dependencies
         run: npm ci
       - name: Audit 5 targeted boundary and continuity regression
@@ -101,6 +104,7 @@ jobs:
           npm run test:ops
           npm run build:pages
       - name: Restore authoritative ledgers after live preflight
+        if: always()
         run: |
           rm -rf github-pages/public/data
           cp -a /tmp/audit5-authoritative-data github-pages/public/data
@@ -150,6 +154,7 @@ jobs:
           - Dashboard, Phase 5, Lifecycle and Roadmap semantics distinguish **current Production** from **TQQQ reference baseline** and do not duplicate the same selected Phase 5 version as RESEARCH.
           - Challenger feed failures are isolated from a healthy incumbent decision; an incumbent integrity failure still blocks all Production selection.
           - Audit 5 boundary/continuity tests are permanently registered in both test:core and test:ops.
+          - Temporary Audit 5 remediation bootstrap code is excluded from the persisted Daily runtime.
 
           ## Validation required for close
           The close workflow requires all of the following to succeed before this report is committed:
@@ -160,7 +165,7 @@ jobs:
           - lint
           - non-persistent live Daily → Phase 5 → Lifecycle → Production Health preflight
           - Pages build
-          - restoration of authoritative data after live preflight
+          - restoration of authoritative data after live preflight, including on preflight failure
           - assertion that Production remains RESEARCH/unapproved and both Forward ledgers remain append-only
 
           ## Reliability certification decision
@@ -176,8 +181,8 @@ jobs:
           ## Authoritative-state effect
           Audit 5 does not select or promote a Production system and does not rewrite Forward history. The live-generation preflight is restored before persistence. The Production/Forward state therefore remains governed by the pre-audit authoritative ledgers.
           EOF
-      - name: Remove one-time remediation helper
-        run: rm scripts/audit5-remediate.mjs
+      - name: Remove one-time Audit 5 scaffolding
+        run: rm scripts/audit5-remediate.mjs .github/workflows/audit5-close.yml
       - name: Repository diff sanity
         run: |
           git diff --check
