@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'tests/audit7-state-space.test.ts'
+      - 'tests/audit7-authority-bundle.test.ts'
+      - 'tests/audit7-ledger-integrity.test.ts'
       - '.github/workflows/audit7-state-space.yml'
       - 'research/multi-audit-assurance-protocol-v1.0-2026-08-27.md'
 
@@ -14,7 +16,7 @@ permissions:
 jobs:
   state-space:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,7 +30,10 @@ jobs:
           test -f research/multi-audit-assurance-protocol-v1.0-2026-08-27.md
           grep -q 'IMMUTABLE BASELINE FOR AUDIT 7' research/multi-audit-assurance-protocol-v1.0-2026-08-27.md
       - name: Run Audit 7 discovery probes
-        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts
-      - name: Run existing core regression after discovery probes
+        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts tests/audit7-authority-bundle.test.ts tests/audit7-ledger-integrity.test.ts
+      - name: Run full core regression after discovery probes
         if: always()
         run: npm run test:core
+      - name: Run full operational regression after discovery probes
+        if: always()
+        run: npm run test:ops
