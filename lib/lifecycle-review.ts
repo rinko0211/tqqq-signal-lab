@@ -3,7 +3,7 @@ import { summarizePhase5, type Phase5Ledger, type Phase5Summary } from "./phase5
 import { assessHealth, hasActiveProduction, type ProductionConfig, type HealthState } from "./production.ts";
 import {summarizeRegimeCoverage} from "./regime-coverage.ts";
 import {compareCandidateToIncumbent,type ParetoMerit} from "./forward-pareto.ts";
-import {marketDataLagSessions,marketDate,nyseReviewBoundaryReached,upstreamWorkflowFresh} from "./market-calendar.ts";
+import {isValidIsoMarketDate,marketDataLagSessions,marketDate,nyseReviewBoundaryReached,upstreamWorkflowFresh} from "./market-calendar.ts";
 
 export type LifecycleStage="ACCUMULATING"|"INTERIM"|"FORMAL"|"STRONGER";
 export type CandidateDecision="CONTINUE_FORWARD"|"DATA_REVIEW_REQUIRED"|"REVALIDATION_REQUIRED"|"PHASE6_ELIGIBLE"|"INSUFFICIENT_EVIDENCE";
@@ -116,7 +116,7 @@ function selectionDecision(reviews:CandidateReview[]){
 }
 
 export function assertLifecycleLedgerInternalIntegrity(ledger:LifecycleLedger){
-  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");const keys=new Set<string>();for(const e of ledger.events){if(!e.key||keys.has(e.key))throw Error(`Lifecycle integrity: duplicate/invalid event key ${e.key}`);if(!DATE_RE.test(e.reviewDate)||!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Lifecycle integrity: invalid event chronology ${e.key}`);keys.add(e.key);}
+  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");const keys=new Set<string>();let previousRecordedAt=-Infinity;for(const e of ledger.events){if(!e.key||keys.has(e.key))throw Error(`Lifecycle integrity: duplicate/invalid event key ${e.key}`);if(!isValidIsoMarketDate(e.reviewDate)||!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Lifecycle integrity: invalid event chronology ${e.key}`);const recordedAt=Date.parse(e.recordedAt);if(recordedAt<previousRecordedAt)throw Error(`Lifecycle integrity: out-of-order event chronology ${e.key}`);previousRecordedAt=recordedAt;keys.add(e.key);}
 }
 export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardLedger;production:ProductionConfig;phase5Status?:LifecycleInputStatus|null;runtimeStatus?:RuntimeStatus|null;prior?:LifecycleLedger|null;now?:string}):LifecycleLedger{
   const now=args.now??new Date().toISOString(),asOf=marketDate(now);if(!DATE_RE.test(asOf))throw Error("Invalid lifecycle review date");

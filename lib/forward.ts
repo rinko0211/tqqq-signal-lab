@@ -10,7 +10,7 @@ import {
 } from "./engine.ts";
 import { earliestLegalExecutionDate } from "./execution-integrity.ts";
 import {assertPlausibleTransition,corporateActionContinuity} from "./corporate-actions.ts";
-import {countNyseSessions} from "./market-calendar.ts";
+import {countNyseSessions,isNyseSession} from "./market-calendar.ts";
 
 export const FORWARD_SCHEMA_VERSION = 1;
 export const FORWARD_START_DATE = "2026-08-21";
@@ -259,9 +259,13 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
 export function assertForwardLedgerInternalIntegrity(ledger:ForwardLedger){
   if(ledger.schemaVersion!==FORWARD_SCHEMA_VERSION||ledger.appendOnly!==true)throw Error("Forward prior ledger is invalid; refusing append-only reset");
   assertForwardFreezeIntegrity(ledger);
+  const canonical=[...ledger.records].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
+  for(let i=0;i<ledger.records.length;i++)if(canonical[i]?.key!==ledger.records[i]?.key)throw Error(`Forward integrity: non-canonical record order at index ${i}`);
   const keys=new Set<string>(),logical=new Set<string>();
   for(const r of ledger.records){
     const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw Error(`Forward integrity: unknown strategy version ${r.strategyVersion}`);
+    if(!isNyseSession(r.marketDataDate))throw Error(`Forward integrity: invalid/non-session market date ${r.marketDataDate}`);
+    if(!Number.isFinite(Date.parse(r.recordedAt)))throw Error(`Forward integrity: invalid recordedAt ${r.key}`);
     const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw Error(`Forward integrity: record key mismatch ${r.key}`);
     if(r.marketDataDate<freeze.startDate)throw Error(`Forward integrity: pre-start record ${r.key}`);
     if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);

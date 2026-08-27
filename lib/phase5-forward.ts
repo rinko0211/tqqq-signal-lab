@@ -1,7 +1,7 @@
 import { metricSet, nextExecutionDate, signals, STRATEGIES, type Bar, type Dataset, type Metrics, type Signal, type StrategyConfig } from "./engine.ts";
 import { earliestLegalExecutionDate } from "./execution-integrity.ts";
 import {assertPlausibleTransition,corporateActionContinuity} from "./corporate-actions.ts";
-import {countNyseSessions} from "./market-calendar.ts";
+import {countNyseSessions,isNyseSession} from "./market-calendar.ts";
 
 export const PHASE5_FORWARD_SCHEMA = 1;
 export const PHASE5_FORWARD_START = "2026-08-25";
@@ -145,7 +145,8 @@ function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:
 function assertPhase5FreezeIntegrity(ledger:Phase5Ledger){for(const frozen of PHASE5_FREEZES){const existing=ledger.freezes.find(x=>x.version===frozen.version);if(!existing)throw new Error(`Phase 5 freeze missing: ${frozen.version}`);if(JSON.stringify(existing)!==JSON.stringify(frozen))throw new Error(`Phase 5 freeze drift blocked: ${frozen.version}`)}if(ledger.freezes.length!==PHASE5_FREEZES.length)throw new Error("Phase 5 unexpected freeze definition")};
 export function assertPhase5LedgerInternalIntegrity(ledger:Phase5Ledger){
   if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");assertPhase5FreezeIntegrity(ledger);
-  const keys=new Set<string>(),logical=new Set<string>();for(const r of ledger.records){const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw new Error(`Phase 5 integrity: unknown version ${r.strategyVersion}`);const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw new Error(`Phase 5 integrity: record key mismatch ${r.key}`);if(r.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: pre-start record ${r.key}`);if(keys.has(r.key)||logical.has(expected))throw new Error(`Phase 5 integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);}
+  const canonical=[...ledger.records].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));for(let i=0;i<ledger.records.length;i++)if(canonical[i]?.key!==ledger.records[i]?.key)throw new Error(`Phase 5 integrity: non-canonical record order at index ${i}`);
+  const keys=new Set<string>(),logical=new Set<string>();for(const r of ledger.records){const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw new Error(`Phase 5 integrity: unknown version ${r.strategyVersion}`);if(!isNyseSession(r.marketDataDate))throw new Error(`Phase 5 integrity: invalid/non-session market date ${r.marketDataDate}`);if(!Number.isFinite(Date.parse(r.recordedAt)))throw new Error(`Phase 5 integrity: invalid recordedAt ${r.key}`);const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw new Error(`Phase 5 integrity: record key mismatch ${r.key}`);if(r.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: pre-start record ${r.key}`);if(keys.has(r.key)||logical.has(expected))throw new Error(`Phase 5 integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);}
 }
 export function updatePhase5LedgerSubset(payload:Payload,input:Phase5Ledger|null|undefined,versions:string[],generatedAt=new Date().toISOString()):Phase5Ledger{
   if(input)assertPhase5LedgerInternalIntegrity(input);

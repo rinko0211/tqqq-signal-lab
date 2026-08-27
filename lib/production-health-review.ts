@@ -1,6 +1,6 @@
 import {hasActiveProduction,type ProductionConfig, type HealthState } from "./production.ts";
 import type { LifecycleLedger } from "./lifecycle-review.ts";
-import {marketDate,nyseReviewBoundaryReached} from "./market-calendar.ts";
+import {isValidIsoMarketDate,marketDate,nyseReviewBoundaryReached} from "./market-calendar.ts";
 
 export type HealthReviewEvent={key:string;dueDate:string;recordedAt:string;version:string;state:HealthState;timing:"ON_TIME"|"LATE_CURRENT_STATE_ONLY";reasons:string[]};
 export type ProductionHealthLedger={schemaVersion:1;createdAt:string;updatedAt:string;appendOnly:true;events:HealthReviewEvent[];current:{active:boolean;version:string|null;lastReview:string|null;nextReview:string|null;state:"NOT_ACTIVE"|HealthState;userAction:"NONE"|"REVALIDATE_PRODUCTION"|"URGENT_INTEGRITY_REVIEW";message:string}};
@@ -8,7 +8,7 @@ const addMonths=(date:string,n:number)=>{const d=new Date(`${date}T00:00:00Z`);d
 const daysBetween=(a:string,b:string)=>Math.floor((new Date(`${b}T00:00:00Z`).getTime()-new Date(`${a}T00:00:00Z`).getTime())/86400000);
 export function emptyProductionHealthLedger(now=new Date().toISOString()):ProductionHealthLedger{return{schemaVersion:1,createdAt:now,updatedAt:now,appendOnly:true,events:[],current:{active:false,version:null,lastReview:null,nextReview:null,state:"NOT_ACTIVE",userAction:"NONE",message:"No human-approved Production system is active."}}}
 export function assertProductionHealthLedgerInternalIntegrity(ledger:ProductionHealthLedger){
-  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Production Health prior ledger is invalid; refusing append-only reset");const keys=new Set<string>(),logical=new Set<string>();for(const e of ledger.events){const id=`${e.version}|${e.dueDate}`;if(!e.key||e.key!==id||keys.has(e.key)||logical.has(id))throw Error(`Production Health integrity: duplicate/invalid event ${e.key}`);if(!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Production Health integrity: invalid recordedAt ${e.key}`);keys.add(e.key);logical.add(id);}
+  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Production Health prior ledger is invalid; refusing append-only reset");const keys=new Set<string>(),logical=new Set<string>();let previousRecordedAt=-Infinity;for(const e of ledger.events){const id=`${e.version}|${e.dueDate}`;if(!e.key||e.key!==id||keys.has(e.key)||logical.has(id))throw Error(`Production Health integrity: duplicate/invalid event ${e.key}`);if(!isValidIsoMarketDate(e.dueDate)||!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Production Health integrity: invalid event date/timestamp ${e.key}`);const recordedAt=Date.parse(e.recordedAt);if(recordedAt<previousRecordedAt)throw Error(`Production Health integrity: out-of-order event chronology ${e.key}`);previousRecordedAt=recordedAt;keys.add(e.key);logical.add(id);}
 }
 export function updateProductionHealthLedger(args:{production:ProductionConfig;lifecycle:LifecycleLedger;prior?:ProductionHealthLedger|null;now?:string}):ProductionHealthLedger{
   const now=args.now??new Date().toISOString(),asOf=marketDate(now);if(args.prior)assertProductionHealthLedgerInternalIntegrity(args.prior);const out=args.prior?structuredClone(args.prior):emptyProductionHealthLedger(now),p=args.production;
