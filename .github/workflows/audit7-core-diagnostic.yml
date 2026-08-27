@@ -1,0 +1,160 @@
+name: Audit 7 Core Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/audit7-core-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: engine
+        id: engine
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/engine.test.ts
+      - name: paper
+        id: paper
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/paper.test.ts
+      - name: forward
+        id: forward
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/forward.test.ts
+      - name: leverage-screening
+        id: leverage
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/leverage-screening.test.ts
+      - name: phase1-5
+        id: phase15
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/phase1-5.test.ts
+      - name: phase2
+        id: phase2
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/phase2.test.ts
+      - name: phase3
+        id: phase3
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/phase3.test.ts
+      - name: phase4
+        id: phase4
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/phase4.test.ts
+      - name: phase5-forward
+        id: phase5f
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/phase5-forward.test.ts
+      - name: phase5-paper
+        id: phase5p
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/phase5-paper.test.ts
+      - name: execution-integrity
+        id: execint
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/execution-integrity.test.ts
+      - name: lifecycle-review
+        id: lifecycle
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts
+      - name: operations-regimes
+        id: regimes
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/operations-regimes.test.ts
+      - name: production-lifecycle
+        id: prodlife
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/production-lifecycle.test.ts
+      - name: production-health-review
+        id: prodhealth
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/production-health-review.test.ts
+      - name: executive-controls
+        id: execctrl
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/executive-controls.test.ts
+      - name: corporate-action-ledger
+        id: corp
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/corporate-action-ledger.test.ts
+      - name: executive-ui-semantics
+        id: ui
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/executive-ui-semantics.test.mjs
+      - name: operational-separation
+        id: sep
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/operational-separation.test.mjs
+      - name: final-control-plane
+        id: control
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/final-control-plane.test.mjs
+      - name: re-audit2-phaseb
+        id: r2b
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/re-audit2-phaseb.test.ts
+      - name: re-audit2-phasec
+        id: r2c
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/re-audit2-phasec.test.ts
+      - name: re-audit2-phased
+        id: r2d
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/re-audit2-phased.test.ts
+      - name: re-audit2-phasee
+        id: r2e
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/re-audit2-phasee.test.ts
+      - name: re-audit4-recurring-failures
+        id: r4
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/re-audit4-recurring-failures.test.ts
+      - name: audit5-operational-continuity
+        id: a5
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit5-operational-continuity.test.ts
+      - name: audit6-recurring-failures
+        id: a6r
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts
+      - name: audit6-final-failclosed
+        id: a6f
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit6-final-failclosed.test.mjs
+      - name: Audit 7 state-space
+        id: a7s
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts
+      - name: Audit 7 authority-bundle
+        id: a7a
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit7-authority-bundle.test.ts
+      - name: Audit 7 ledger-integrity
+        id: a7l
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit7-ledger-integrity.test.ts
+      - name: Fail if any diagnostic file failed
+        if: always()
+        run: |
+          failed=0
+          for pair in \
+            engine:${{ steps.engine.outcome }} paper:${{ steps.paper.outcome }} forward:${{ steps.forward.outcome }} leverage:${{ steps.leverage.outcome }} \
+            phase15:${{ steps.phase15.outcome }} phase2:${{ steps.phase2.outcome }} phase3:${{ steps.phase3.outcome }} phase4:${{ steps.phase4.outcome }} \
+            phase5f:${{ steps.phase5f.outcome }} phase5p:${{ steps.phase5p.outcome }} execint:${{ steps.execint.outcome }} lifecycle:${{ steps.lifecycle.outcome }} \
+            regimes:${{ steps.regimes.outcome }} prodlife:${{ steps.prodlife.outcome }} prodhealth:${{ steps.prodhealth.outcome }} execctrl:${{ steps.execctrl.outcome }} \
+            corp:${{ steps.corp.outcome }} ui:${{ steps.ui.outcome }} sep:${{ steps.sep.outcome }} control:${{ steps.control.outcome }} r2b:${{ steps.r2b.outcome }} r2c:${{ steps.r2c.outcome }} r2d:${{ steps.r2d.outcome }} r2e:${{ steps.r2e.outcome }} r4:${{ steps.r4.outcome }} a5:${{ steps.a5.outcome }} a6r:${{ steps.a6r.outcome }} a6f:${{ steps.a6f.outcome }} a7s:${{ steps.a7s.outcome }} a7a:${{ steps.a7a.outcome }} a7l:${{ steps.a7l.outcome }}; do
+            name=${pair%%:*}; outcome=${pair#*:}; echo "$name=$outcome"; [ "$outcome" = success ] || failed=1
+          done
+          exit $failed
