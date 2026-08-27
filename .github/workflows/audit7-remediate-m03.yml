@@ -1,0 +1,60 @@
+name: Audit 7 M03 Guarded Remediation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit7-remediate-m03.mjs'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit7-m03-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate-verify-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Capture protected authoritative state
+        run: |
+          sha256sum github-pages/public/data/production-config.json github-pages/public/data/forward-ledger.json github-pages/public/data/phase-5-forward-ledger.json github-pages/public/data/lifecycle-review.json > /tmp/a7-protected.before
+      - name: Apply deterministic M03 remediation
+        run: node scripts/audit7-remediate-m03.mjs
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Audit 7 authority bundle probes
+        run: node --experimental-strip-types --test tests/audit7-authority-bundle.test.ts tests/audit7-state-space.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Pages integration build
+        run: npm run build:pages
+      - name: Verify protected authoritative state unchanged
+        run: |
+          sha256sum github-pages/public/data/production-config.json github-pages/public/data/forward-ledger.json github-pages/public/data/phase-5-forward-ledger.json github-pages/public/data/lifecycle-review.json > /tmp/a7-protected.after
+          diff -u /tmp/a7-protected.before /tmp/a7-protected.after
+      - name: Scope guard
+        run: |
+          git diff --name-only | tee /tmp/a7-files
+          test "$(grep -Ev '^(app/page\.tsx|package\.json)$' /tmp/a7-files | wc -l)" -eq 0
+          grep -qx 'app/page.tsx' /tmp/a7-files
+          grep -qx 'package.json' /tmp/a7-files
+      - name: Persist validated M03 remediation
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app/page.tsx package.json
+          git commit -m 'Remediate Audit 7 UI authority bundle coherence'
+          git pull --rebase origin main
+          git push origin HEAD:main
