@@ -1,0 +1,66 @@
+name: Audit 8 Instrument Primary Action
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'research/audit-8-charter-2026-08-27.md'
+      - 'lib/primary-action.ts'
+      - 'scripts/audit8-wire-primary-action.mjs'
+      - 'tests/audit8-instrumentation.test.ts'
+      - '.github/workflows/audit8-instrument-primary-action.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit8-primary-action-instrumentation
+  cancel-in-progress: false
+
+jobs:
+  instrument:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Capture exact instrumentation source head
+        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify immutable Audit 8 charter
+        run: |
+          test -f research/audit-8-charter-2026-08-27.md
+          grep -q 'INDEPENDENT AUDIT BASELINE' research/audit-8-charter-2026-08-27.md
+          grep -q 'black-box adversarial fixtures' research/audit-8-charter-2026-08-27.md
+      - name: Wire the product entrypoint without changing decision semantics
+        run: node scripts/audit8-wire-primary-action.mjs
+      - name: Verify instrumentation and product action surface
+        run: node --experimental-strip-types --test tests/audit8-instrumentation.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Build user-facing Pages integration
+        run: npm run build:pages
+      - name: Enforce instrumentation-only product diff
+        run: |
+          test "$(git diff --name-only)" = "app/page.tsx"
+          git diff --exit-code -- github-pages/public/data
+      - name: Persist validated UI wiring only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::main changed during Audit 8 instrumentation; refusing unvalidated persistence"
+            exit 1
+          fi
+          git add app/page.tsx
+          git commit -m "Wire UI to Audit 8 primary action entrypoint"
+          git push origin HEAD:main
