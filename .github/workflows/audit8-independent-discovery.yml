@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'tests/audit8-independent-blackbox.test.ts'
+      - 'tests/audit8-wave2-blackbox.test.ts'
       - '.github/workflows/audit8-independent-discovery.yml'
 
 permissions:
@@ -32,7 +33,7 @@ jobs:
       - name: Independent black-box and adversarial discovery
         id: discovery
         continue-on-error: true
-        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts
       - name: Full core regression remains green
         run: npm run test:core
       - name: Full operational regression remains green
