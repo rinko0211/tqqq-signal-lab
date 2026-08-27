@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {operationalAuthorityBundleIsCoherent} from "../lib/operational-authority.ts";
 import {DEFAULT_PRODUCTION_CONFIG,transitionMode} from "../lib/production.ts";
 
-const forward={schemaVersion:1,appendOnly:true};
 const status={generatedAt:"2027-08-25T21:00:00.000Z",actionStatus:"success",marketDataDate:"2027-08-25",signalDate:"2027-08-25",state:"latest",errors:[]};
+const forward={schemaVersion:1,appendOnly:true,updatedAt:status.generatedAt};
 const baselineSignal={generatedAt:status.generatedAt,dataDate:"2027-08-25",platformMode:"RESEARCH",assetTicker:"TQQQ",strategy:"Volatility Shield 13%",strategyVersion:"VS13-v1.0",state:"latest"};
 
 test("A7 FC-13/08: coherent RESEARCH baseline authority is accepted",()=>{
@@ -24,6 +24,12 @@ test("A7 FC-13: new Signal with old runtime generation fails closed",()=>{
   assert.equal(r.ok,false);assert.ok(r.reasons.some(x=>x.includes("generations")));
 });
 
+test("A7 FC-13: current Signal/status plus stale Forward generation fails closed",()=>{
+  const staleForward={...forward,updatedAt:"2027-08-24T21:00:00.000Z"};
+  const r=operationalAuthorityBundleIsCoherent({signal:baselineSignal,status,production:DEFAULT_PRODUCTION_CONFIG,forward:staleForward});
+  assert.equal(r.ok,false);assert.ok(r.reasons.some(x=>x.includes("Forward")&&x.includes("generation")));
+});
+
 test("A7 FC-13/15: identical timestamps cannot mask date divergence",()=>{
   const signal={...baselineSignal,dataDate:"2027-08-24"};
   const r=operationalAuthorityBundleIsCoherent({signal,status,production:DEFAULT_PRODUCTION_CONFIG,forward});
@@ -31,7 +37,7 @@ test("A7 FC-13/15: identical timestamps cannot mask date divergence",()=>{
 });
 
 test("A7 FC-08: malformed Forward authority blocks an otherwise coherent bundle",()=>{
-  assert.equal(operationalAuthorityBundleIsCoherent({signal:baselineSignal,status,production:DEFAULT_PRODUCTION_CONFIG,forward:{schemaVersion:1,appendOnly:false}}).ok,false);
+  assert.equal(operationalAuthorityBundleIsCoherent({signal:baselineSignal,status,production:DEFAULT_PRODUCTION_CONFIG,forward:{schemaVersion:1,appendOnly:false,updatedAt:status.generatedAt}}).ok,false);
 });
 
 test("A7 FC-13/02: DECISION with active incumbent requires Signal mode DECISION and incumbent identity",()=>{
