@@ -1,0 +1,97 @@
+name: Audit 6 Remediation Verification
+on:
+  push:
+    paths:
+      - .github/workflows/audit6-verification.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: daily-signal-pages
+  cancel-in-progress: false
+  queue: max
+jobs:
+  verify-remediate-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Capture authoritative starting state
+        run: |
+          echo "AUDIT6_START_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          cp -a github-pages/public/data /tmp/audit6-authoritative-data
+      - name: Apply deterministic Audit 6 remediation
+        run: node scripts/audit6-remediate.mjs
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify permanent Audit 6 registration
+        run: |
+          node - <<'NODE'
+          const p=require('./package.json');
+          for(const k of ['test:core','test:ops']) if(!p.scripts[k].includes('tests/audit6-recurring-failures.test.ts')) throw new Error(`${k} missing Audit 6 regression`);
+          NODE
+      - name: Focused recurring-failure regression
+        run: node --experimental-strip-types --test tests/audit6-recurring-failures.test.ts tests/audit5-operational-continuity.test.ts tests/re-audit4-recurring-failures.test.ts tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/execution-integrity.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs tests/final-control-plane.test.mjs
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: Full application and Pages integration
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: Non-persistent live operational preflight
+        run: |
+          npm run generate:daily
+          test ! -s github-pages/public/data/.failed
+          npm run generate:phase5-forward
+          npm run generate:lifecycle-review
+          npm run generate:production-health-review
+          npm run test:ops
+          npm run build:pages
+      - name: Restore authoritative ledgers after live preflight
+        if: always()
+        run: |
+          rm -rf github-pages/public/data
+          cp -a /tmp/audit6-authoritative-data github-pages/public/data
+          git clean -fd -- public/data github-pages/public/data
+          git restore -- public/data github-pages/public/data 2>/dev/null || true
+      - name: Verify authoritative state and no audit mutation
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('github-pages/public/data/production-config.json','utf8'));
+          const f=JSON.parse(fs.readFileSync('github-pages/public/data/forward-ledger.json','utf8'));
+          const p5=JSON.parse(fs.readFileSync('github-pages/public/data/phase-5-forward-ledger.json','utf8'));
+          const l=JSON.parse(fs.readFileSync('github-pages/public/data/lifecycle-review.json','utf8'));
+          if(p.mode!=='RESEARCH'||p.approvedByHuman!==false||p.selectedTicker!==null||p.strategyVersion!==null) throw new Error('Audit 6 must not promote Production');
+          if(f.appendOnly!==true||p5.appendOnly!==true||l.appendOnly!==true) throw new Error('Authoritative ledgers must remain append-only');
+          if(l.current.stage!=='ACCUMULATING'||l.current.userAction!=='NONE') throw new Error('Audit 6 must not advance Lifecycle');
+          NODE
+          test -z "$(git status --porcelain github-pages/public/data public/data)"
+      - name: Repository diff sanity
+        run: |
+          git diff --check
+          ! git diff --name-only | grep -E '^github-pages/public/data/|^public/data/'
+      - name: Remove one-time remediation helper
+        run: rm scripts/audit6-remediate.mjs
+      - name: Persist only fully validated Audit 6 remediation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          test -z "$(git diff --cached --name-only | grep -E '^github-pages/public/data/|^public/data/' || true)"
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$AUDIT6_START_SHA" ]; then
+            echo "::error::main changed during Audit 6 validation; refusing to persist a stale validation result"
+            exit 1
+          fi
+          git commit -m "Remediate Audit 6 recurring reliability defects"
+          git push origin HEAD:main
