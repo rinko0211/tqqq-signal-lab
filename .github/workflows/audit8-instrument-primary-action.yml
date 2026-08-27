@@ -8,6 +8,8 @@ on:
       - 'lib/primary-action.ts'
       - 'scripts/audit8-wire-primary-action.mjs'
       - 'tests/audit8-instrumentation.test.ts'
+      - 'tests/executive-ui-semantics.test.mjs'
+      - 'tests/audit6-final-failclosed.test.mjs'
       - '.github/workflows/audit8-instrument-primary-action.yml'
 
 permissions:
