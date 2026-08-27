@@ -14,6 +14,9 @@ import {
   nyseExecutionWindow,
   nyseReviewBoundaryReached,
 } from "../lib/market-calendar.ts";
+import {emptyProductionHealthLedger,updateProductionHealthLedger} from "../lib/production-health-review.ts";
+import {emptyLifecycleLedger,type LifecycleLedger} from "../lib/lifecycle-review.ts";
+import {emptyPhase5Ledger} from "../lib/phase5-forward.ts";
 
 /**
  * Audit 7 — State-Space & Discontinuity discovery probes.
@@ -57,6 +60,20 @@ test("A7 FC-01: formal review holiday boundary rolls to the next legal session c
   assert.equal(effectiveReviewSession("2027-07-04"),"2027-07-06");
   assert.equal(nyseReviewBoundaryReached("2027-07-04","2027-07-06T19:59:00Z"),false);
   assert.equal(nyseReviewBoundaryReached("2027-07-04","2027-07-06T20:01:00Z"),true);
+});
+
+test("A7 FC-01/12: quarterly Production Health due on an NYSE holiday waits for the next legal session close",()=>{
+  const decision=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION");
+  const production=transitionMode(decision,"PRODUCTION",{ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2027-08-25",evidence:"Strong",finalReviewComplete:true});
+  const lifecycle=emptyLifecycleLedger(emptyPhase5Ledger().reviewSchedule,"2027-11-24T22:00:00Z") as LifecycleLedger;
+  lifecycle.current.productionHealth={state:"Healthy",version:"UPRO-SPBT-v1.0",reasons:["ok"],nextHealthReview:"2027-11-25"};
+  const before=updateProductionHealthLedger({production,lifecycle,prior:emptyProductionHealthLedger(),now:"2027-11-25T12:00:00Z"});
+  assert.equal(before.events.length,0,"Thanksgiving must not be recorded as an ON_TIME NYSE review session");
+  const preClose=updateProductionHealthLedger({production,lifecycle,prior:before,now:"2027-11-26T20:59:00Z"});
+  assert.equal(preClose.events.length,0,"conservative review boundary remains closed until 16:00 ET");
+  const afterClose=updateProductionHealthLedger({production,lifecycle,prior:preClose,now:"2027-11-26T21:01:00Z"});
+  assert.equal(afterClose.events.length,1);
+  assert.equal(afterClose.events[0].dueDate,"2027-11-25");
 });
 
 test("A7 FC-01/09: partial Daily data cannot become complete or actionable before close+grace",()=>{
