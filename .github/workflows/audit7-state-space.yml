@@ -1,0 +1,34 @@
+name: Audit 7 State-Space Verification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/audit7-state-space.test.ts'
+      - '.github/workflows/audit7-state-space.yml'
+      - 'research/multi-audit-assurance-protocol-v1.0-2026-08-27.md'
+
+permissions:
+  contents: read
+
+jobs:
+  state-space:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify immutable Audit 7 assurance baseline exists
+        run: |
+          test -f research/multi-audit-assurance-protocol-v1.0-2026-08-27.md
+          grep -q 'IMMUTABLE BASELINE FOR AUDIT 7' research/multi-audit-assurance-protocol-v1.0-2026-08-27.md
+      - name: Run Audit 7 discovery probes
+        run: node --experimental-strip-types --test tests/audit7-state-space.test.ts
+      - name: Run existing core regression after discovery probes
+        if: always()
+        run: npm run test:core
