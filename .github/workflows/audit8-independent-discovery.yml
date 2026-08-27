@@ -1,0 +1,58 @@
+name: Audit 8 Independent Adversarial Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tests/audit8-independent-blackbox.test.ts'
+      - '.github/workflows/audit8-independent-discovery.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  independent-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture exact discovery head
+        run: echo "AUDIT8_DISCOVERY_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify frozen Audit 8 charter
+        run: |
+          test "$(git hash-object research/audit-8-charter-2026-08-27.md)" = "a58a9373516028d5e2add08dbb2e134a0ec4ca17"
+          grep -q 'black-box adversarial fixtures' research/audit-8-charter-2026-08-27.md
+          grep -q 'independent observable-action oracle' research/audit-8-charter-2026-08-27.md
+      - name: Independent black-box and adversarial discovery
+        id: discovery
+        continue-on-error: true
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts
+      - name: Full core regression remains green
+        run: npm run test:core
+      - name: Full operational regression remains green
+        run: npm run test:ops
+      - name: User-facing Pages build remains green
+        run: npm run build:pages
+      - name: Verify authoritative state was not mutated
+        run: |
+          git diff --exit-code -- public/data github-pages/public/data
+          node --experimental-strip-types - <<'NODE'
+          import fs from 'node:fs';
+          const paths=['public/data/production-config.json','github-pages/public/data/production-config.json'];
+          const path=paths.find(p=>fs.existsSync(p));
+          if(!path)throw Error('Production config authority missing');
+          const p=JSON.parse(fs.readFileSync(path,'utf8'));
+          if(p.mode!=='RESEARCH'||p.approvedByHuman!==false||p.selectedTicker!==null||p.selectedStrategy!==null||p.strategyVersion!==null)throw Error('Audit 8 discovery altered or encountered promoted Production authority');
+          console.log(`Production remains safe RESEARCH authority at ${path}`);
+          NODE
+      - name: Fail the audit run if independent discovery found any mismatch
+        if: always()
+        run: |
+          echo "discovery=${{ steps.discovery.outcome }}"
+          test "${{ steps.discovery.outcome }}" = "success"
