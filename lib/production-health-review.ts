@@ -18,10 +18,12 @@ export function updateProductionHealthLedger(args:{production:ProductionConfig;l
   const episodeStart=p.effectiveDate,episodeEvents=out.events.filter(x=>x.version===p.strategyVersion&&(!episodeStart||x.dueDate>=episodeStart));
   const last=episodeEvents.at(-1),firstDue=p.nextHealthReview??(p.effectiveDate?addMonths(p.effectiveDate,3):null);let due=last?addMonths(last.dueDate,3):firstDue;
   if(!due)throw Error("HEALTH-002: Production review schedule is missing");
+  if(last?.timing==="LATE_CURRENT_STATE_ONLY")while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);
   if(nyseReviewBoundaryReached(due,now)&&!out.events.some(x=>x.version===p.strategyVersion&&x.dueDate===due)){
     const late=daysBetween(due,asOf)>7;
     out.events.push({key:`${p.strategyVersion}|${due}`,dueDate:due,recordedAt:now,version:p.strategyVersion,state:health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,timing:late?"LATE_CURRENT_STATE_ONLY":"ON_TIME",reasons:[...health.reasons,...(late?["Scheduled health review was missed by more than 7 days; no retrospective health state was fabricated"]:[])]});
     due=addMonths(due,3);
+    if(late)while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);
   }
   const latest=out.events.filter(x=>x.version===p.strategyVersion&&(!episodeStart||x.dueDate>=episodeStart)).at(-1),state=health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,userAction=state==="Critical"?"URGENT_INTEGRITY_REVIEW":state==="Revalidation Required"?"REVALIDATE_PRODUCTION":"NONE";
   out.updatedAt=now;out.current={active:true,version:p.strategyVersion,lastReview:latest?.dueDate??null,nextReview:due,state,userAction,message:userAction==="NONE"?`Production health is ${state}. No user action is required.${p.mode==="DECISION"?" A human decision is pending; the previously approved Production system remains active until a new approval is atomically committed.":""}`:`Production health is ${state}. Review the lifecycle action center before adding risk.`};return out;
