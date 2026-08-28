@@ -122,3 +122,37 @@ Required remediation properties:
 5. register the independent adversarial fixture permanently in core/operational regression;
 6. run the independent fixture, full core, full ops, Pages build, authoritative-state no-mutation, and exact-head persistence guard;
 7. perform no Production promotion, strategy retuning, or append-only history rewrite.
+
+---
+
+## Remediation evidence
+
+Remediation was validated and persisted through the guarded exact-head workflow.
+
+- guarded workflow run: `33156064601`
+- job: `98799000977`
+- exact validated source head: `003e5a2bc9b08012f0901c7cc43264aa4ea70d8a`
+- persisted remediation commit: `f15c6cc70687fcea06df7902fe8b253cd7e54e7d`
+- persisted commit message: `Remediate Audit 8 M10 Production authority chronology`
+
+Validated results:
+
+- original post-remediation Wave 2 adversarial fixture: **6/6 PASS**
+- permanent M10 independent chronology regression: **9/9 PASS**
+- independent Wave 1 + Wave 2 contract regressions: **17/17 PASS**
+- primary-action source-shape regression: **9/9 PASS**
+- full core regression: **238/238 PASS**
+- full operational regression: **202/202 PASS**
+- Pages build: **PASS**
+- authoritative `public/data` and `github-pages/public/data` mutation/hash guard: **PASS / unchanged**
+- remediation scope guard: **PASS**, with exactly `lib/primary-action.ts`, `package.json`, and `tests/executive-ui-semantics.test.mjs` modified by the deterministic remediation
+- exact-head check immediately before persistence: **PASS**
+
+Post-persistence inspection at `f15c6cc70687fcea06df7902fe8b253cd7e54e7d` confirmed:
+
+- `derivePrimaryAction` now derives the observation date with `marketDate(args.now)` and includes `productionAuthorityChronologyUnsafe` in the fail-closed `signalUnsafe` boundary;
+- the M10 independent regression is permanently registered in both `test:core` and `test:ops`;
+- the UI source-shape regression permanently asserts the M10 chronology gate;
+- authoritative `production-config.json` remains `RESEARCH`, `approvedByHuman=false`, with null Production identity and no automatic promotion.
+
+Remediation closes the implementation defect but **does not restore Audit 8 to CLEAN**. By the frozen audit-accounting rule, **Audit 8 remains permanently NOT CLEAN and the certification CLEAN streak remains 0/2**.
