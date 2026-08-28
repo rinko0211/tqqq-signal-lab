@@ -1,7 +1,7 @@
 import {freshness} from "./engine.ts";
 import {earliestLegalExecutionDate} from "./execution-integrity.ts";
 import {assertForwardLedgerInternalIntegrity,type ForwardLedger} from "./forward.ts";
-import {nyseExecutionWindow,type NyseExecutionWindow} from "./market-calendar.ts";
+import {marketDate,nyseExecutionWindow,type NyseExecutionWindow} from "./market-calendar.ts";
 import {
   operationalAuthorityBundleIsCoherent,
   type AuthorityBundleResult,
@@ -83,6 +83,15 @@ export function derivePrimaryAction(args:{
   const nowMs=Date.parse(args.now);
   const generationTimes=[args.signal?.generatedAt,args.status?.generatedAt,args.forward?.updatedAt].map(x=>typeof x==="string"?Date.parse(x):NaN);
   const futureGenerationUnsafe=!Number.isFinite(nowMs)||generationTimes.some(t=>Number.isFinite(t)&&t>nowMs);
+  let observationMarketDate:string|undefined;
+  try{observationMarketDate=marketDate(args.now)}catch{}
+  const productionUpdatedAtMs=args.production?Date.parse(args.production.updatedAt):NaN;
+  const productionAuthorityChronologyUnsafe=Boolean(approvedIncumbent&&args.production&&(
+    !observationMarketDate||
+    !args.production.approvalDate||!args.production.effectiveDate||
+    args.production.approvalDate>observationMarketDate||args.production.effectiveDate>observationMarketDate||
+    !Number.isFinite(productionUpdatedAtMs)||productionUpdatedAtMs>nowMs
+  ));
   let expectedExecutionDate:string|undefined,executionContractUnsafe=false;
   if(signal&&args.signal?.generatedAt){
     try{expectedExecutionDate=earliestLegalExecutionDate(signal.date,args.signal.generatedAt);if(signal.executionDate&&signal.executionDate!==expectedExecutionDate)executionContractUnsafe=true}
@@ -100,7 +109,7 @@ export function derivePrimaryAction(args:{
   void args.freshnessDate;
   const freshnessDate=args.signal?.dataDate;
   const fresh=freshnessDate?freshness(freshnessDate,args.now):null;
-  const signalUnsafe=Boolean(authorityUnsafe||forwardIntegrityUnsafe||signalPayloadUnsafe||signalNumericUnsafe||holdingsNumericUnsafe||futureGenerationUnsafe||executionContractUnsafe||args.status?.state==="failed"||fresh?.stale);
+  const signalUnsafe=Boolean(authorityUnsafe||forwardIntegrityUnsafe||signalPayloadUnsafe||signalNumericUnsafe||holdingsNumericUnsafe||futureGenerationUnsafe||productionAuthorityChronologyUnsafe||executionContractUnsafe||args.status?.state==="failed"||fresh?.stale);
 
   if(signalUnsafe)return{code:"CHECK_DATA",message:"売買しない：データ/Signalが安全確認できません。System Statusを確認してください",target,currentTicker,currentVersion,holdingsMatch,actual,executionDate,executionWindow,signalChange,executionMissed,executionActionable,authorityBundle,authorityUnsafe,signalUnsafe,freshnessDate};
   if(executionMissed)return{code:"NO_ACTION_EXPIRED",message:`売買しない：予定始値（${executionDate}）を通過しています。過去の始値を追認せず、次のDaily Signal更新後に再確認してください`,target,currentTicker,currentVersion,holdingsMatch,actual,executionDate,executionWindow,signalChange,executionMissed,executionActionable,authorityBundle,authorityUnsafe,signalUnsafe,freshnessDate};
