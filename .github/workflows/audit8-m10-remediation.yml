@@ -1,0 +1,78 @@
+name: Audit 8 M10 Guarded Remediation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit8-m10-remediation.mjs'
+      - '.github/workflows/audit8-m10-remediation.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-signal-pages
+  cancel-in-progress: false
+
+jobs:
+  remediate-verify-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Capture exact remediation source head
+        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Verify frozen charter and pre-remediation M10 record
+        run: |
+          test "$(git hash-object research/audit-8-charter-2026-08-27.md)" = "a58a9373516028d5e2add08dbb2e134a0ec4ca17"
+          test "$(git hash-object research/audit-8-finding-010-production-authority-chronology-2026-08-28.md)" = "8d57cce40bedd019508a5d5d13557ce6d5434151"
+          test "$(git hash-object tests/audit8-m10-production-authority-chronology.test.ts)" = "32d3e5bde3a9d3584ef85554ffc4ed27b251e337"
+          grep -q 'A8-M10' research/audit-8-finding-010-production-authority-chronology-2026-08-28.md
+          grep -q 'CLEAN streak remains 0/2' research/audit-8-finding-010-production-authority-chronology-2026-08-28.md
+      - name: Capture authoritative state
+        run: |
+          find public/data github-pages/public/data -type f -print0 2>/dev/null | sort -z | xargs -0 sha256sum > /tmp/a8-m10-authority.before
+      - name: Apply deterministic M10 remediation
+        run: node scripts/audit8-m10-remediation.mjs
+      - name: Run original post-remediation independent discovery fixture
+        run: node --experimental-strip-types --test tests/audit8-wave2-adversarial.test.ts
+      - name: Run permanent M10 independent chronology regression
+        run: node --experimental-strip-types --test tests/audit8-m10-production-authority-chronology.test.ts
+      - name: Re-run independent Wave 1 and Wave 2 contract regressions
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts
+      - name: Full core regression with permanent M10 registration
+        run: npm run test:core
+      - name: Full operational regression with permanent M10 registration
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Verify authoritative state unchanged
+        run: |
+          find public/data github-pages/public/data -type f -print0 2>/dev/null | sort -z | xargs -0 sha256sum > /tmp/a8-m10-authority.after
+          diff -u /tmp/a8-m10-authority.before /tmp/a8-m10-authority.after
+          git diff --exit-code -- public/data github-pages/public/data
+      - name: Enforce remediation scope
+        run: |
+          git diff --name-only | tee /tmp/a8-m10-files
+          test "$(grep -Ev '^(lib/primary-action\.ts|package\.json)$' /tmp/a8-m10-files | wc -l)" -eq 0
+          grep -q 'tests/audit8-m10-production-authority-chronology.test.ts' package.json
+      - name: Persist only the exact validated remediation
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::main advanced after validation; refusing unvalidated persistence"
+            exit 1
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/primary-action.ts package.json
+          git commit -m 'Remediate Audit 8 M10 Production authority chronology'
+          git push origin HEAD:main
