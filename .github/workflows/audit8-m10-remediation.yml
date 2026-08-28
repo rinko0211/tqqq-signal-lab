@@ -64,7 +64,15 @@ jobs:
       - name: Enforce remediation scope
         run: |
           git diff --name-only | tee /tmp/a8-m10-files
-          test "$(grep -Ev '^(lib/primary-action\\.ts|tests/executive-ui-semantics\\.test\\.mjs|package\\.json)$' /tmp/a8-m10-files | wc -l)" -eq 0
+          while IFS= read -r file; do
+            case "$file" in
+              lib/primary-action.ts|tests/executive-ui-semantics.test.mjs|package.json) ;;
+              *)
+                echo "::error::Unexpected remediation diff: $file"
+                exit 1
+                ;;
+            esac
+          done < /tmp/a8-m10-files
           grep -q 'tests/audit8-m10-production-authority-chronology.test.ts' package.json
       - name: Persist only the exact validated remediation
         run: |
