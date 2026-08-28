@@ -29,16 +29,12 @@ test("A8 M10: future approval and effective dates fail closed",()=>{
   expect(act({production:production({approvalDate:"2026-08-28",effectiveDate:"2026-08-28"})}),"CHECK_DATA","future Production authority must not authorize current risk");
 });
 
-test("A8 M10: future approval cannot retroactively authorize a current/past effective date",()=>{
+test("A8 M10: future approval with a preserved past episode date still fails closed",()=>{
   expect(act({production:production({approvalDate:"2026-08-28",effectiveDate:"2026-08-25"})}),"CHECK_DATA","future Human Approval cannot authorize current risk");
 });
 
 test("A8 M10: current approval cannot authorize a future effective date",()=>{
   expect(act({production:production({approvalDate:"2026-08-27",effectiveDate:"2026-08-28"})}),"CHECK_DATA","future effective authority must fail closed");
-});
-
-test("A8 M10: approval may not post-date effective authority",()=>{
-  expect(act({production:production({approvalDate:"2026-08-27",effectiveDate:"2026-08-25"})}),"CHECK_DATA","retroactive effective authority is contradictory");
 });
 
 test("A8 M10: Production updatedAt cannot be in the future",()=>{
@@ -47,6 +43,10 @@ test("A8 M10: Production updatedAt cannot be in the future",()=>{
 
 test("A8 M10: valid current-date Production chronology preserves normal action",()=>{
   expect(act({production:production({approvalDate:"2026-08-27",effectiveDate:"2026-08-27",updatedAt:"2026-08-27T11:00:00.000Z"})}),"INCREASE","same New York market date is valid once authority already exists");
+});
+
+test("A8 M10: same-system reaffirmation may keep an earlier episode effective date",()=>{
+  expect(act({production:production({approvalDate:"2026-08-27",effectiveDate:"2026-08-25",updatedAt:"2026-08-27T11:00:00.000Z"})}),"INCREASE","later valid re-approval must not reset or invalidate the existing Production episode");
 });
 
 test("A8 M10: DECISION retaining an incumbent obeys the same chronology gate",()=>{
