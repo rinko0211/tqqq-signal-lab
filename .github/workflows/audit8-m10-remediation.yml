@@ -48,6 +48,8 @@ jobs:
         run: node --experimental-strip-types --test tests/audit8-m10-production-authority-chronology.test.ts
       - name: Re-run independent Wave 1 and Wave 2 contract regressions
         run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts
+      - name: Verify primary-action source-shape regression includes M10
+        run: node --test tests/executive-ui-semantics.test.mjs
       - name: Full core regression with permanent M10 registration
         run: npm run test:core
       - name: Full operational regression with permanent M10 registration
@@ -62,7 +64,7 @@ jobs:
       - name: Enforce remediation scope
         run: |
           git diff --name-only | tee /tmp/a8-m10-files
-          test "$(grep -Ev '^(lib/primary-action\.ts|package\.json)$' /tmp/a8-m10-files | wc -l)" -eq 0
+          test "$(grep -Ev '^(lib/primary-action\\.ts|tests/executive-ui-semantics\\.test\\.mjs|package\\.json)$' /tmp/a8-m10-files | wc -l)" -eq 0
           grep -q 'tests/audit8-m10-production-authority-chronology.test.ts' package.json
       - name: Persist only the exact validated remediation
         run: |
@@ -73,6 +75,6 @@ jobs:
           fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add lib/primary-action.ts package.json
+          git add lib/primary-action.ts tests/executive-ui-semantics.test.mjs package.json
           git commit -m 'Remediate Audit 8 M10 Production authority chronology'
           git push origin HEAD:main

@@ -31,6 +31,24 @@ const patchOnce=(text,from,to,label)=>{
 }
 
 {
+  const path="tests/executive-ui-semantics.test.mjs";
+  let s=fs.readFileSync(path,"utf8");
+  s=patchOnce(
+    s,
+    '  assert.match(primary,/futureGenerationUnsafe/);\n  assert.match(primary,/executionContractUnsafe/);',
+    '  assert.match(primary,/futureGenerationUnsafe/);\n  assert.match(primary,/productionAuthorityChronologyUnsafe/);\n  assert.match(primary,/marketDate\\(args\\.now\\)/);\n  assert.match(primary,/executionContractUnsafe/);',
+    "M10 source-shape assertions"
+  );
+  s=patchOnce(
+    s,
+    '  assert.match(primary,/signalUnsafe=Boolean\\(authorityUnsafe\\|\\|forwardIntegrityUnsafe\\|\\|signalPayloadUnsafe\\|\\|signalNumericUnsafe\\|\\|holdingsNumericUnsafe\\|\\|futureGenerationUnsafe\\|\\|executionContractUnsafe\\|\\|args\\.status\\?\\.state==="failed"\\|\\|fresh\\?\\.stale\\)/);',
+    '  assert.match(primary,/signalUnsafe=Boolean\\(authorityUnsafe\\|\\|forwardIntegrityUnsafe\\|\\|signalPayloadUnsafe\\|\\|signalNumericUnsafe\\|\\|holdingsNumericUnsafe\\|\\|futureGenerationUnsafe\\|\\|productionAuthorityChronologyUnsafe\\|\\|executionContractUnsafe\\|\\|args\\.status\\?\\.state==="failed"\\|\\|fresh\\?\\.stale\\)/);',
+    "M10 signalUnsafe source-shape guard"
+  );
+  fs.writeFileSync(path,s);
+}
+
+{
   const path="package.json";
   let s=fs.readFileSync(path,"utf8");
   const marker=" tests/audit8-wave2-blackbox.test.ts\"";
