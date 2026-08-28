@@ -56,5 +56,20 @@
     "regime": "弱い上昇",
     "reason": "確認条件成立。目標を100%へ変更",
     "crisis": false
+  },
+  {
+    "date": "2026-08-27",
+    "assetTicker": "TQQQ",
+    "strategyVersion": "VS13-v1.0",
+    "tqqqOpen": 72.085,
+    "tqqqClose": 73.3,
+    "qqqOpen": 716.93,
+    "qqqClose": 721.11,
+    "target": 1,
+    "previousTarget": 1,
+    "score": 85,
+    "regime": "弱い上昇",
+    "reason": "弱い上昇・総合85点のため100%を維持",
+    "crisis": false
   }
 ]
