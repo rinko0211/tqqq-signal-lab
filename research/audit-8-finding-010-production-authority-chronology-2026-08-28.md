@@ -20,6 +20,8 @@ Six independent fixtures executed: **4 PASS / 2 FAIL**. The two failures shared 
 1. `approvalDate=2026-08-28`, `effectiveDate=2026-08-28`, observation `2026-08-27T12:00:00Z` — expected `CHECK_DATA`, observed **INCREASE**.
 2. `approvalDate=2026-08-28`, `effectiveDate=2026-08-25`, observation `2026-08-27T12:00:00Z` — expected `CHECK_DATA`, observed **INCREASE**.
 
+The second fixture is invalid because the approval itself is in the future. It does **not** imply that `approvalDate > effectiveDate` is always invalid: same-system reaffirmation intentionally preserves the original Production episode `effectiveDate` while recording a later human re-approval date.
+
 The same exact head simultaneously passed:
 
 - full core regression: **229/229 PASS**
@@ -37,7 +39,7 @@ This isolates the failure to Production authority chronology rather than a broad
 
 Consequently a structurally complete, registered, human-approved Production identity can be accepted as current authority even when its approval and/or effective date lies in the future. Cross-artifact Signal/status/Forward chronology guards do not cover this separate Production authority clock.
 
-The same boundary family also requires explicit protection against impossible internal Production chronology such as approval occurring after effective authority or a future `Production.updatedAt`; these cases are promoted into permanent coverage even though the initial dynamic trigger was the two future-date fixtures above.
+The same boundary family also requires explicit protection against a future `Production.updatedAt`, because current authority metadata may not claim a write that has not yet occurred.
 
 ---
 
@@ -55,10 +57,10 @@ Temporal expansions:
 - future `approvalDate`
 - future `effectiveDate`
 - both future while mutually equal
-- future approval with past/current effective date
-- approval later than effective date
+- future approval with an earlier preserved episode `effectiveDate`
 - future `Production.updatedAt`
 - DECISION retaining an incumbent with impossible Production chronology
+- same-system reaffirmation with later valid approval and earlier preserved effective date
 - same-date valid authority around UTC/New-York date boundaries
 - clock rollback and later recovery
 
@@ -66,9 +68,11 @@ Temporal expansions:
 
 ## F3 — Invariant Promotion
 
-**A user-facing risk-changing action may rely on approved Production authority only when that authority is temporally possible at the observation time. `approvalDate` and `effectiveDate` must not be later than the current New York market date; approval may not post-date effective authority; and Production metadata used as current authority may not claim an update from the future. Any contradiction yields `CHECK_DATA`.**
+**A user-facing risk-changing action may rely on approved Production authority only when that authority is temporally possible at the observation time. `approvalDate` and `effectiveDate` must not be later than the current New York market date, and Production metadata used as current authority may not claim an `updatedAt` later than the observation timestamp. Any such contradiction yields `CHECK_DATA`.**
 
 Date-only Human Approval fields are interpreted as New York market dates because the operational contract is NYSE-session based. Equality with the current New York date is allowed; a strictly later market date is not.
+
+A later valid `approvalDate` with an earlier preserved `effectiveDate` remains allowed for same-system reaffirmation, because `effectiveDate` denotes the start of the continuing Production episode rather than the timestamp of the latest approval event.
 
 ---
 
@@ -77,12 +81,12 @@ Date-only Human Approval fields are interpreted as New York market dates because
 Permanent Audit 8 regression must independently cover:
 
 1. future approval + future effective date => `CHECK_DATA`;
-2. future approval + current/past effective date => `CHECK_DATA`;
+2. future approval + preserved past effective date => `CHECK_DATA`;
 3. current approval + future effective date => `CHECK_DATA`;
-4. approval later than effective date => `CHECK_DATA`;
-5. future `Production.updatedAt` => `CHECK_DATA`;
-6. valid past/current Production chronology => normal observable action preserved;
-7. DECISION with active incumbent obeys the same chronology gate;
+4. future `Production.updatedAt` => `CHECK_DATA`;
+5. valid current-date approval/effective chronology => normal observable action preserved;
+6. valid same-system reaffirmation with later approval and earlier preserved effective date => normal observable action preserved;
+7. DECISION with active incumbent obeys the same future-date chronology gate;
 8. New-York date boundary cases do not use UTC-date shortcuts.
 
 The independent oracle must remain fixture-local and must not import the implementation helper used for remediation.
@@ -97,6 +101,7 @@ Audit 9 temporal/chaos sequences must include:
 - clock jump forward and restoration;
 - cached Production authority dated ahead of Signal/status/Forward;
 - DECISION review while an incumbent authority becomes temporally impossible;
+- same-system reaffirmation followed by reload/clock skew;
 - reload before/after the New York date boundary;
 - recovery from invalid chronology without retaining a previously derived risk-changing action.
 
@@ -112,7 +117,7 @@ Required remediation properties:
 
 1. enforce Production authority chronology at the actual primary action boundary;
 2. use the New York market date rather than raw UTC date for date-only authority fields;
-3. fail closed on future or internally contradictory active Production authority;
+3. fail closed on future active Production authority without breaking same-system reaffirmation semantics;
 4. preserve valid RESEARCH and valid approved Production/DECISION behavior;
 5. register the independent adversarial fixture permanently in core/operational regression;
 6. run the independent fixture, full core, full ops, Pages build, authoritative-state no-mutation, and exact-head persistence guard;
