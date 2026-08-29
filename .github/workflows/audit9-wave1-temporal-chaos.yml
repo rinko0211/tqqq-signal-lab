@@ -1,0 +1,42 @@
+name: Audit 9 Wave 1 Temporal Chaos
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit9-wave1-temporal-chaos']
+    paths:
+      - 'tests/audit9-wave1-temporal-chaos.test.ts'
+      - '.github/workflows/audit9-wave1-temporal-chaos.yml'
+      - 'research/audit-9-charter-2026-08-29.md'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify frozen Audit 9 charter and Audit 8 close
+        run: |
+          test "$(git hash-object research/audit-9-charter-2026-08-29.md)" = "0c9353aa74594140dfc65952dac6d21364633b04"
+          test "$(git hash-object research/audit-8-close-2026-08-29.md)" = "75874169b662381a83943d99f2ae572c6be77e5e"
+      - name: Run Audit 9 Wave 1 temporal chaos discovery
+        run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts
+      - name: Re-run Audit 8 independent regression families
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
