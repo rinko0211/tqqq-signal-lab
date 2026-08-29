@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-25T15:36:16.466Z",
-  "updatedAt": "2026-08-28T23:01:04.993Z",
+  "updatedAt": "2026-08-29T03:54:01.332Z",
   "appendOnly": true,
   "freezes": [
     {
@@ -479,6 +479,111 @@
       "dataSource": "Nasdaq Historical + Cboe VIX History · Phase 5 Forward Gate",
       "dataStatus": "VALID",
       "buildVersion": "phase5-forward-1.0.1"
+    },
+    {
+      "key": "QLD-VS13-Scaled-v1.0|2026-08-28",
+      "marketDataDate": "2026-08-28",
+      "recordedAt": "2026-08-29T03:54:01.332Z",
+      "recordMode": "LIVE",
+      "strategyId": "QLD_VS13_SCALED",
+      "ticker": "QLD",
+      "strategyName": "QLD + Common VS13 + scaled stop",
+      "strategyVersion": "QLD-VS13-Scaled-v1.0",
+      "score": 83,
+      "components": {
+        "trend": 100,
+        "momentum": 44.369302867359245,
+        "volatility": 84.00939602396215,
+        "market": 91.36104060913706
+      },
+      "regime": "弱い上昇",
+      "targetExposure": 1,
+      "previousExposure": 1,
+      "signal": "HOLD",
+      "tradeReason": "弱い上昇・総合83点のため100%を維持",
+      "intendedExecutionDate": "2026-08-31",
+      "execution": null,
+      "assetClose": 90.17,
+      "position": 1,
+      "quantity": 11256.062361681868,
+      "cash": 0,
+      "equity": 1014959.1431528542,
+      "dailyReturn": -0.013241409498796264,
+      "currentDrawdown": -0.013241409498796264,
+      "cumulativeCosts": 803.5278009346717,
+      "dataSource": "Nasdaq Historical + Cboe VIX History · Phase 5 Forward Gate",
+      "dataStatus": "VALID",
+      "buildVersion": "phase5-forward-1.0.1"
+    },
+    {
+      "key": "SSO-SPBT-Scaled-v1.0|2026-08-28",
+      "marketDataDate": "2026-08-28",
+      "recordedAt": "2026-08-29T03:54:01.332Z",
+      "recordMode": "LIVE",
+      "strategyId": "SSO_SPBT_SCALED",
+      "ticker": "SSO",
+      "strategyName": "SSO + S&P Broad Trend + scaled stop",
+      "strategyVersion": "SSO-SPBT-Scaled-v1.0",
+      "score": 91,
+      "components": {
+        "trend": 100,
+        "momentum": 53.23247144670051,
+        "volatility": 100,
+        "market": 91.36104060913706
+      },
+      "regime": "弱い上昇",
+      "targetExposure": 1,
+      "previousExposure": 1,
+      "signal": "HOLD",
+      "tradeReason": "弱い上昇・総合91点のため100%を維持",
+      "intendedExecutionDate": "2026-08-31",
+      "execution": null,
+      "assetClose": 70.74,
+      "position": 1,
+      "quantity": 14290.617848970252,
+      "cash": 0,
+      "equity": 1010918.3066361556,
+      "dailyReturn": -0.004643309413254526,
+      "currentDrawdown": -0.004643309413254526,
+      "cumulativeCosts": 800,
+      "dataSource": "Nasdaq Historical + Cboe VIX History · Phase 5 Forward Gate",
+      "dataStatus": "VALID",
+      "buildVersion": "phase5-forward-1.0.1"
+    },
+    {
+      "key": "UPRO-SPBT-v1.0|2026-08-28",
+      "marketDataDate": "2026-08-28",
+      "recordedAt": "2026-08-29T03:54:01.332Z",
+      "recordMode": "LIVE",
+      "strategyId": "UPRO_SPBT",
+      "ticker": "UPRO",
+      "strategyName": "UPRO + S&P Broad Trend",
+      "strategyVersion": "UPRO-SPBT-v1.0",
+      "score": 91,
+      "components": {
+        "trend": 100,
+        "momentum": 53.23247144670051,
+        "volatility": 100,
+        "market": 91.36104060913706
+      },
+      "regime": "弱い上昇",
+      "targetExposure": 1,
+      "previousExposure": 1,
+      "signal": "HOLD",
+      "tradeReason": "弱い上昇・総合91点のため100%を維持",
+      "intendedExecutionDate": "2026-08-31",
+      "execution": null,
+      "assetClose": 151.78,
+      "position": 1,
+      "quantity": 6697.948786700631,
+      "cash": 0,
+      "equity": 1016614.6668454218,
+      "dailyReturn": -0.007389967955006016,
+      "currentDrawdown": -0.007389967955006016,
+      "cumulativeCosts": 800,
+      "dataSource": "Nasdaq Historical + Cboe VIX History · Phase 5 Forward Gate",
+      "dataStatus": "VALID",
+      "buildVersion": "phase5-forward-1.0.1"
     }
   ],
   "reviewSchedule": {
@@ -486,5 +591,6 @@
     "formal": "2027-08-25",
     "stronger": "2028-08-25"
   },
-  "promotionPolicy": "Human approval only. No promotion before 12 months. Require true Forward observations, >=6 executed non-zero-turnover trades/actions where naturally generated, multiple regimes, missing/invalid <=1%, <=40 Action Days/year, no integrity/execution defect, and no unexplained drawdown materially outside historical stress expectations. Phase 6 uses Pareto evidence; Forward robustness outranks historical CAGR."
+  "promotionPolicy": "Human approval only. No promotion before 12 months. Require true Forward observations, >=6 executed non-zero-turnover trades/actions where naturally generated, multiple regimes, missing/invalid <=1%, <=40 Action Days/year, no integrity/execution defect, and no unexplained drawdown materially outside historical stress expectations. Phase 6 uses Pareto evidence; Forward robustness outranks historical CAGR.",
+  "coverageGaps": []
 }
