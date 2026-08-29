@@ -60,6 +60,12 @@ replaceOnce(
   'assert.ok(approve.includes("assertLifecycleLedgerInternalIntegrity(lifecycle)"),"Production approval must validate Lifecycle provenance before consuming current authority");'
 );
 
+// A10-M01 made nested event <= ledger generation mandatory. This older Audit 8
+// fixture predates that invariant and had a 21:01 event inside a 21:00 artifact.
+// Move only the synthetic artifact generation forward; event semantics are unchanged.
+const a8="tests/audit8-ledger-evidence-blackbox.test.ts";
+replaceOnce(a8,'updatedAt:"2028-04-10T21:00:00.000Z"','updatedAt:"2028-04-10T22:00:00.000Z"');
+
 const pkgPath="package.json";
 const pkg=JSON.parse(fs.readFileSync(pkgPath,"utf8"));
 for(const key of ["test:core","test:ops"]){

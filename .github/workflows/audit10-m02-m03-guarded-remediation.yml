@@ -73,7 +73,7 @@ jobs:
           bad=0
           while IFS= read -r f; do
             case "$f" in
-              lib/lifecycle-review.ts|lib/production-health-review.ts|scripts/approve-production.ts|tests/audit10-wave2-independence-symmetry.test.mjs|package.json) ;;
+              lib/lifecycle-review.ts|lib/production-health-review.ts|scripts/approve-production.ts|tests/audit10-wave2-independence-symmetry.test.mjs|tests/audit8-ledger-evidence-blackbox.test.ts|package.json) ;;
               *) echo "::error::unexpected remediation change $f"; bad=1 ;;
             esac
           done < <(git diff --name-only)
@@ -85,6 +85,6 @@ jobs:
           test "$(git rev-parse origin/audit10-meta-coverage)" = "$CANDIDATE_HEAD"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/lifecycle-review.ts lib/production-health-review.ts scripts/approve-production.ts tests/audit10-wave2-independence-symmetry.test.mjs package.json
+          git add lib/lifecycle-review.ts lib/production-health-review.ts scripts/approve-production.ts tests/audit10-wave2-independence-symmetry.test.mjs tests/audit8-ledger-evidence-blackbox.test.ts package.json
           git commit -m 'Remediate Audit 10 M02 M03 causal provenance gaps'
           git push origin HEAD:audit10-meta-coverage
