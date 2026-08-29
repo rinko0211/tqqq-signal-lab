@@ -27,10 +27,10 @@ function bindActualWorkflowContracts(){
   }
   for(const name of ['W1','W2','W3']){
     const s=files[name];
-    const persist= name==='W1'?pos(s,'Save append-only live signal history'):name==='W2'?pos(s,'Persist append-only Phase 5 ledger/status'):pos(s,'Persist append-only review state');
+    const persist=name==='W1'?pos(s,'Save append-only live signal history'):name==='W2'?pos(s,'Persist append-only Phase 5 ledger/status'):pos(s,'Persist append-only review state');
     const confirm=pos(s,'Confirm validated source remains authoritative');
     const build=name==='W1'?pos(s,'Build PWA from the persisted validated head'):pos(s,'Build integrated PWA');
-    const deploy=name==='W2'?pos(s,'Deploy integrated Pages'):pos(s,'Deploy GitHub Pages')>=0?pos(s,'Deploy GitHub Pages'):pos(s,'Deploy integrated Pages');
+    const deploy=name==='W1'?pos(s,'Deploy GitHub Pages'):pos(s,'Deploy integrated Pages');
     assert.ok(persist<confirm&&confirm<build&&build<deploy,`${name} must persist -> confirm -> build -> deploy`);
   }
   must(files.W4,/persisted_sha=\$\(git rev-parse HEAD\)/,'approval must expose exact persisted SHA');
@@ -55,11 +55,7 @@ const writerSteps=(id)=>['read','validate','persist','confirm','deploy'].map(ste
 const opIds=['W1','W2','W3','W4','W5'];
 const failureModes=['none','persist-fail','confirm-fail','build-fail','deploy-fail'];
 
-function isSerialBySharedLock(history,a,b){
-  // All W1-W5 critical jobs are bound to daily-signal-pages. An admissible
-  // GitHub Actions history cannot switch from one operation to the other and
-  // then back while both jobs are live. A W4->W5 dependency gap is modeled
-  // separately below.
+function isSerialBySharedLock(history){
   const ids=history.map(x=>x.id);
   let switches=0;for(let i=1;i<ids.length;i++)if(ids[i]!==ids[i-1])switches++;
   return switches<=1;
@@ -101,7 +97,7 @@ test('Audit12 LZ01-LZ08/LZ11-LZ12: exhaustive pair interleavings are serialized 
     assert.equal(histories.length,252);
     for(const h of histories)for(const fault of failureModes){
       evaluated++;
-      if(!isSerialBySharedLock(h,a,b)){preventedByLock++;continue}
+      if(!isSerialBySharedLock(h)){preventedByLock++;continue}
       simulateSerial(h,fault);executed++;
     }
   }
@@ -115,16 +111,11 @@ test('Audit12 LZ04/LZ07/LZ10: approval persist -> intervening writer -> exact de
   let cases=0;
   for(const writer of ['W1','W2','W3'])for(const writerFault of ['none','persist-fail','confirm-fail','deploy-fail'])for(let retry=0;retry<25;retry++){
     cases++;
-    // Approval W4 wins the shared writer lock and persists generation 1.
     let main=1;const approvedSha=1;let deployed=0;
-    // Lock is released between approval persistence and reusable W5 deploy-only.
-    // Another routine writer may run completely in that gap.
     if(writerFault==='none')main=2;
-    // If another writer did not persist, main remains approval generation.
     const w5CanProceed=main===approvedSha;
     if(w5CanProceed)deployed=approvedSha;
     else assert.equal(deployed,0,'stale approved SHA must not deploy after intervening authoritative writer');
-    // clean retry of W5 against the original approval must still abort after main advanced
     if(main!==approvedSha)assert.equal(main,2);
   }
   assert.equal(cases,300);
@@ -138,9 +129,7 @@ test('Audit12 LZ02/LZ05/LZ09: stale writers cannot overwrite current main and no
       cases++;
       const start=100+n;let main=start;
       const aBase=main,bBase=main;
-      // A persists first.
       assert.equal(aBase,main);main++;
-      // B's compare-and-swap sees stale base and must abort, not rebase.
       assert.notEqual(bBase,main);
       const productionAuthority='RESEARCH';
       assert.equal(productionAuthority,'RESEARCH');
