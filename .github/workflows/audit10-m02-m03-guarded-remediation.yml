@@ -55,7 +55,7 @@ jobs:
       - name: Existing Lifecycle and Health regressions
         run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
       - name: Wave 1 evidence graph v2
-        run: node --test tests/audit10-wave1-meta-coverage-v2.test.mjs
+        run: node --experimental-strip-types --test tests/audit10-wave1-meta-coverage-v2.test.mjs
       - name: Verify permanent standard registration
         run: |
           grep -q 'audit10-wave2-independence-symmetry.test.mjs' package.json
