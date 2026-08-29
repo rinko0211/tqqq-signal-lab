@@ -30,11 +30,17 @@ const healthLedger=(events:ProductionHealthLedger["events"]):ProductionHealthLed
 
 test("A8 ledger black-box: stale multi-quarter Health cursor skips retrospective fabrication",()=>{
   const p=production({...UPRO,approvalDate:"2027-08-25",effectiveDate:"2027-08-25",nextHealthReview:"2027-11-25"});
-  const prior=healthLedger([{key:`${UPRO.version}|2027-11-25`,dueDate:"2027-11-25",recordedAt:"2027-12-10T21:01:00.000Z",version:UPRO.version,state:"Healthy",timing:"LATE_CURRENT_STATE_ONLY",reasons:["prior late current-state review"]}]);
-  const before=structuredClone(prior.events);
+  const old={key:`${UPRO.version}|2027-11-25`,dueDate:"2027-11-25",recordedAt:"2027-12-10T21:01:00.000Z",version:UPRO.version,state:"Healthy" as const,timing:"LATE_CURRENT_STATE_ONLY" as const,reasons:["prior late current-state review"]};
+  const prior=healthLedger([old]);
   const out=updateProductionHealthLedger({production:p,lifecycle:lifecycleFor(UPRO.version),prior,now:"2028-08-25T21:01:00.000Z"});
-  assert.deepEqual(out.events,before,"stale cursor must not fabricate quarterly historical states");
-  assert.equal(out.current.lastReview,"2027-11-25");
+  assert.equal(out.events.length,2,"recovery may record one current-state late review, but may not fabricate every missed quarter");
+  assert.deepEqual(out.events[0],old,"pre-existing late evidence must remain append-only and unchanged");
+  assert.equal(out.events[1].dueDate,"2028-02-25");
+  assert.equal(out.events[1].recordedAt,"2028-08-25T21:01:00.000Z");
+  assert.equal(out.events[1].timing,"LATE_CURRENT_STATE_ONLY");
+  assert.equal(out.events.some(e=>e.dueDate==="2028-05-25"),false,"intermediate missed quarter must not be retrospectively fabricated");
+  assert.equal(out.events.some(e=>e.dueDate==="2028-08-25"),false,"recovery snapshot must not be duplicated across multiple missed due dates");
+  assert.equal(out.current.lastReview,"2028-02-25");
   assert.equal(out.current.nextReview,"2028-11-25");
   assert.equal(out.current.state,"Healthy");
   assert.equal(out.current.userAction,"NONE");
