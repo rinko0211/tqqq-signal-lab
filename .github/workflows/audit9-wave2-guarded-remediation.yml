@@ -123,7 +123,7 @@ jobs:
           PY
       - name: Verify remediation scope
         run: |
-          git diff --name-only | sort > /tmp/changed.txt
+          { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u > /tmp/changed.txt
           cat /tmp/changed.txt
           test "$(cat /tmp/changed.txt)" = "$(printf '%s\n' lib/phase5-forward.ts lib/production-health-review.ts package.json tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts | sort)"
       - name: Run corrected Audit 9 Wave 2 sequence regression
