@@ -51,8 +51,13 @@ replaceOnce(
 const wave2="tests/audit10-wave2-independence-symmetry.test.mjs";
 replaceOnce(
   wave2,
+  'assert.deepEqual(productionEligibleVersions(ledger),["VS13-v1.0"],"approval selector consumes forged current authority");',
+  'assert.throws(()=>productionEligibleVersions(ledger),/current|history|review|evidence|coherence/i,"approval selector must fail closed on unsupported current authority");'
+);
+replaceOnce(
+  wave2,
   'assert.doesNotMatch(approve,/assertLifecycleLedgerInternalIntegrity/);',
-  'assert.match(approve,/assertLifecycleLedgerInternalIntegrity\(lifecycle\)/,"Production approval must validate Lifecycle provenance before consuming current authority");'
+  'assert.ok(approve.includes("assertLifecycleLedgerInternalIntegrity(lifecycle)"),"Production approval must validate Lifecycle provenance before consuming current authority");'
 );
 
 const pkgPath="package.json";
