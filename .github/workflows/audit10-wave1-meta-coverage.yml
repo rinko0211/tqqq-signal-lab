@@ -1,0 +1,30 @@
+name: Audit 10 Wave 1 Meta-Coverage
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-meta-coverage']
+    paths:
+      - 'tests/audit10-wave1-meta-coverage.test.mjs'
+      - '.github/workflows/audit10-wave1-meta-coverage.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  meta-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify immutable assurance baseline and Audit 10 charter
+        run: |
+          test "$(git hash-object research/multi-audit-assurance-protocol-v1.0-2026-08-27.md)" = "dc84ce8f72c46902a931035ea32c6251ced7f66b"
+          test -s research/audit-10-charter-2026-08-29.md
+      - name: Run independent Audit 10 Wave 1 meta-coverage discovery
+        run: node --experimental-strip-types --test tests/audit10-wave1-meta-coverage.test.mjs
