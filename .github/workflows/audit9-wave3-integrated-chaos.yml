@@ -1,0 +1,45 @@
+name: Audit 9 Wave 3 Integrated Chaos
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit9-wave3-integrated-chaos']
+    paths:
+      - 'tests/audit9-wave3-integrated-chaos.test.ts'
+      - '.github/workflows/audit9-wave3-integrated-chaos.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify Audit 9 governance
+        run: |
+          test "$(git hash-object research/audit-9-charter-2026-08-29.md)" = "0c9353aa74594140dfc65952dac6d21364633b04"
+          test "$(git hash-object research/audit-9-findings-wave2-2026-08-29.md)" = "14dc0b74790865a23bbb5c5f4f6667e8a9fa242f"
+          test "$(git hash-object research/audit-9-finding-003-health-recurrence-after-late-recovery-2026-08-29.md)" = "84e36a644b41c04b78513c52a2924be90380c42b"
+      - name: Run Wave 3 integrated hazardous chaos
+        run: node --experimental-strip-types --test tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Re-run Audit 9 Wave 2 persistence chaos
+        run: node --experimental-strip-types --test tests/audit9-wave2-persistence-chaos.test.ts
+      - name: Re-run Audit 9 Wave 1 temporal chaos
+        run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts
+      - name: Re-run Audit 8 independent families
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
