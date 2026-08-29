@@ -40,7 +40,7 @@ test("A8 UI differential: actual page consumes the product entrypoint without a 
   const deriveCall=page.match(/primaryAction\s*=\s*derivePrimaryAction\s*\(\s*\{[\s\S]*?\}\s*\)/)?.[0]||"";
   assert.ok(deriveCall,"UI must assign derivePrimaryAction() to primaryAction");
   for(const [key,value] of [["signal","dailySignal"],["status","runtimeStatus"],["forward","forwardLedger"],["production","productionConfig"],["now","now\\.toISOString\\(\\)"]])
-    assert.match(deriveCall,new RegExp(`${key}\\s*:\\s*${value}\\b?`));
+    assert.match(deriveCall,new RegExp(`${key}\\s*:\\s*${value}`));
   assert.match(deriveCall,/\bholdings\b/);
   for(const [lhs,rhs] of [["target","target"],["currentTicker","currentTicker"],["currentVersion","currentVersion"],["actual","actual"],["executionDate","executionDate"],["signalUnsafe","signalUnsafe"]])
     assert.match(page,new RegExp(`\\b${lhs}\\s*=\\s*primaryAction\\.${rhs}\\b`));
