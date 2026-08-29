@@ -55,13 +55,15 @@ const evidence=[
   ["A9-M02",()=>groupedSection("research/audit-9-findings-wave2-2026-08-29.md","A9-M02")],
   ["A9-M03",()=>individual("research/audit-9-finding-003-health-recurrence-after-late-recovery-2026-08-29.md")],
   ["A10-M01",()=>individual("research/audit-10-finding-001-ledger-generation-chronology-symmetry-2026-08-29.md")],
+  ["A10-M02",()=>individual("research/audit-10-finding-002-review-evidence-causal-chronology-2026-08-29.md")],
+  ["A10-M03",()=>individual("research/audit-10-finding-003-current-state-evidence-provenance-2026-08-29.md")],
 ];
 
 const permanentFamilies=[
   "tests/audit7-state-space.test.ts","tests/audit7-authority-bundle.test.ts","tests/audit7-ledger-integrity.test.ts","tests/audit7-interactions.test.ts","tests/audit7-corporate-action-interactions.test.ts","tests/audit7-episode-annual-review.test.ts","tests/audit7-boundary-closure.test.ts",
   "tests/audit8-independent-blackbox.test.ts","tests/audit8-wave2-blackbox.test.ts","tests/audit8-m10-production-authority-chronology.test.ts","tests/audit8-ui-differential.test.ts","tests/audit8-ledger-evidence-blackbox.test.ts","tests/audit8-pwa-cache-differential.test.ts",
   "tests/audit9-wave1-temporal-chaos.test.ts","tests/audit9-wave2-persistence-chaos.test.ts","tests/audit9-wave3-integrated-chaos.test.ts",
-  "tests/audit10-m01-ledger-generation-chronology.test.ts",
+  "tests/audit10-m01-ledger-generation-chronology.test.ts","tests/audit10-wave2-independence-symmetry.test.mjs","tests/audit10-coverage-closure.test.mjs",
 ];
 
 test("A10 Wave1v2 MTA-01: frozen assurance inventory IDs are exact",()=>{
@@ -71,7 +73,7 @@ test("A10 Wave1v2 MTA-01: frozen assurance inventory IDs are exact",()=>{
 });
 
 test("A10 Wave1v2 MTA-02/MTA-09: all A7-A10 material findings retain F1-F5 evidence",()=>{
-  assert.equal(evidence.length,21,"expected A7 7 + A8 10 + A9 3 + A10 1 findings");
+  assert.equal(evidence.length,23,"expected A7 7 + A8 10 + A9 3 + A10 3 findings");
   for(const [id,get] of evidence)assertF1F5(id,get());
 });
 
