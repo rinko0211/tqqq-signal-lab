@@ -42,6 +42,11 @@ function sectionFor(id,text){
   const tail=text.slice(start+id.length),next=tail.search(/\n#{1,2}\s+A\d+-M\d+/);
   return text.slice(start,next<0?text.length:start+id.length+next);
 }
+function findingEvidence(id,row,m,ctx){
+  const text=ctx.read(row.file);
+  const grouped=Object.values(m.findings??{}).filter(x=>x.file===row.file).length>1;
+  return grouped?sectionFor(id,text):text;
+}
 function realContext(){
   const pkg=JSON.parse(fs.readFileSync("package.json","utf8"));
   return{
@@ -94,8 +99,8 @@ function validate(m,ctx){
   for(const id of EXPECTED.materialFindings){
     const row=m.findings?.[id];if(!row)continue;
     if(!ctx.exists(row.file)){err("MTA-04",`${id} finding file missing ${row.file}`);continue}
-    const section=sectionFor(id,ctx.read(row.file));
-    if(!section)err("MTA-04",`${id} marker absent from finding evidence`);
+    const section=findingEvidence(id,row,m,ctx);
+    if(!section)err("MTA-04",`${id} marker absent from grouped finding evidence`);
     if(!/MATERIAL/i.test(section))err("MTA-04",`${id} material classification absent`);
     for(const f of ["F1","F2","F3","F4","F5"])if(!new RegExp(`\\b${f}\\b`).test(section))err("MTA-07",`${id} missing ${f}`);
     if(!Array.isArray(row.regressions)||!row.regressions.length)err("MTA-04",`${id} has no permanent regression edge`);
