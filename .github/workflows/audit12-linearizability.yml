@@ -1,9 +1,9 @@
-name: Audit 12 Linearizability Discovery
+name: Audit 12 Linearizability Closure
 
 on:
   workflow_dispatch:
   push:
-    branches: ['audit12-linearizability']
+    branches: ['audit12-linearizability', 'main']
     paths:
       - 'tests/audit12-linearizability.test.mjs'
       - '.github/workflows/audit12-linearizability.yml'
@@ -11,24 +11,34 @@ on:
       - '.github/workflows/phase5-forward.yml'
       - '.github/workflows/lifecycle-review.yml'
       - '.github/workflows/approve-production.yml'
+      - 'package.json'
+      - 'research/audit-12-close-2026-08-29.md'
 
 permissions:
   contents: read
 
 jobs:
-  discovery:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
+      - name: Capture exact candidate head
+        run: echo "VALIDATED_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '22.13.0'
           cache: npm
       - run: npm ci
       - name: Verify frozen Audit 12 charter
-        run: test -f research/audit-12-charter-2026-08-29.md
-      - name: Run Audit 12 bounded exhaustive linearizability discovery
+        run: test "$(git hash-object research/audit-12-charter-2026-08-29.md)" = "b9c412d84aca01e728c28bf53778c49495e32dc2"
+      - name: Verify Audit 12 permanent registration
+        run: |
+          node - <<'NODE'
+          const p=require('./package.json');const f='tests/audit12-linearizability.test.mjs';
+          if(!p.scripts['test:core'].includes(f)||!p.scripts['test:ops'].includes(f))throw Error('Audit 12 is not permanent in core+ops');
+          NODE
+      - name: Audit 12 bounded exhaustive linearizability histories
         run: node --test tests/audit12-linearizability.test.mjs
       - name: Audit 11 metamorphic inheritance
         run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts tests/audit11-ledger-provenance-metamorphic.test.ts tests/audit11-pwa-persistence-metamorphic.test.ts
@@ -38,7 +48,18 @@ jobs:
         run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
       - name: Audit 8 independent inheritance
         run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
       - name: Production remains unpromoted
         run: node -e 'const p=require("./public/data/production-config.json");if(p.mode!=="RESEARCH"||p.approvedByHuman!==false||p.selectedTicker!==null||p.selectedStrategy!==null||p.strategyVersion!==null)process.exit(1)'
       - name: Authoritative-state no-mutation guard
         run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Exact-head evidence
+        run: |
+          test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse "origin/$GITHUB_REF_NAME")" = "$VALIDATED_SHA"
