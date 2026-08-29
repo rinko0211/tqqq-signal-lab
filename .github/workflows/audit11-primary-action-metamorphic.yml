@@ -1,24 +1,28 @@
-name: Audit 11 Metamorphic Discovery
+name: Audit 11 Metamorphic Closure
 
 on:
   workflow_dispatch:
   push:
-    branches: ['audit11-metamorphic']
+    branches: ['audit11-metamorphic', 'main']
     paths:
       - 'tests/audit11-primary-action-metamorphic.test.ts'
       - 'tests/audit11-ledger-provenance-metamorphic.test.ts'
       - 'tests/audit11-pwa-persistence-metamorphic.test.ts'
       - '.github/workflows/audit11-primary-action-metamorphic.yml'
+      - 'package.json'
+      - 'research/audit-11-close-2026-08-29.md'
 
 permissions:
   contents: read
 
 jobs:
-  discovery:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
+      - name: Capture exact candidate head
+        run: echo "VALIDATED_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '22.13.0'
@@ -26,13 +30,33 @@ jobs:
       - run: npm ci
       - name: Verify frozen Audit 11 charter
         run: test "$(git hash-object research/audit-11-charter-2026-08-29.md)" = "8bc2b530d1f40a4c855cd7655fb5afb15e553b0d"
-      - name: Run 5000-case primary-action metamorphic discovery
-        run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts
-      - name: Run 1000-case ledger/provenance metamorphic discovery
-        run: node --experimental-strip-types --test tests/audit11-ledger-provenance-metamorphic.test.ts
-      - name: Run 500-case PWA/persistence metamorphic discovery
-        run: node --experimental-strip-types --test tests/audit11-pwa-persistence-metamorphic.test.ts
+      - name: Verify Audit 11 permanent registration
+        run: |
+          node - <<'NODE'
+          const p=require('./package.json');
+          const required=['tests/audit11-primary-action-metamorphic.test.ts','tests/audit11-ledger-provenance-metamorphic.test.ts','tests/audit11-pwa-persistence-metamorphic.test.ts'];
+          for(const f of required){if(!p.scripts['test:core'].includes(f)||!p.scripts['test:ops'].includes(f))throw Error(`${f} is not permanent in core+ops`)}
+          NODE
+      - name: Audit 11 — 6500 deterministic metamorphic transformations
+        run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts tests/audit11-ledger-provenance-metamorphic.test.ts tests/audit11-pwa-persistence-metamorphic.test.ts
+      - name: Audit 10 retained meta and coverage closure
+        run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts tests/audit10-wave1-meta-coverage-v2.test.mjs tests/audit10-wave2-independence-symmetry.test.mjs tests/audit10-coverage-closure.test.mjs
+      - name: Audit 9 temporal inheritance
+        run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Audit 8 independent inheritance
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
       - name: Production remains unpromoted
         run: node -e 'const p=require("./public/data/production-config.json");if(p.mode!=="RESEARCH"||p.approvedByHuman!==false||p.selectedTicker!==null||p.selectedStrategy!==null||p.strategyVersion!==null)process.exit(1)'
       - name: Authoritative-state no-mutation guard
         run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Exact-head evidence
+        run: |
+          test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
+          git fetch origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse "origin/$GITHUB_REF_NAME")" = "$VALIDATED_SHA"
