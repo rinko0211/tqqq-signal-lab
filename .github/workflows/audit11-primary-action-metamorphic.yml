@@ -7,6 +7,7 @@ on:
     paths:
       - 'tests/audit11-primary-action-metamorphic.test.ts'
       - 'tests/audit11-ledger-provenance-metamorphic.test.ts'
+      - 'tests/audit11-pwa-persistence-metamorphic.test.ts'
       - '.github/workflows/audit11-primary-action-metamorphic.yml'
 
 permissions:
@@ -15,7 +16,7 @@ permissions:
 jobs:
   discovery:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,6 +30,8 @@ jobs:
         run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts
       - name: Run 1000-case ledger/provenance metamorphic discovery
         run: node --experimental-strip-types --test tests/audit11-ledger-provenance-metamorphic.test.ts
+      - name: Run 500-case PWA/persistence metamorphic discovery
+        run: node --experimental-strip-types --test tests/audit11-pwa-persistence-metamorphic.test.ts
       - name: Production remains unpromoted
         run: node -e 'const p=require("./public/data/production-config.json");if(p.mode!=="RESEARCH"||p.approvedByHuman!==false||p.selectedTicker!==null||p.selectedStrategy!==null||p.strategyVersion!==null)process.exit(1)'
       - name: Authoritative-state no-mutation guard
