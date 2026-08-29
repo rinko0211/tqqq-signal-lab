@@ -53,7 +53,7 @@ jobs:
       - name: A10-M01 retained chronology regression
         run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts
       - name: Existing Lifecycle and Health regressions
-        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/audit7-episode-annual-review.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
       - name: Wave 1 evidence graph v2
         run: node --experimental-strip-types --test tests/audit10-wave1-meta-coverage-v2.test.mjs
       - name: Verify permanent standard registration
@@ -73,7 +73,7 @@ jobs:
           bad=0
           while IFS= read -r f; do
             case "$f" in
-              lib/lifecycle-review.ts|lib/production-health-review.ts|scripts/approve-production.ts|tests/audit10-wave2-independence-symmetry.test.mjs|tests/audit8-ledger-evidence-blackbox.test.ts|package.json) ;;
+              lib/lifecycle-review.ts|lib/production-health-review.ts|scripts/approve-production.ts|tests/audit10-wave2-independence-symmetry.test.mjs|tests/audit8-ledger-evidence-blackbox.test.ts|tests/audit7-episode-annual-review.test.ts|package.json) ;;
               *) echo "::error::unexpected remediation change $f"; bad=1 ;;
             esac
           done < <(git diff --name-only)
@@ -85,6 +85,6 @@ jobs:
           test "$(git rev-parse origin/audit10-meta-coverage)" = "$CANDIDATE_HEAD"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/lifecycle-review.ts lib/production-health-review.ts scripts/approve-production.ts tests/audit10-wave2-independence-symmetry.test.mjs tests/audit8-ledger-evidence-blackbox.test.ts package.json
+          git add lib/lifecycle-review.ts lib/production-health-review.ts scripts/approve-production.ts tests/audit10-wave2-independence-symmetry.test.mjs tests/audit8-ledger-evidence-blackbox.test.ts tests/audit7-episode-annual-review.test.ts package.json
           git commit -m 'Remediate Audit 10 M02 M03 causal provenance gaps'
           git push origin HEAD:audit10-meta-coverage
