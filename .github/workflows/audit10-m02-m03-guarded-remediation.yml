@@ -1,0 +1,90 @@
+name: Audit 10 M02 M03 Guarded Remediation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-meta-coverage']
+    paths:
+      - 'scripts/audit10-m02-m03-remediation.mjs'
+      - '.github/workflows/audit10-m02-m03-guarded-remediation.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit10-m02-m03-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Capture exact candidate head
+        run: echo "CANDIDATE_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify findings exist before remediation
+        run: |
+          test -s research/audit-10-finding-002-review-evidence-causal-chronology-2026-08-29.md
+          test -s research/audit-10-finding-003-current-state-evidence-provenance-2026-08-29.md
+      - name: Confirm Wave 2 defects reproduce before patch
+        shell: bash
+        run: |
+          set +e
+          node --experimental-strip-types --test tests/audit10-wave2-independence-symmetry.test.mjs > /tmp/a10-prepatch.log 2>&1
+          rc=$?
+          cat /tmp/a10-prepatch.log
+          test "$rc" -ne 0
+          grep -q 'A10 Wave2 S1' /tmp/a10-prepatch.log
+          grep -q 'A10 Wave2 S2' /tmp/a10-prepatch.log
+          grep -q 'A10 Wave2 S3' /tmp/a10-prepatch.log
+          grep -q 'A10 Wave2 S4' /tmp/a10-prepatch.log
+      - name: Apply deterministic M02/M03 remediation
+        run: node scripts/audit10-m02-m03-remediation.mjs
+      - name: Wave 2 permanent causal/provenance regression
+        run: node --experimental-strip-types --test tests/audit10-wave2-independence-symmetry.test.mjs
+      - name: A10-M01 retained chronology regression
+        run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts
+      - name: Existing Lifecycle and Health regressions
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Wave 1 evidence graph v2
+        run: node --test tests/audit10-wave1-meta-coverage-v2.test.mjs
+      - name: Verify permanent standard registration
+        run: |
+          grep -q 'audit10-wave2-independence-symmetry.test.mjs' package.json
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Scope guard
+        shell: bash
+        run: |
+          bad=0
+          while IFS= read -r f; do
+            case "$f" in
+              lib/lifecycle-review.ts|lib/production-health-review.ts|scripts/approve-production.ts|tests/audit10-wave2-independence-symmetry.test.mjs|package.json) ;;
+              *) echo "::error::unexpected remediation change $f"; bad=1 ;;
+            esac
+          done < <(git diff --name-only)
+          test "$bad" -eq 0
+      - name: Persist validated remediation on exact branch head
+        shell: bash
+        run: |
+          git fetch origin audit10-meta-coverage
+          test "$(git rev-parse origin/audit10-meta-coverage)" = "$CANDIDATE_HEAD"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/lifecycle-review.ts lib/production-health-review.ts scripts/approve-production.ts tests/audit10-wave2-independence-symmetry.test.mjs package.json
+          git commit -m 'Remediate Audit 10 M02 M03 causal provenance gaps'
+          git push origin HEAD:audit10-meta-coverage
