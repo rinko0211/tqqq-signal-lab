@@ -1,0 +1,32 @@
+name: Audit 11 Primary Action Metamorphic Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit11-metamorphic']
+    paths:
+      - 'tests/audit11-primary-action-metamorphic.test.ts'
+      - '.github/workflows/audit11-primary-action-metamorphic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify frozen Audit 11 charter
+        run: test "$(git hash-object research/audit-11-charter-2026-08-29.md)" = "8bc2b530d1f40a4c855cd7655fb5afb15e553b0d"
+      - name: Run 5000-case primary-action metamorphic discovery
+        run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts
+      - name: Production remains unpromoted
+        run: node -e 'const p=require("./public/data/production-config.json");if(p.mode!=="RESEARCH"||p.approvedByHuman!==false||p.selectedTicker!==null||p.selectedStrategy!==null||p.strategyVersion!==null)process.exit(1)'
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
