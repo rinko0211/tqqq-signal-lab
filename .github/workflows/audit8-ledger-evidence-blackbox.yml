@@ -1,0 +1,39 @@
+name: Audit 8 Ledger Evidence Black-Box
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit8-ledger-evidence-blackbox']
+    paths:
+      - 'tests/audit8-ledger-evidence-blackbox.test.ts'
+      - '.github/workflows/audit8-ledger-evidence-blackbox.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify frozen Audit 8 charter
+        run: test "$(git hash-object research/audit-8-charter-2026-08-27.md)" = "a58a9373516028d5e2add08dbb2e134a0ec4ca17"
+      - name: Run independent ledger/evidence discovery
+        run: node --experimental-strip-types --test tests/audit8-ledger-evidence-blackbox.test.ts
+      - name: Re-run prior Audit 8 independent families
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
