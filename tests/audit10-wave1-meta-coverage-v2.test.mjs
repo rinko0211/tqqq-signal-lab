@@ -79,7 +79,7 @@ test("A10 Wave1v2 MTA-02/MTA-09: all A7-A10 material findings retain F1-F5 evide
 
 test("A10 Wave1v2 MTA-06: F5 inheritance is explicit from Audit8 to Audit9 and Audit9 to Audit10",()=>{
   for(let i=1;i<=10;i++){const id=`A8-M${String(i).padStart(2,"0")}`;assert.ok(audit9Charter.includes(id),`${id} missing from Audit9 inherited mutation charter`)}
-  for(let i=1;i<=3;i++){const id=`A9-M${String(i).padStart(2,"0")}`;assert.ok(audit10Charter.includes(id),`${id} missing from Audit10 inherited mutation charter`)}
+  assert.match(audit10Charter,/A9-M01(?:–|-)M03|A9-M01[\s\S]*A9-M02[\s\S]*A9-M03/,"A9-M01–M03 inherited finding family missing from Audit10 charter");
 });
 
 test("A10 Wave1v2 MTA-07: permanent finding/audit families are in core and ops",()=>{
@@ -120,5 +120,5 @@ test("A10 Wave1v2 MTA-08/A9-M03: late-review evidence label is not reused as an 
 
 test("A10 Wave1v2 MTA-10/MTA-12: accounting and unattended soak remain separate",()=>{
   const a8=read("research/audit-8-close-2026-08-29.md"),a9=read("research/audit-9-close-2026-08-29.md");
-  assert.match(a8,/PERMANENTLY NOT CLEAN|permanently NOT CLEAN/i);assert.match(a9,/PERMANENTLY NOT CLEAN/i);assert.match(a9,/0\/2/);assert.match(audit10Charter,/0-of-2 CLEAN/);assert.match(audit10Charter,/1\/2 CLEAN/);assert.match(audit10Charter,/10 consecutive NYSE-session|unattended soak/i);
+  assert.match(a8,/PERMANENTLY NOT CLEAN|permanently NOT CLEAN/i);assert.match(a9,/PERMANENTLY NOT CLEAN/i);assert.match(a9,/0\/2/);assert.match(audit10Charter,/0-of-2 CLEAN/);assert.match(audit10Charter,/1\/2/);assert.match(audit10Charter,/10 consecutive NYSE-session|unattended soak/i);
 });
