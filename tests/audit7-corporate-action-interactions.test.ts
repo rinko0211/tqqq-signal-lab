@@ -45,6 +45,10 @@ const priorPhase5=(freeze:ReturnType<typeof emptyPhase5Ledger>["freezes"][number
 
 test("A7 D10 FC-14/06: Phase5 subset keeps split-day pending execution continuous without contaminating peers",()=>{
   const ledger=emptyPhase5Ledger("2027-01-04T21:30:00Z"),freeze=ledger.freezes.find(f=>f.version==="UPRO-SPBT-v1.0")!;ledger.records=[priorPhase5(freeze)];
+  // This synthetic corporate-action fixture intentionally omits the older
+  // Phase5 price path. Make that omission explicit evidence rather than an
+  // impossible silently truncated prior.
+  ledger.coverageGaps=sessions(freeze.startDate,"2027-01-03").map(date=>({key:`${freeze.version}|${date}|GAP`,strategyVersion:freeze.version,marketDataDate:date,recordedAt:"2027-01-04T21:30:00Z",reason:"SOURCE_DATA_MISSING" as const}));
   const beforePeerFreezes=structuredClone(ledger.freezes.filter(f=>f.version!==freeze.version));
   const out=updatePhase5LedgerSubset(phasePayload,ledger,[freeze.version],"2027-01-05T21:30:00Z"),row=out.records.find(r=>r.strategyVersion===freeze.version&&r.marketDataDate==="2027-01-05")!;
   assert.equal(row.corporateActionKind,"SPLIT");assert.equal(row.corporateActionFactor,2);assert.ok(row.execution);assert.equal(row.execution!.before,.5);assert.equal(row.execution!.after,1);
