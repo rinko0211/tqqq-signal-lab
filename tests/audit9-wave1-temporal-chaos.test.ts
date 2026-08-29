@@ -216,7 +216,10 @@ test("Audit 9 Wave 1: missed-open state is not chased and a later clean signal i
   const changedIndex=Math.ceil(i/13)*13;
   const f=researchFx(changedIndex);
   assert.notEqual(targetFor(changedIndex),previousTargetFor(changedIndex),"fixture must be a target-change session");
-  f.now=`${sessions[changedIndex+1]}T20:00:00.000Z`;
+  // 16:00Z is safely after the NYSE core open and before the close in both EDT
+  // and EST, so this tests an expired open without simultaneously making the
+  // prior-close operational data stale because a new close has completed.
+  f.now=`${sessions[changedIndex+1]}T16:00:00.000Z`;
   assert.equal(act(f),"NO_ACTION_EXPIRED","expired legal open must not become a late chase");
 
   const later=researchFx(changedIndex+1);
