@@ -58,10 +58,16 @@ test("A8 ledger black-box: A→B→A keeps old evidence append-only but starts a
 
 const market=JSON.parse(fs.readFileSync("github-pages/public/data/market-data.json","utf8"));
 const authoritative=JSON.parse(fs.readFileSync("github-pages/public/data/phase-5-forward-ledger.json","utf8")) as Phase5Ledger;
-const payloadThrough=(date:string)=>({
-  source:"Audit 8 external market fixture",retrievedAt:`${date}T22:00:00.000Z`,
-  series:Object.fromEntries(Object.entries(market.series).map(([ticker,rows])=>[ticker,(rows as any[]).filter(r=>r.date<=date)])),
-});
+const payloadThrough=(date:string)=>{
+  const base=Object.fromEntries(Object.entries(market.series).map(([ticker,rows])=>[ticker,(rows as any[]).filter(r=>r.date<=date)])) as Record<string,any[]>;
+  // Phase5 isolation semantics do not depend on leverage price identity. Reuse
+  // stored SPY/QQQ market sessions as deterministic external aliases so the
+  // fixture is self-contained and does not call an external provider or calendar.
+  base.UPRO=base.SPY.map(x=>({...x}));
+  base.SSO=base.SPY.map(x=>({...x}));
+  base.QLD=base.QQQ.map(x=>({...x}));
+  return{source:"Audit 8 external market fixture",retrievedAt:`${date}T22:00:00.000Z`,series:base};
+};
 
 test("A8 ledger black-box: one Phase5 system failure is isolated and retry catches up only that system",()=>{
   let ledger=structuredClone(authoritative);
