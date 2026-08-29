@@ -3,10 +3,12 @@ name: Audit 10 Coverage Closure
 on:
   workflow_dispatch:
   push:
-    branches: ['audit10-coverage-closure']
+    branches: ['audit10-coverage-closure', 'main']
     paths:
       - 'research/audit-10-coverage-manifest-v1.json'
+      - 'research/audit-10-close-2026-08-29.md'
       - 'tests/audit10-coverage-closure.test.mjs'
+      - 'tests/audit10-wave1-meta-coverage-v2.test.mjs'
       - '.github/workflows/audit10-coverage-closure.yml'
       - 'package.json'
 
