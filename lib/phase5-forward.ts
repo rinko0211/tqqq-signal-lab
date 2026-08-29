@@ -66,16 +66,19 @@ export type Phase5Record = {
   signal:string; tradeReason:string; intendedExecutionDate:string; execution:Phase5Execution|null; assetClose:number; position:number; quantity:number; cash:number;
   equity:number; dailyReturn:number; currentDrawdown:number; cumulativeCosts:number; corporateActionFactor?:number; corporateActionKind?:"SPLIT"|"REVERSE_SPLIT"; dataSource:string; dataStatus:"VALID"|"BACKFILLED_NO_SIGNAL"; buildVersion:string;
 };
+export type Phase5CoverageGap={
+  key:string;strategyVersion:string;marketDataDate:string;recordedAt:string;reason:"SOURCE_DATA_MISSING";
+};
 export type Phase5Ledger = {
   schemaVersion:1; createdAt:string; updatedAt:string; appendOnly:true; freezes:Phase5Freeze[];
-  reviewSchedule:{interim:string;formal:string;stronger:string}; promotionPolicy:string; records:Phase5Record[];
+  reviewSchedule:{interim:string;formal:string;stronger:string}; promotionPolicy:string; records:Phase5Record[];coverageGaps?:Phase5CoverageGap[];
 };
 
 type Payload={source?:string;retrievedAt?:string;series:Record<string,Bar[]>};
 
 export function emptyPhase5Ledger(now=new Date().toISOString()):Phase5Ledger{
   return{
-    schemaVersion:1,createdAt:now,updatedAt:now,appendOnly:true,freezes:structuredClone(PHASE5_FREEZES),records:[],
+    schemaVersion:1,createdAt:now,updatedAt:now,appendOnly:true,freezes:structuredClone(PHASE5_FREEZES),records:[],coverageGaps:[],
     reviewSchedule:{interim:"2027-02-25",formal:"2027-08-25",stronger:"2028-08-25"},
     promotionPolicy:"Human approval only. No promotion before 12 months. Require true Forward observations, >=6 executed non-zero-turnover trades/actions where naturally generated, multiple regimes, missing/invalid <=1%, <=40 Action Days/year, no integrity/execution defect, and no unexplained drawdown materially outside historical stress expectations. Phase 6 uses Pareto evidence; Forward robustness outranks historical CAGR.",
   };
@@ -92,6 +95,8 @@ function datasetFor(payload:Payload,freeze:Phase5Freeze):Dataset{
 }
 
 const keyOf=(version:string,date:string)=>`${version}|${date}`;
+const gapKeyOf=(version:string,date:string)=>`${version}|${date}|GAP`;
+const nyseSessionsInclusive=(start:string,end:string)=>{const out:string[]=[];for(const d=new Date(`${start}T12:00:00Z`),last=new Date(`${end}T12:00:00Z`);d<=last;d.setUTCDate(d.getUTCDate()+1)){const date=d.toISOString().slice(0,10);if(isNyseSession(date))out.push(date)}return out};
 const observationSignal=(date:string,target:number,asset:string):Signal=>({
   date,score:0,components:{trend:0,momentum:0,volatility:0,market:0},regime:"Missing live observation",target,previousTarget:target,
   reason:`${asset}: missed live signal; observation only`,nextChange:"No retrospective signal",
@@ -99,64 +104,98 @@ const observationSignal=(date:string,target:number,asset:string):Signal=>({
 });
 
 function appendFreeze(ds:Dataset,ledger:Phase5Ledger,freeze:Phase5Freeze,source:string,generatedAt:string){
+  ledger.coverageGaps??=[];
   const allRows=()=>ledger.records.filter(r=>r.strategyVersion===freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
+  const gaps=()=>ledger.coverageGaps!.filter(g=>g.strategyVersion===freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
   const prior=allRows();
   const last=prior.at(-1);
   const anchorIndex=last?ds.days.findIndex(d=>d.date===last.marketDataDate):-1;
   if(last&&anchorIndex<0)throw new Error(`Phase 5 prior anchor missing from provider dataset: ${freeze.version} ${last.marketDataDate}`);
-  const startIndex=last?anchorIndex+1:ds.days.findIndex(d=>d.date>=freeze.startDate);
-  if(startIndex<0)return;
-  for(let i=startIndex;i<ds.days.length;i++){
-    const day=ds.days[i];
-    if(day.date<freeze.startDate)throw new Error(`Phase 5 pre-start write blocked ${freeze.version} ${day.date}`);
-    if(ledger.records.some(r=>r.key===keyOf(freeze.version,day.date)))continue;
-    const rows=allRows(),previous=rows.at(-1),isLatest=i===ds.days.length-1;
-    const asset=day.tqqq,providerPriorDay=previous?ds.days.find(x=>x.date===previous.marketDataDate):undefined,continuity=previous&&providerPriorDay?corporateActionContinuity(previous.assetClose,providerPriorDay.tqqq.close):null;
-    if(previous&&continuity)assertPlausibleTransition(continuity.adjustedPriorClose,asset.open,continuity);
-    const priorClose=continuity?.adjustedPriorClose??previous?.assetClose??asset.close;
-    let equity=previous?.equity??freeze.initialCapital;
-    const previousExposure=previous?.position??0;
-    let actualExposure=previousExposure,execution:Phase5Execution|null=null,cumulativeCosts=previous?.cumulativeCosts??0;
-    if(previous){
-      equity*=1+previousExposure*(asset.open/priorClose-1);
-      if(previous.targetExposure!==previous.position&&previous.intendedExecutionDate<=day.date){
-        const turnover=Math.abs(previous.targetExposure-previous.position),commission=equity*turnover*.0003,slippage=equity*turnover*.0005,totalCost=commission+slippage;
-        equity-=totalCost;cumulativeCosts+=totalCost;
-        execution={signalDate:previous.marketDataDate,intendedDate:previous.intendedExecutionDate,recordedDate:day.date,price:asset.open*(previous.targetExposure>previous.position?1.0005:.9995),before:previous.position,after:previous.targetExposure,turnover,commission,slippage,totalCost,status:previous.intendedExecutionDate===day.date?"ON_TIME":"SCHEDULED_CATCHUP"};
-        actualExposure=previous.targetExposure;
+  const priorCoverage=[...prior.map(r=>r.marketDataDate),...gaps().map(g=>g.marketDataDate)].sort().at(-1);
+  const startIndex=priorCoverage?ds.days.findIndex(d=>d.date>priorCoverage):ds.days.findIndex(d=>d.date>=freeze.startDate);
+  if(startIndex>=0){
+    for(let i=startIndex;i<ds.days.length;i++){
+      const day=ds.days[i];
+      if(day.date<freeze.startDate)throw new Error(`Phase 5 pre-start write blocked ${freeze.version} ${day.date}`);
+      if(ledger.records.some(r=>r.key===keyOf(freeze.version,day.date))||ledger.coverageGaps.some(g=>g.strategyVersion===freeze.version&&g.marketDataDate===day.date))continue;
+      const rows=allRows(),previous=rows.at(-1),isLatest=i===ds.days.length-1;
+      const asset=day.tqqq,providerPriorDay=previous?ds.days.find(x=>x.date===previous.marketDataDate):undefined,continuity=previous&&providerPriorDay?corporateActionContinuity(previous.assetClose,providerPriorDay.tqqq.close):null;
+      if(previous&&continuity)assertPlausibleTransition(continuity.adjustedPriorClose,asset.open,continuity);
+      const priorClose=continuity?.adjustedPriorClose??previous?.assetClose??asset.close;
+      let equity=previous?.equity??freeze.initialCapital;
+      const previousExposure=previous?.position??0;
+      let actualExposure=previousExposure,execution:Phase5Execution|null=null,cumulativeCosts=previous?.cumulativeCosts??0;
+      if(previous){
+        equity*=1+previousExposure*(asset.open/priorClose-1);
+        if(previous.targetExposure!==previous.position&&previous.intendedExecutionDate<=day.date){
+          const turnover=Math.abs(previous.targetExposure-previous.position),commission=equity*turnover*.0003,slippage=equity*turnover*.0005,totalCost=commission+slippage;
+          equity-=totalCost;cumulativeCosts+=totalCost;
+          execution={signalDate:previous.marketDataDate,intendedDate:previous.intendedExecutionDate,recordedDate:day.date,price:asset.open*(previous.targetExposure>previous.position?1.0005:.9995),before:previous.position,after:previous.targetExposure,turnover,commission,slippage,totalCost,status:previous.intendedExecutionDate===day.date?"ON_TIME":"SCHEDULED_CATCHUP"};
+          actualExposure=previous.targetExposure;
+        }
+        equity*=1+actualExposure*(asset.close/asset.open-1);
       }
-      equity*=1+actualExposure*(asset.close/asset.open-1);
+      if(!Number.isFinite(equity)||equity<=0)throw new Error(`Phase 5 invalid equity ${freeze.version} ${day.date}: ${equity}`);
+      const peak=Math.max(freeze.initialCapital,...rows.map(r=>r.equity),equity),currentDrawdown=equity/peak-1;
+      const sig=isLatest?signals(ds.days.slice(0,i+1),freeze.config).at(-1)!:observationSignal(day.date,actualExposure,freeze.ticker);
+      const targetExposure=isLatest?sig.target:actualExposure;
+      const record:Phase5Record={
+        key:keyOf(freeze.version,day.date),marketDataDate:day.date,recordedAt:generatedAt,recordMode:isLatest?"LIVE":"BACKFILLED_OBSERVATION",strategyId:freeze.id,ticker:freeze.ticker,
+        strategyName:freeze.name,strategyVersion:freeze.version,score:sig.score,components:sig.components,regime:sig.regime,targetExposure,previousExposure,
+        signal:targetExposure===actualExposure?"HOLD":targetExposure>actualExposure?"INCREASE":"REDUCE",tradeReason:sig.reason,intendedExecutionDate:isLatest?earliestLegalExecutionDate(day.date,generatedAt):nextExecutionDate(day.date),execution,
+        assetClose:asset.close,position:actualExposure,quantity:asset.close?equity*actualExposure/asset.close:0,cash:equity*(1-actualExposure),equity,
+        dailyReturn:previous?equity/previous.equity-1:0,currentDrawdown,cumulativeCosts,...(continuity&&continuity.kind!=="NONE"&&continuity.kind!=="UNEXPLAINED_RESTATEMENT"?{corporateActionFactor:continuity.factor,corporateActionKind:continuity.kind}:{}),dataSource:source,dataStatus:isLatest?"VALID":"BACKFILLED_NO_SIGNAL",buildVersion:PHASE5_BUILD,
+      };
+      ledger.records.push(record);
     }
-    if(!Number.isFinite(equity)||equity<=0)throw new Error(`Phase 5 invalid equity ${freeze.version} ${day.date}: ${equity}`);
-    const peak=Math.max(freeze.initialCapital,...rows.map(r=>r.equity),equity),currentDrawdown=equity/peak-1;
-    const sig=isLatest?signals(ds.days.slice(0,i+1),freeze.config).at(-1)!:observationSignal(day.date,actualExposure,freeze.ticker);
-    const targetExposure=isLatest?sig.target:actualExposure;
-    const record:Phase5Record={
-      key:keyOf(freeze.version,day.date),marketDataDate:day.date,recordedAt:generatedAt,recordMode:isLatest?"LIVE":"BACKFILLED_OBSERVATION",strategyId:freeze.id,ticker:freeze.ticker,
-      strategyName:freeze.name,strategyVersion:freeze.version,score:sig.score,components:sig.components,regime:sig.regime,targetExposure,previousExposure,
-      signal:targetExposure===actualExposure?"HOLD":targetExposure>actualExposure?"INCREASE":"REDUCE",tradeReason:sig.reason,intendedExecutionDate:isLatest?earliestLegalExecutionDate(day.date,generatedAt):nextExecutionDate(day.date),execution,
-      assetClose:asset.close,position:actualExposure,quantity:asset.close?equity*actualExposure/asset.close:0,cash:equity*(1-actualExposure),equity,
-      dailyReturn:previous?equity/previous.equity-1:0,currentDrawdown,cumulativeCosts,...(continuity&&continuity.kind!=="NONE"&&continuity.kind!=="UNEXPLAINED_RESTATEMENT"?{corporateActionFactor:continuity.factor,corporateActionKind:continuity.kind}:{}),dataSource:source,dataStatus:isLatest?"VALID":"BACKFILLED_NO_SIGNAL",buildVersion:PHASE5_BUILD,
-    };
-    ledger.records.push(record);
+  }
+  const horizon=ds.days.at(-1)?.date;
+  if(horizon&&horizon>=freeze.startDate){
+    const covered=new Set([...allRows().map(r=>r.marketDataDate),...gaps().map(g=>g.marketDataDate)]);
+    for(const date of nyseSessionsInclusive(freeze.startDate,horizon))if(!covered.has(date)){
+      ledger.coverageGaps.push({key:gapKeyOf(freeze.version,date),strategyVersion:freeze.version,marketDataDate:date,recordedAt:generatedAt,reason:"SOURCE_DATA_MISSING"});
+      covered.add(date);
+    }
   }
 }
 
 function assertPhase5FreezeIntegrity(ledger:Phase5Ledger){for(const frozen of PHASE5_FREEZES){const existing=ledger.freezes.find(x=>x.version===frozen.version);if(!existing)throw new Error(`Phase 5 freeze missing: ${frozen.version}`);if(JSON.stringify(existing)!==JSON.stringify(frozen))throw new Error(`Phase 5 freeze drift blocked: ${frozen.version}`)}if(ledger.freezes.length!==PHASE5_FREEZES.length)throw new Error("Phase 5 unexpected freeze definition")};
 export function assertPhase5LedgerInternalIntegrity(ledger:Phase5Ledger){
-  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");assertPhase5FreezeIntegrity(ledger);
+  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");
+  assertPhase5FreezeIntegrity(ledger);
+  const ledgerUpdatedAt=Date.parse(ledger.updatedAt);if(!Number.isFinite(ledgerUpdatedAt))throw new Error("Phase 5 integrity: invalid ledger updatedAt");
   const canonical=[...ledger.records].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));for(let i=0;i<ledger.records.length;i++)if(canonical[i]?.key!==ledger.records[i]?.key)throw new Error(`Phase 5 integrity: non-canonical record order at index ${i}`);
-  const keys=new Set<string>(),logical=new Set<string>();for(const r of ledger.records){const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw new Error(`Phase 5 integrity: unknown version ${r.strategyVersion}`);if(!isNyseSession(r.marketDataDate))throw new Error(`Phase 5 integrity: invalid/non-session market date ${r.marketDataDate}`);if(!Number.isFinite(Date.parse(r.recordedAt)))throw new Error(`Phase 5 integrity: invalid recordedAt ${r.key}`);const expected=keyOf(r.strategyVersion,r.marketDataDate);if(r.key!==expected)throw new Error(`Phase 5 integrity: record key mismatch ${r.key}`);if(r.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: pre-start record ${r.key}`);if(keys.has(r.key)||logical.has(expected))throw new Error(`Phase 5 integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);}
+  const gaps=ledger.coverageGaps??[],canonicalGaps=[...gaps].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));for(let i=0;i<gaps.length;i++)if(canonicalGaps[i]?.key!==gaps[i]?.key)throw new Error(`Phase 5 integrity: non-canonical gap order at index ${i}`);
+  const keys=new Set<string>(),coverage=new Set<string>();
+  for(const r of ledger.records){
+    const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw new Error(`Phase 5 integrity: unknown version ${r.strategyVersion}`);
+    if(!isNyseSession(r.marketDataDate))throw new Error(`Phase 5 integrity: invalid/non-session market date ${r.marketDataDate}`);
+    const recordedAt=Date.parse(r.recordedAt);if(!Number.isFinite(recordedAt))throw new Error(`Phase 5 integrity: invalid recordedAt ${r.key}`);if(recordedAt>ledgerUpdatedAt)throw new Error(`Phase 5 integrity: record chronology exceeds ledger generation ${r.key}`);
+    const expected=keyOf(r.strategyVersion,r.marketDataDate),logical=`${r.strategyVersion}|${r.marketDataDate}`;if(r.key!==expected)throw new Error(`Phase 5 integrity: record key mismatch ${r.key}`);if(r.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: pre-start record ${r.key}`);if(keys.has(r.key)||coverage.has(logical))throw new Error(`Phase 5 integrity: duplicate record ${r.key}`);keys.add(r.key);coverage.add(logical);
+  }
+  for(const g of gaps){
+    const freeze=ledger.freezes.find(f=>f.version===g.strategyVersion);if(!freeze)throw new Error(`Phase 5 integrity: unknown gap version ${g.strategyVersion}`);
+    if(!isNyseSession(g.marketDataDate)||g.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: invalid gap date ${g.key}`);
+    const recordedAt=Date.parse(g.recordedAt);if(!Number.isFinite(recordedAt)||recordedAt>ledgerUpdatedAt)throw new Error(`Phase 5 integrity: invalid gap chronology ${g.key}`);
+    const expected=gapKeyOf(g.strategyVersion,g.marketDataDate),logical=`${g.strategyVersion}|${g.marketDataDate}`;if(g.key!==expected||g.reason!=="SOURCE_DATA_MISSING")throw new Error(`Phase 5 integrity: invalid gap evidence ${g.key}`);if(keys.has(g.key)||coverage.has(logical))throw new Error(`Phase 5 integrity: duplicate/conflicting coverage ${g.key}`);keys.add(g.key);coverage.add(logical);
+  }
+  for(const freeze of ledger.freezes){
+    const dates=[...ledger.records.filter(r=>r.strategyVersion===freeze.version).map(r=>r.marketDataDate),...gaps.filter(g=>g.strategyVersion===freeze.version).map(g=>g.marketDataDate)].sort();
+    if(!dates.length)continue;
+    const horizon=dates.at(-1)!;const expected=nyseSessionsInclusive(freeze.startDate,horizon);
+    if(dates.length!==expected.length)throw new Error(`Phase 5 integrity: incomplete coverage for ${freeze.version}; expected ${expected.length} sessions from ${freeze.startDate} through ${horizon}, found ${dates.length} coverage facts`);
+    for(const date of expected)if(!coverage.has(`${freeze.version}|${date}`))throw new Error(`Phase 5 integrity: missing coverage for ${freeze.version} ${date}`);
+  }
 }
 export function updatePhase5LedgerSubset(payload:Payload,input:Phase5Ledger|null|undefined,versions:string[],generatedAt=new Date().toISOString()):Phase5Ledger{
   if(input)assertPhase5LedgerInternalIntegrity(input);
-  const ledger=input?structuredClone(input):emptyPhase5Ledger(generatedAt);assertPhase5LedgerInternalIntegrity(ledger);const wanted=new Set(versions);
+  const ledger=input?structuredClone(input):emptyPhase5Ledger(generatedAt);ledger.coverageGaps??=[];assertPhase5LedgerInternalIntegrity(ledger);const wanted=new Set(versions);
   for(const version of wanted)if(!PHASE5_FREEZES.some(f=>f.version===version))throw new Error(`Phase 5 unknown frozen version: ${version}`);
   for(const freeze of ledger.freezes.filter(f=>wanted.has(f.version)))appendFreeze(datasetFor(payload,freeze),ledger,freeze,payload.source||"official",generatedAt);
-  if(ledger.records.some(r=>r.marketDataDate<PHASE5_FORWARD_START))throw new Error("Phase 5 ledger contains pre-start record");
-  ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=generatedAt;return ledger;
+  if(ledger.records.some(r=>r.marketDataDate<PHASE5_FORWARD_START)||ledger.coverageGaps.some(g=>g.marketDataDate<PHASE5_FORWARD_START))throw new Error("Phase 5 ledger contains pre-start coverage");
+  ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.coverageGaps.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=generatedAt;assertPhase5LedgerInternalIntegrity(ledger);return ledger;
 }
 export function updatePhase5Ledger(payload:Payload,input?:Phase5Ledger|null,generatedAt=new Date().toISOString()):Phase5Ledger{return updatePhase5LedgerSubset(payload,input,PHASE5_FREEZES.map(f=>f.version),generatedAt)}
 
 export type Phase5Summary={version:string;ticker:Phase5Ticker;role:Phase5Role;observations:number;liveObservations:number;missing:number;executions:number;actionDays:number;currentCapital:number;totalReturn:number;currentDd:number;metrics:Metrics;evidence:"INSUFFICIENT"|"LOW"|"MODERATE"|"FORMAL_READY";status:"FORWARD_ACTIVE"|"AWAITING_FIRST_BAR"|"DATA_REVIEW_REQUIRED"};
-export function summarizePhase5(ledger:Phase5Ledger):Phase5Summary[]{return ledger.freezes.map(f=>{const rows=ledger.records.filter(r=>r.strategyVersion===f.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)),live=rows.filter(r=>r.dataStatus==="VALID"),expectedSessions=rows.length?countNyseSessions(f.startDate,rows.at(-1)!.marketDataDate):0,missing=Math.max(0,expectedSessions-live.length),missingRatio=missing/Math.max(expectedSessions,1),executions=rows.filter(r=>r.execution&&r.execution.turnover>0),actionDays=new Set(executions.map(r=>r.execution!.recordedDate)).size,m=metricSet(rows.map(r=>r.dailyReturn),[],[],rows.map(r=>r.marketDataDate),rows.map(r=>r.position)),months=live.length/21;let evidence:Phase5Summary["evidence"]="INSUFFICIENT";if(months>=12&&executions.length>=6&&missingRatio<=.01)evidence="FORMAL_READY";else if(months>=6)evidence="MODERATE";else if(months>=3)evidence="LOW";const status:Phase5Summary["status"]=rows.length===0?"AWAITING_FIRST_BAR":missingRatio>.01&&expectedSessions>=20?"DATA_REVIEW_REQUIRED":"FORWARD_ACTIVE";return{version:f.version,ticker:f.ticker,role:f.role,observations:rows.length,liveObservations:live.length,missing,executions:executions.length,actionDays,currentCapital:rows.at(-1)?.equity??f.initialCapital,totalReturn:(rows.at(-1)?.equity??f.initialCapital)/f.initialCapital-1,currentDd:rows.at(-1)?.currentDrawdown??0,metrics:m,evidence,status}})}
+export function summarizePhase5(ledger:Phase5Ledger):Phase5Summary[]{return ledger.freezes.map(f=>{const rows=ledger.records.filter(r=>r.strategyVersion===f.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)),gaps=(ledger.coverageGaps??[]).filter(g=>g.strategyVersion===f.version),live=rows.filter(r=>r.dataStatus==="VALID"),horizon=[...rows.map(r=>r.marketDataDate),...gaps.map(g=>g.marketDataDate)].sort().at(-1),expectedSessions=horizon?countNyseSessions(f.startDate,horizon):0,missing=Math.max(0,expectedSessions-live.length),missingRatio=missing/Math.max(expectedSessions,1),executions=rows.filter(r=>r.execution&&r.execution.turnover>0),actionDays=new Set(executions.map(r=>r.execution!.recordedDate)).size,m=metricSet(rows.map(r=>r.dailyReturn),[],[],rows.map(r=>r.marketDataDate),rows.map(r=>r.position)),months=live.length/21;let evidence:Phase5Summary["evidence"]="INSUFFICIENT";if(months>=12&&executions.length>=6&&missingRatio<=.01)evidence="FORMAL_READY";else if(months>=6)evidence="MODERATE";else if(months>=3)evidence="LOW";const status:Phase5Summary["status"]=rows.length===0?"AWAITING_FIRST_BAR":missingRatio>.01&&expectedSessions>=20?"DATA_REVIEW_REQUIRED":"FORWARD_ACTIVE";return{version:f.version,ticker:f.ticker,role:f.role,observations:rows.length,liveObservations:live.length,missing,executions:executions.length,actionDays,currentCapital:rows.at(-1)?.equity??f.initialCapital,totalReturn:(rows.at(-1)?.equity??f.initialCapital)/f.initialCapital-1,currentDd:rows.at(-1)?.currentDrawdown??0,metrics:m,evidence,status}})}
