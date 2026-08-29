@@ -1,0 +1,156 @@
+name: Audit 9 Wave 2 Guarded Remediation
+
+on:
+  push:
+    branches: ['audit9-wave2-remediation']
+    paths:
+      - '.github/workflows/audit9-wave2-guarded-remediation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Capture exact source head
+        run: echo "SOURCE_HEAD=$GITHUB_SHA" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify frozen governance and findings exist before remediation
+        run: |
+          test "$(git hash-object research/audit-9-charter-2026-08-29.md)" = "0c9353aa74594140dfc65952dac6d21364633b04"
+          test "$(git hash-object research/audit-8-close-2026-08-29.md)" = "75874169b662381a83943d99f2ae572c6be77e5e"
+          grep -q 'A9-M01' research/audit-9-findings-wave2-2026-08-29.md
+          grep -q 'A9-M02' research/audit-9-findings-wave2-2026-08-29.md
+          grep -q 'A9-M03' research/audit-9-finding-003-health-recurrence-after-late-recovery-2026-08-29.md
+      - name: Capture authoritative state hashes
+        run: |
+          find public/data github-pages/public/data -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/authority-before.sha256
+      - name: Import validated Audit 9 sequence fixtures
+        run: |
+          git fetch --no-tags --depth=1 origin \
+            refs/heads/audit9-wave1-temporal-chaos:refs/remotes/origin/audit9-wave1-temporal-chaos \
+            refs/heads/audit9-wave2-persistence-chaos:refs/remotes/origin/audit9-wave2-persistence-chaos
+          git show origin/audit9-wave1-temporal-chaos:tests/audit9-wave1-temporal-chaos.test.ts > tests/audit9-wave1-temporal-chaos.test.ts
+          git show origin/audit9-wave2-persistence-chaos:tests/audit9-wave2-persistence-chaos.test.ts > tests/audit9-wave2-persistence-chaos.test.ts
+      - name: Apply deterministic A9-M01/M02/M03 remediation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          p=Path('lib/phase5-forward.ts')
+          s=p.read_text()
+          start=s.index('export function assertPhase5LedgerInternalIntegrity')
+          end=s.index('export function updatePhase5LedgerSubset',start)
+          new='''export function assertPhase5LedgerInternalIntegrity(ledger:Phase5Ledger){
+            if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw new Error("Phase 5 prior ledger is invalid; refusing append-only reset");
+            assertPhase5FreezeIntegrity(ledger);
+            const ledgerUpdatedAt=Date.parse(ledger.updatedAt);
+            if(!Number.isFinite(ledgerUpdatedAt))throw new Error("Phase 5 integrity: invalid ledger updatedAt");
+            const canonical=[...ledger.records].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
+            for(let i=0;i<ledger.records.length;i++)if(canonical[i]?.key!==ledger.records[i]?.key)throw new Error(`Phase 5 integrity: non-canonical record order at index ${i}`);
+            const keys=new Set<string>(),logical=new Set<string>();
+            for(const r of ledger.records){
+              const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);
+              if(!freeze)throw new Error(`Phase 5 integrity: unknown version ${r.strategyVersion}`);
+              if(!isNyseSession(r.marketDataDate))throw new Error(`Phase 5 integrity: invalid/non-session market date ${r.marketDataDate}`);
+              const recordedAt=Date.parse(r.recordedAt);
+              if(!Number.isFinite(recordedAt))throw new Error(`Phase 5 integrity: invalid recordedAt ${r.key}`);
+              if(recordedAt>ledgerUpdatedAt)throw new Error(`Phase 5 integrity: record chronology exceeds ledger generation ${r.key}`);
+              const expected=keyOf(r.strategyVersion,r.marketDataDate);
+              if(r.key!==expected)throw new Error(`Phase 5 integrity: record key mismatch ${r.key}`);
+              if(r.marketDataDate<freeze.startDate)throw new Error(`Phase 5 integrity: pre-start record ${r.key}`);
+              if(keys.has(r.key)||logical.has(expected))throw new Error(`Phase 5 integrity: duplicate record ${r.key}`);
+              keys.add(r.key);logical.add(expected);
+            }
+            for(const freeze of ledger.freezes){
+              const rows=ledger.records.filter(r=>r.strategyVersion===freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
+              if(!rows.length)continue;
+              const last=rows.at(-1)!;
+              const expectedSessions=countNyseSessions(freeze.startDate,last.marketDataDate);
+              if(rows.length!==expectedSessions)throw new Error(`Phase 5 integrity: incomplete history for ${freeze.version}; expected ${expectedSessions} sessions from ${freeze.startDate} through ${last.marketDataDate}, found ${rows.length}`);
+            }
+          }
+          '''
+          s=s[:start]+new+s[end:]
+          old='ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=generatedAt;return ledger;'
+          newret='ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));ledger.updatedAt=generatedAt;assertPhase5LedgerInternalIntegrity(ledger);return ledger;'
+          if old not in s: raise SystemExit('Phase5 output-boundary preimage not found')
+          s=s.replace(old,newret,1)
+          p.write_text(s)
+
+          p=Path('lib/production-health-review.ts')
+          s=p.read_text()
+          old='if(last?.timing==="LATE_CURRENT_STATE_ONLY")while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);'
+          new='if(last?.timing==="LATE_CURRENT_STATE_ONLY")while(nyseReviewBoundaryReached(due,last.recordedAt))due=addMonths(due,3);'
+          if old not in s: raise SystemExit('Health recurrence preimage not found')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('tests/audit9-wave2-persistence-chaos.test.ts')
+          s=p.read_text()
+          old='''  ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2028-11-27T21:01:00.000Z"});
+            assert.equal(ledger.events.length,3);assert.equal(ledger.events[2].dueDate,"2028-11-25");assert.equal(ledger.events[2].timing,"ON_TIME");
+            assert.equal(new Set(ledger.events.map(e=>e.key)).size,ledger.events.length);
+          });'''
+          new='''  ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2028-11-27T21:01:00.000Z"});
+            assert.equal(ledger.events.length,3);assert.equal(ledger.events[2].dueDate,"2028-11-25");assert.equal(ledger.events[2].timing,"ON_TIME");
+            const firstNormalAfterRecovery=clone(ledger.events[2]);
+            for(let n=0;n<6;n++)ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:`2028-11-27T22:${String(n).padStart(2,"0")}:00.000Z`});
+            assert.equal(ledger.events.length,3,"later normal recurrence retries must remain exactly once");assert.deepEqual(ledger.events[2],firstNormalAfterRecovery);
+            ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2029-03-01T22:01:00.000Z"});
+            assert.equal(ledger.events.length,4,"ordinary recurrence must continue beyond the first post-recovery quarter");
+            assert.equal(ledger.events[3].dueDate,"2029-02-25");assert.equal(ledger.events[3].timing,"ON_TIME");
+            assert.equal(new Set(ledger.events.map(e=>e.key)).size,ledger.events.length);
+          });'''
+          if old not in s: raise SystemExit('Wave2 health extension preimage not found')
+          p.write_text(s.replace(old,new,1))
+
+          p=Path('package.json')
+          obj=json.loads(p.read_text())
+          for script in ('test:core','test:ops'):
+              for test in ('tests/audit9-wave1-temporal-chaos.test.ts','tests/audit9-wave2-persistence-chaos.test.ts'):
+                  if test not in obj['scripts'][script].split(): obj['scripts'][script]+=' '+test
+          p.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n')
+          PY
+      - name: Verify remediation scope
+        run: |
+          git diff --name-only | sort > /tmp/changed.txt
+          cat /tmp/changed.txt
+          test "$(cat /tmp/changed.txt)" = "$(printf '%s\n' lib/phase5-forward.ts lib/production-health-review.ts package.json tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts | sort)"
+      - name: Run corrected Audit 9 Wave 2 sequence regression
+        run: node --experimental-strip-types --test tests/audit9-wave2-persistence-chaos.test.ts
+      - name: Re-run Audit 9 Wave 1 500-session temporal chaos
+        run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts
+      - name: Re-run Audit 8 independent regression families
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Full core regression with permanent Audit 9 sequences
+        run: npm run test:core
+      - name: Full operational regression with permanent Audit 9 sequences
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Authoritative-state no-mutation guard
+        run: |
+          git diff --exit-code -- public/data github-pages/public/data
+          find public/data github-pages/public/data -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/authority-after.sha256
+          diff -u /tmp/authority-before.sha256 /tmp/authority-after.sha256
+      - name: Exact-head persistence guard
+        run: |
+          REMOTE_HEAD=$(git ls-remote origin refs/heads/audit9-wave2-remediation | cut -f1)
+          test "$REMOTE_HEAD" = "$SOURCE_HEAD"
+      - name: Persist validated remediation on isolated branch
+        run: |
+          git config user.name "audit9-remediation-bot"
+          git config user.email "audit9-remediation-bot@users.noreply.github.com"
+          git add lib/phase5-forward.ts lib/production-health-review.ts package.json tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts
+          git commit -m "Remediate Audit 9 Wave 2 temporal persistence defects [skip ci]"
+          git push origin HEAD:audit9-wave2-remediation
