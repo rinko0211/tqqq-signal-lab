@@ -5,6 +5,7 @@ on:
     branches: ['audit9-wave2-remediation']
     paths:
       - '.github/workflows/audit9-wave2-guarded-remediation.yml'
+      - 'tests/audit8-ledger-evidence-blackbox.test.ts'
 
 permissions:
   contents: write
