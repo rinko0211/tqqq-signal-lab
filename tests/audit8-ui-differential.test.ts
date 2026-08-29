@@ -35,14 +35,19 @@ function setMode(f:Fx,mode:"RESEARCH"|"DECISION"|"PRODUCTION",identity?:{ticker:
 
 test("A8 UI differential: actual page consumes the product entrypoint without a second action decision tree",()=>{
   const page=fs.readFileSync("app/page.tsx","utf8");
-  assert.match(page,/import \{derivePrimaryAction\} from "\.\.\/lib\/primary-action"/);
-  assert.match(page,/primaryAction=derivePrimaryAction\(\{signal:dailySignal,status:runtimeStatus,forward:forwardLedger,production:productionConfig,now:now\.toISOString\(\),holdings\}\)/);
+  assert.match(page,/import\s*\{\s*derivePrimaryAction\s*\}\s*from\s*"\.\.\/lib\/primary-action"/);
+  assert.equal((page.match(/derivePrimaryAction\s*\(/g)||[]).length,1,"UI must have exactly one product action entrypoint call");
+  const deriveCall=page.match(/primaryAction\s*=\s*derivePrimaryAction\s*\(\s*\{[\s\S]*?\}\s*\)/)?.[0]||"";
+  assert.ok(deriveCall,"UI must assign derivePrimaryAction() to primaryAction");
+  for(const [key,value] of [["signal","dailySignal"],["status","runtimeStatus"],["forward","forwardLedger"],["production","productionConfig"],["now","now\\.toISOString\\(\\)"]])
+    assert.match(deriveCall,new RegExp(`${key}\\s*:\\s*${value}\\b?`));
+  assert.match(deriveCall,/\bholdings\b/);
   for(const [lhs,rhs] of [["target","target"],["currentTicker","currentTicker"],["currentVersion","currentVersion"],["actual","actual"],["executionDate","executionDate"],["signalUnsafe","signalUnsafe"]])
-    assert.match(page,new RegExp(`${lhs}=primaryAction\\.${rhs}`));
-  assert.match(page,/action = primaryAction\.message/);
+    assert.match(page,new RegExp(`\\b${lhs}\\s*=\\s*primaryAction\\.${rhs}\\b`));
+  assert.match(page,/\baction\s*=\s*primaryAction\.message\b/);
   const signalViewCall=page.match(/<SignalView[\s\S]*?\/>/)?.[0]||"";
-  assert.match(signalViewCall,/action=\{action\}/);
-  assert.match(signalViewCall,/actual=\{actual\}/);
+  assert.match(signalViewCall,/\baction\s*=\s*\{\s*action\s*\}/);
+  assert.match(signalViewCall,/\bactual\s*=\s*\{\s*actual\s*\}/);
 });
 
 test("A8 UI differential: literal oracle and UI projection agree over the reachable action surface",()=>{
