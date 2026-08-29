@@ -1,0 +1,32 @@
+name: Audit 10 Wave 1 Meta-Coverage V2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-meta-coverage']
+    paths:
+      - 'tests/audit10-wave1-meta-coverage-v2.test.mjs'
+      - '.github/workflows/audit10-wave1-meta-coverage-v2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  meta-discovery-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify immutable assurance/finding evidence
+        run: |
+          test "$(git hash-object research/multi-audit-assurance-protocol-v1.0-2026-08-27.md)" = "dc84ce8f72c46902a931035ea32c6251ced7f66b"
+          test "$(git hash-object research/audit-10-finding-001-ledger-generation-chronology-symmetry-2026-08-29.md)" = "5cd375f9d10ca270dece23d7a2871f287b5b875f"
+      - name: Run Audit 10 Wave 1 evidence graph v2
+        run: node --experimental-strip-types --test tests/audit10-wave1-meta-coverage-v2.test.mjs
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data

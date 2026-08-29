@@ -116,7 +116,17 @@ function selectionDecision(reviews:CandidateReview[]){
 }
 
 export function assertLifecycleLedgerInternalIntegrity(ledger:LifecycleLedger){
-  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");const keys=new Set<string>();let previousRecordedAt=-Infinity;for(const e of ledger.events){if(!e.key||keys.has(e.key))throw Error(`Lifecycle integrity: duplicate/invalid event key ${e.key}`);if(!isValidIsoMarketDate(e.reviewDate)||!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Lifecycle integrity: invalid event chronology ${e.key}`);const recordedAt=Date.parse(e.recordedAt);if(recordedAt<previousRecordedAt)throw Error(`Lifecycle integrity: out-of-order event chronology ${e.key}`);previousRecordedAt=recordedAt;keys.add(e.key);}
+  if(ledger.schemaVersion!==1||ledger.appendOnly!==true)throw Error("Lifecycle prior ledger is invalid; refusing append-only reset");const generation=Date.parse(ledger.updatedAt);if(!Number.isFinite(generation))throw Error("Lifecycle integrity: invalid ledger generation updatedAt");const keys=new Set<string>();let previousRecordedAt=-Infinity;for(const e of ledger.events){if(!e.key||keys.has(e.key))throw Error(`Lifecycle integrity: duplicate/invalid event key ${e.key}`);if(!isValidIsoMarketDate(e.reviewDate)||!Number.isFinite(Date.parse(e.recordedAt)))throw Error(`Lifecycle integrity: invalid event chronology ${e.key}`);const recordedAt=Date.parse(e.recordedAt);if(marketDate(e.recordedAt)<e.reviewDate)throw Error(`Lifecycle integrity: review evidence predates claimed review date ${e.key}`);if(recordedAt>generation)throw Error(`Lifecycle integrity: event chronology exceeds ledger generation ${e.key}`);if(recordedAt<previousRecordedAt)throw Error(`Lifecycle integrity: out-of-order event chronology ${e.key}`);previousRecordedAt=recordedAt;keys.add(e.key);}
+  const cycleDate=ledger.current.reviewCycleDate??null,cycle=cycleDate?ledger.events.filter(e=>e.reviewDate===cycleDate).at(-1):undefined;
+  if(cycleDate&&!cycle)throw Error("Lifecycle integrity: current review cycle lacks append-only event evidence");
+  const authorityCurrent=ledger.current.systemDecision==="PHASE6_HUMAN_DECISION_REQUIRED"||ledger.current.userAction==="RUN_PHASE6_HUMAN_REVIEW";
+  if(authorityCurrent){
+    if(!cycle||cycle.userAction!=="RUN_PHASE6_HUMAN_REVIEW")throw Error("Lifecycle integrity: human-review authority lacks matching cycle evidence");
+    const frozenSelectable=new Set(cycle.candidateReviews.filter(x=>x.promotionSelectable).map(x=>x.version));
+    const currentSelectable=ledger.current.candidateReviews.filter(x=>x.promotionSelectable).map(x=>x.version);
+    if(!currentSelectable.length||currentSelectable.some(v=>!frozenSelectable.has(v)))throw Error("Lifecycle integrity: current selectable authority is not backed by frozen cycle evidence");
+  }
+  if((ledger.current.reviewResolved||ledger.current.reviewResolvedAt)&&!cycle)throw Error("Lifecycle integrity: resolved review current lacks cycle evidence");
 }
 export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardLedger;production:ProductionConfig;phase5Status?:LifecycleInputStatus|null;runtimeStatus?:RuntimeStatus|null;prior?:LifecycleLedger|null;now?:string}):LifecycleLedger{
   const now=args.now??new Date().toISOString(),asOf=marketDate(now);if(!DATE_RE.test(asOf))throw Error("Invalid lifecycle review date");
@@ -182,4 +192,4 @@ export function updateLifecycleReview(args:{phase5:Phase5Ledger;forward:ForwardL
   out.updatedAt=now;out.current={asOf,stage,systemDecision,userAction,message,candidateReviews:currentReviews,productionHealth:prodHealth,nextReview,incumbentVersion:configuredIncumbent,reviewCycleDate:cycle?.reviewDate??null,reviewResolved:cycleResolved,reviewResolvedAt:approvalResolved?args.production.approvalDate:null};return out;
 }
 
-export function productionEligibleVersions(lifecycle:LifecycleLedger):string[]{if(lifecycle.current.systemDecision!=="PHASE6_HUMAN_DECISION_REQUIRED")return[];return lifecycle.current.candidateReviews.filter(x=>x.promotionSelectable).map(x=>x.version)}
+export function productionEligibleVersions(lifecycle:LifecycleLedger):string[]{assertLifecycleLedgerInternalIntegrity(lifecycle);if(lifecycle.current.systemDecision!=="PHASE6_HUMAN_DECISION_REQUIRED")return[];return lifecycle.current.candidateReviews.filter(x=>x.promotionSelectable).map(x=>x.version)}

@@ -1,0 +1,36 @@
+name: Audit 10 Wave 2 Symmetry Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-meta-coverage']
+    paths:
+      - 'tests/audit10-wave2-independence-symmetry.test.mjs'
+      - '.github/workflows/audit10-wave2-symmetry-discovery.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify Audit 10 governance
+        run: |
+          test -s research/audit-10-charter-2026-08-29.md
+          test -s research/audit-10-finding-001-ledger-generation-chronology-symmetry-2026-08-29.md
+      - name: Run Wave 2 independence and symmetry discovery
+        run: node --experimental-strip-types --test tests/audit10-wave2-independence-symmetry.test.mjs
+      - name: Re-run A10-M01 permanent chronology regression
+        run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts
+      - name: Re-run Wave 1 evidence graph v2
+        run: node --test tests/audit10-wave1-meta-coverage-v2.test.mjs
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data

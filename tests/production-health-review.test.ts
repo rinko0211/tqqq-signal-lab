@@ -14,7 +14,7 @@ test("critical Production health creates urgent user action after the legal revi
 test("late review never fabricates a historical health state",()=>{const p=production(),a=updateProductionHealthLedger({production:p,lifecycle:lifecycle(),prior:emptyProductionHealthLedger(),now:"2027-12-10T21:01:00Z"});assert.equal(a.events[0].timing,"LATE_CURRENT_STATE_ONLY");assert.ok(a.events[0].reasons.some(x=>/no retrospective/i.test(x)))});
 
 test("re-entering the same Production version starts a new quarterly health episode",()=>{
-  const old=emptyProductionHealthLedger("2027-08-25T00:00:00Z");old.events.push({key:"UPRO-SPBT-v1.0|2027-11-25",dueDate:"2027-11-25",recordedAt:"2027-11-26T21:01:00Z",version:"UPRO-SPBT-v1.0",state:"Healthy",timing:"ON_TIME",reasons:["old episode"]});
+  const old=emptyProductionHealthLedger("2027-11-26T21:01:00Z");old.events.push({key:"UPRO-SPBT-v1.0|2027-11-25",dueDate:"2027-11-25",recordedAt:"2027-11-26T21:01:00Z",version:"UPRO-SPBT-v1.0",state:"Healthy",timing:"ON_TIME",reasons:["old episode"]});
   const d=transitionMode(DEFAULT_PRODUCTION_CONFIG,"DECISION"),p=transitionMode(d,"PRODUCTION",{ticker:"UPRO",system:"UPRO + S&P Broad Trend",version:"UPRO-SPBT-v1.0",date:"2029-01-10",evidence:"Strong",finalReviewComplete:true});
   const l=lifecycle();l.current.productionHealth={state:"Healthy",version:"UPRO-SPBT-v1.0",reasons:["ok"],nextHealthReview:"2029-04-10"};
   const before=updateProductionHealthLedger({production:p,lifecycle:l,prior:old,now:"2029-01-11T12:00:00Z"});assert.equal(before.events.length,1);assert.equal(before.current.lastReview,null);assert.equal(before.current.nextReview,"2029-04-10");

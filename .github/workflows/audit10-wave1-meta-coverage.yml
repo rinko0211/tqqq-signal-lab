@@ -1,0 +1,43 @@
+name: Audit 10 Wave 1 Meta-Coverage
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-meta-coverage']
+    paths:
+      - 'tests/audit10-wave1-meta-coverage.test.mjs'
+      - '.github/workflows/audit10-wave1-meta-coverage.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  meta-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify immutable assurance baseline and Audit 10 charter
+        run: |
+          test "$(git hash-object research/multi-audit-assurance-protocol-v1.0-2026-08-27.md)" = "dc84ce8f72c46902a931035ea32c6251ced7f66b"
+          test -s research/audit-10-charter-2026-08-29.md
+      - name: Correct A7-M01 grouped-register harness reference
+        run: sed -i 's#research/audit-7-finding-001-production-authority-boundary-2026-08-27.md#research/audit-7-live-findings-2026-08-27.md#' tests/audit10-wave1-meta-coverage.test.mjs
+      - name: Run independent Audit 10 Wave 1 meta-coverage discovery
+        run: node --experimental-strip-types --test tests/audit10-wave1-meta-coverage.test.mjs
+      - name: Independently probe Production Health artifact-generation chronology
+        if: always()
+        run: |
+          node --experimental-strip-types --input-type=module <<'NODE'
+          import {emptyProductionHealthLedger,assertProductionHealthLedgerInternalIntegrity} from './lib/production-health-review.ts';
+          const h=emptyProductionHealthLedger('2026-08-29T00:00:00.000Z');
+          h.events.push({key:'VS13-v1.0|2027-11-25',dueDate:'2027-11-25',recordedAt:'2030-01-02T21:00:00.000Z',version:'VS13-v1.0',state:'Healthy',timing:'ON_TIME',reasons:['Audit10 symmetry probe']});
+          let rejected=false;
+          try{assertProductionHealthLedgerInternalIntegrity(h)}catch{rejected=true}
+          if(!rejected){console.error('AUDIT10 DISCOVERY: Production Health accepted nested evidence later than ledger.updatedAt');process.exit(1)}
+          NODE

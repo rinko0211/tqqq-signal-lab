@@ -1,0 +1,63 @@
+name: Audit 10 Coverage Closure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-coverage-closure', 'main']
+    paths:
+      - 'research/audit-10-coverage-manifest-v1.json'
+      - 'research/audit-10-close-2026-08-29.md'
+      - 'tests/audit10-coverage-closure.test.mjs'
+      - 'tests/audit10-wave1-meta-coverage-v2.test.mjs'
+      - '.github/workflows/audit10-coverage-closure.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture exact head
+        run: echo "CANDIDATE_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify Audit 10 governance and findings
+        run: |
+          test -s research/audit-10-charter-2026-08-29.md
+          test -s research/audit-10-finding-001-ledger-generation-chronology-symmetry-2026-08-29.md
+          test -s research/audit-10-finding-002-review-evidence-causal-chronology-2026-08-29.md
+          test -s research/audit-10-finding-003-current-state-evidence-provenance-2026-08-29.md
+      - name: Machine-checkable coverage graph and synthetic corruption self-tests
+        run: node --experimental-strip-types --test tests/audit10-coverage-closure.test.mjs
+      - name: Audit 10 retained meta regressions
+        run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts tests/audit10-wave2-independence-symmetry.test.mjs tests/audit10-wave1-meta-coverage-v2.test.mjs
+      - name: Audit 9 temporal inheritance
+        run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Audit 8 independent inheritance
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Full core regression
+        run: npm run test:core
+      - name: Full operational regression
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Production remains unpromoted
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const p of ['public/data/production-config.json','github-pages/public/data/production-config.json']){
+            const x=JSON.parse(fs.readFileSync(p,'utf8'));
+            if(x.mode!=='RESEARCH'||x.approvedByHuman!==false||x.selectedTicker!==null||x.selectedStrategy!==null||x.strategyVersion!==null)throw Error(`Production authority changed in ${p}`);
+          }
+          NODE
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Exact-head evidence
+        run: test "$(git rev-parse HEAD)" = "$CANDIDATE_HEAD"

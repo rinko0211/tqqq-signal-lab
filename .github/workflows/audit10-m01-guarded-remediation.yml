@@ -1,0 +1,75 @@
+name: Audit 10 M01 Guarded Remediation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit10-meta-coverage']
+    paths:
+      - 'scripts/audit10-m01-remediation.mjs'
+      - 'tests/audit10-m01-ledger-generation-chronology.test.ts'
+      - 'tests/production-health-review.test.ts'
+      - '.github/workflows/audit10-m01-guarded-remediation.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: audit10-m01-remediation
+  cancel-in-progress: false
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit10-meta-coverage
+          fetch-depth: 0
+      - name: Capture exact candidate head
+        run: echo "CANDIDATE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify finding exists before remediation
+        run: |
+          test "$(git hash-object research/audit-10-finding-001-ledger-generation-chronology-symmetry-2026-08-29.md)" = "5cd375f9d10ca270dece23d7a2871f287b5b875f"
+          test "$(git hash-object research/multi-audit-assurance-protocol-v1.0-2026-08-27.md)" = "dc84ce8f72c46902a931035ea32c6251ced7f66b"
+      - name: Confirm A10-M01 regression fails before patch
+        run: |
+          if node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts; then
+            echo "::error::A10-M01 regression unexpectedly passed before remediation"
+            exit 1
+          fi
+      - name: Apply deterministic A10-M01 remediation
+        run: node scripts/audit10-m01-remediation.mjs
+      - name: A10-M01 permanent regression
+        run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts
+      - name: Existing Lifecycle and Health regressions
+        run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Verify permanent standard registration
+        run: |
+          test "$(grep -o 'tests/audit10-m01-ledger-generation-chronology.test.ts' package.json | wc -l)" -eq 2
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Scope guard
+        run: |
+          bad=0
+          while IFS= read -r f; do
+            case "$f" in
+              lib/lifecycle-review.ts|lib/production-health-review.ts|package.json) ;;
+              *) echo "::error::unexpected remediation file: $f"; bad=1 ;;
+            esac
+          done < <(git diff --name-only)
+          test "$bad" -eq 0
+      - name: Persist validated remediation on exact branch head
+        run: |
+          git fetch origin audit10-meta-coverage
+          test "$(git rev-parse origin/audit10-meta-coverage)" = "$CANDIDATE_SHA"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/lifecycle-review.ts lib/production-health-review.ts package.json
+          git commit -m "Remediate Audit 10 M01 ledger chronology symmetry"
+          git push origin HEAD:audit10-meta-coverage
