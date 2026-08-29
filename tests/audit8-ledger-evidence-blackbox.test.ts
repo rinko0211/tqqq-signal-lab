@@ -58,14 +58,14 @@ test("A8 ledger black-box: A→B→A keeps old evidence append-only but starts a
 
 const market=JSON.parse(fs.readFileSync("github-pages/public/data/market-data.json","utf8"));
 const authoritative=JSON.parse(fs.readFileSync("github-pages/public/data/phase-5-forward-ledger.json","utf8")) as Phase5Ledger;
+const scaleBars=(rows:any[],scale:number)=>rows.map(x=>({...x,open:x.open*scale,high:x.high*scale,low:x.low*scale,close:x.close*scale,adjClose:(x.adjClose??x.close)*scale}));
+const priorClose=(version:string)=>authoritative.records.find(r=>r.strategyVersion===version&&r.marketDataDate==="2026-08-26")!.assetClose;
+const sourceClose=(ticker:"SPY"|"QQQ")=>market.series[ticker].find((r:any)=>r.date==="2026-08-26").close;
 const payloadThrough=(date:string)=>{
   const base=Object.fromEntries(Object.entries(market.series).map(([ticker,rows])=>[ticker,(rows as any[]).filter(r=>r.date<=date)])) as Record<string,any[]>;
-  // Phase5 isolation semantics do not depend on leverage price identity. Reuse
-  // stored SPY/QQQ market sessions as deterministic external aliases so the
-  // fixture is self-contained and does not call an external provider or calendar.
-  base.UPRO=base.SPY.map(x=>({...x}));
-  base.SSO=base.SPY.map(x=>({...x}));
-  base.QLD=base.QQQ.map(x=>({...x}));
+  base.UPRO=scaleBars(base.SPY,priorClose(UPRO.version)/sourceClose("SPY"));
+  base.SSO=scaleBars(base.SPY,priorClose(SSO.version)/sourceClose("SPY"));
+  base.QLD=scaleBars(base.QQQ,priorClose("QLD-VS13-Scaled-v1.0")/sourceClose("QQQ"));
   return{source:"Audit 8 external market fixture",retrievedAt:`${date}T22:00:00.000Z`,series:base};
 };
 
