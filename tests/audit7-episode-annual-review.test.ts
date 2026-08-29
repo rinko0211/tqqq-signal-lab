@@ -45,7 +45,7 @@ test("A7 D17 FC-04/05/12: A→B→A re-entry remains a fresh A health episode at
   assert.equal(lifecycle.current.productionHealth.version,"UPRO-SPBT-v1.0");assert.notEqual(lifecycle.current.productionHealth.state,"NOT_IN_PRODUCTION");
   assert.equal(a2.mode,"PRODUCTION","annual review calculation must not mutate Production authority");assert.equal(a2.effectiveDate,"2028-04-10");
 
-  const oldHealth=emptyProductionHealthLedger("2027-08-25T20:00:00Z");oldHealth.events.push({key:"UPRO-SPBT-v1.0|2027-11-25",dueDate:"2027-11-25",recordedAt:"2027-11-26T21:01:00Z",version:"UPRO-SPBT-v1.0",state:"Healthy",timing:"ON_TIME",reasons:["old A episode"]});
+  const oldHealth=emptyProductionHealthLedger("2027-11-26T22:00:00Z");oldHealth.events.push({key:"UPRO-SPBT-v1.0|2027-11-25",dueDate:"2027-11-25",recordedAt:"2027-11-26T21:01:00Z",version:"UPRO-SPBT-v1.0",state:"Healthy",timing:"ON_TIME",reasons:["old A episode"]});
   const health=updateProductionHealthLedger({production:a2,lifecycle,prior:oldHealth,now:"2028-08-25T20:01:00Z"});
   assert.equal(health.events[0].reasons[0],"old A episode","old A evidence remains append-only");assert.equal(health.events.length,2);
   assert.equal(health.current.lastReview,"2028-07-10","re-entered A must use only the new episode's review cursor");assert.equal(health.events.at(-1)!.timing,"LATE_CURRENT_STATE_ONLY");assert.equal(health.current.nextReview,"2028-10-10");

@@ -1,6 +1,6 @@
 import{readFile,mkdir,writeFile}from"node:fs/promises";
 import{assertProductionConfigIntegrity,cancelDecision,hasActiveProduction,transitionMode,type ProductionConfig}from"../lib/production.ts";
-import{productionEligibleVersions,type LifecycleLedger}from"../lib/lifecycle-review.ts";
+import{assertLifecycleLedgerInternalIntegrity,productionEligibleVersions,type LifecycleLedger}from"../lib/lifecycle-review.ts";
 import{lifecycleReviewCoversUpstreams,lifecycleReviewIsFresh}from"../lib/lifecycle-approval.ts";
 import{marketDate}from"../lib/market-calendar.ts";
 const action=process.env.MODE||"DECISION",confirmation=process.env.CONFIRMATION||"";
@@ -20,6 +20,7 @@ if(action==="CANCEL_DECISION"){
   let runtimeStatus:{generatedAt?:string},phase5Status:{generatedAt?:string};
   try{lifecycle=JSON.parse(await readFile(new URL("lifecycle-review.json",root),"utf8"))}catch{throw Error("LIFECYCLE-001: autonomous lifecycle review is missing")}
   try{runtimeStatus=JSON.parse(await readFile(new URL("status.json",root),"utf8"));phase5Status=JSON.parse(await readFile(new URL("phase-5-forward-status.json",root),"utf8"))}catch{throw Error("LIFECYCLE-006: authoritative upstream status is missing; refresh Daily/Phase5/Lifecycle before Production approval")}
+  assertLifecycleLedgerInternalIntegrity(lifecycle);
   if(!lifecycleReviewIsFresh(lifecycle))throw Error("LIFECYCLE-005: autonomous lifecycle review is stale or has an invalid timestamp; run a current review before Production approval");
   if(!lifecycleReviewCoversUpstreams(lifecycle,[runtimeStatus.generatedAt,phase5Status.generatedAt]))throw Error("LIFECYCLE-006: lifecycle review predates a current upstream status; refresh Lifecycle immediately before Production approval");
   if(lifecycle.current.stage!=="FORMAL"&&lifecycle.current.stage!=="STRONGER")throw Error("LIFECYCLE-002: Production is blocked before the formal Forward review");

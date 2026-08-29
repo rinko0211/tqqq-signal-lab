@@ -24,7 +24,7 @@ const lifecycleFor=(version:string,state:"Healthy"|"Watch"|"Revalidation Require
 }) as any;
 
 const healthLedger=(events:ProductionHealthLedger["events"]):ProductionHealthLedger=>({
-  schemaVersion:1,createdAt:"2027-08-25T21:00:00.000Z",updatedAt:"2028-04-10T21:00:00.000Z",appendOnly:true,events:structuredClone(events),
+  schemaVersion:1,createdAt:"2027-08-25T21:00:00.000Z",updatedAt:"2028-04-10T22:00:00.000Z",appendOnly:true,events:structuredClone(events),
   current:{active:false,version:null,lastReview:null,nextReview:null,state:"NOT_ACTIVE",userAction:"NONE",message:"fixture"},
 });
 

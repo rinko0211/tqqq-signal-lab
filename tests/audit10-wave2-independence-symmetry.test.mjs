@@ -49,7 +49,7 @@ test("A10 Wave2 S3: fresh Lifecycle current cannot claim a human-review authorit
   assert.equal(ledger.events.length,0,"fixture deliberately has no scheduled-review evidence");
   assert.equal(lifecycleReviewIsFresh(ledger,"2029-01-10T22:00:00.000Z"),true,"freshness alone accepts fixture");
   assert.equal(lifecycleReviewCoversUpstreams(ledger,["2029-01-10T20:00:00.000Z","2029-01-10T20:30:00.000Z"]),true,"upstream-age gate alone accepts fixture");
-  assert.deepEqual(productionEligibleVersions(ledger),["VS13-v1.0"],"approval selector consumes forged current authority");
+  assert.throws(()=>productionEligibleVersions(ledger),/current|history|review|evidence|coherence/i,"approval selector must fail closed on unsupported current authority");
   assert.throws(()=>assertLifecycleLedgerInternalIntegrity(ledger),/current|history|review|evidence|coherence/i,"ledger integrity must reject unsupported current authority before approval consumers can use it");
 });
 
@@ -64,5 +64,5 @@ test("A10 Wave2 S5: user-facing and approval surfaces consume Lifecycle/Health c
   const ui=src("app/lifecycle-ui.tsx"),approve=src("scripts/approve-production.ts");
   assert.match(ui,/health\?\.current\.userAction/);assert.match(ui,/review\.current/);
   assert.match(approve,/lifecycle\.current\.systemDecision/);assert.match(approve,/productionEligibleVersions\(lifecycle\)/);
-  assert.doesNotMatch(approve,/assertLifecycleLedgerInternalIntegrity/);
+  assert.ok(approve.includes("assertLifecycleLedgerInternalIntegrity(lifecycle)"),"Production approval must validate Lifecycle provenance before consuming current authority");
 });
