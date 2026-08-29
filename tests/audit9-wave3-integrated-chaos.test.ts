@@ -122,7 +122,7 @@ test("A9 Wave3 H6: deploy failure × newer persisted generation × reload cannot
   assert.equal(action(staleDeployed),"CHECK_DATA","reload after failed deploy sees stale deployed JSON and must not infer the newer persisted action");
 
   const newPersisted=actionFx({dataDate:"2026-08-28",generatedAt:"2026-08-28T22:10:00.000Z",now:"2026-08-31T12:00:00.000Z",executionDate:"2026-08-31"});
-  const w=worker(async()=>({kind:"new-deployed-json"}),async(r)=>r==="./"?{kind:"old-cached-shell"}:null);
+  const w=worker(async(r)=>r.mode==="navigate"?Promise.reject(new Error("deploy unavailable")):{kind:"new-deployed-json"},async(r)=>r==="./"?{kind:"old-cached-shell"}:null);
   assert.deepEqual(await swFetch(w,{url:"https://example.test/tqqq-signal-lab/",mode:"navigate"}),{kind:"old-cached-shell"});
   assert.deepEqual(await swFetch(w,{url:"https://example.test/tqqq-signal-lab/data/signal.json",mode:"cors"}),{kind:"new-deployed-json"});
   assert.equal(action(newPersisted),"INCREASE","only after later successful deploy may the newer coherent generation become actionable");
