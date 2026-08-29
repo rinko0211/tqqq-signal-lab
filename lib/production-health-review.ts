@@ -18,7 +18,10 @@ export function updateProductionHealthLedger(args:{production:ProductionConfig;l
   const episodeStart=p.effectiveDate,episodeEvents=out.events.filter(x=>x.version===p.strategyVersion&&(!episodeStart||x.dueDate>=episodeStart));
   const last=episodeEvents.at(-1),firstDue=p.nextHealthReview??(p.effectiveDate?addMonths(p.effectiveDate,3):null);let due=last?addMonths(last.dueDate,3):firstDue;
   if(!due)throw Error("HEALTH-002: Production review schedule is missing");
-  if(last?.timing==="LATE_CURRENT_STATE_ONLY")while(nyseReviewBoundaryReached(due,now))due=addMonths(due,3);
+  // A historical late-review label is evidence, not a permanent scheduler flag.
+  // Collapse only quarters that were already missed at the instant that late
+  // event was actually recorded. Future quarters become eligible normally.
+  if(last?.timing==="LATE_CURRENT_STATE_ONLY")while(nyseReviewBoundaryReached(due,last.recordedAt))due=addMonths(due,3);
   if(nyseReviewBoundaryReached(due,now)&&!out.events.some(x=>x.version===p.strategyVersion&&x.dueDate===due)){
     const late=daysBetween(due,asOf)>7;
     out.events.push({key:`${p.strategyVersion}|${due}`,dueDate:due,recordedAt:now,version:p.strategyVersion,state:health.state==="NOT_IN_PRODUCTION"?"Critical":health.state,timing:late?"LATE_CURRENT_STATE_ONLY":"ON_TIME",reasons:[...health.reasons,...(late?["Scheduled health review was missed by more than 7 days; no retrospective health state was fabricated"]:[])]});
