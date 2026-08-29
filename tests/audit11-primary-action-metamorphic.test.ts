@@ -39,14 +39,14 @@ function fx(pair:readonly[string,string],up:boolean,production=false){
 const act=(x:any)=>derivePrimaryAction(x).code;
 
 type Mut={name:string;apply:(x:any)=>void};
-function mutations(pair:readonly[string,string],production:boolean):Mut[]{const [date,next]=pair;const base:Mut[]=[
+function mutations(pair:readonly[string,string],production:boolean):Mut[]{const [,next]=pair;const base:Mut[]=[
   {name:"generation-skew",apply:x=>{x.status.generatedAt=x.status.generatedAt.replace("10:00.000Z","10:01.000Z")}},
   {name:"forward-anchor-loss",apply:x=>{x.forward.records=x.forward.records.slice(1)}},
   {name:"holdings-nonnumeric",apply:x=>{x.holdings.ratio="not-a-number"}},
   {name:"missed-open",apply:x=>{x.now=`${next}T16:00:00.000Z`}},
   {name:"execution-mismatch",apply:x=>{x.signal.signal.executionDate="2099-01-02"}},
   {name:"status-date-contradiction",apply:x=>{x.status.marketDataDate="2026-08-24"}},
-  {name:"signal-state-loss",apply:x=>{delete x.signal.signal}},
+  {name:"signal-date-contradiction",apply:x=>{x.signal.signal.date="2026-08-24"}},
   {name:"status-signal-date-contradiction",apply:x=>{x.status.signalDate="2026-08-24"}},
 ];
 if(production)base.push(
@@ -62,7 +62,7 @@ test(`Audit 11 mechanism independence and volume seed=${SEED}`,()=>{const src=fs
 
 test(`MR-01 fault monotonicity ${CASES.monotonic} cases seed=${SEED}`,()=>{for(let i=0;i<CASES.monotonic;i++){const pair=choose(pairs),prod=Boolean(rnd()&1),{x}=cleanRisk(pair,prod),ms=mutations(pair,prod);const chosen=[...ms].sort(()=>Number(rnd()&1)-.5).slice(0,2+(rnd()%Math.min(3,ms.length-1)));let y=clone(x);for(const m of chosen){m.apply(y);const c=act(y);assert.equal(risk(c),false,`seed=${SEED} case=${i} after=${m.name} faults=${chosen.map(z=>z.name).join(",")} code=${c}`)}}});
 
-test(`MR-02 partial repair / repair-order closure ${CASES.partialRepair} cases seed=${SEED}`,()=>{for(let i=0;i<CASES.partialRepair;i++){const pair=choose(pairs),prod=Boolean(rnd()&1),{x,c:baseline}=cleanRisk(pair,prod),ms=mutations(pair,prod);const a=ms[rnd()%ms.length];let b=ms[rnd()%ms.length];while(b===a)b=ms[rnd()%ms.length];const onlyA=clone(x);a.apply(onlyA);const onlyB=clone(x);b.apply(onlyB);const both=clone(x);a.apply(both);b.apply(both);for(const [label,z] of [[a.name,onlyA],[b.name,onlyB],[`${a.name}+${b.name}`,both]] as const){const c=act(z);assert.equal(risk(c),false,`seed=${SEED} case=${i} partial=${label} code=${c}`)}assert.equal(act(clone(x)),baseline,`seed=${SEED} case=${i} fully repaired state must converge`)}});
+test(`MR-02 partial repair / repair-order closure ${CASES.partialRepair} cases seed=${SEED}`,()=>{for(let i=0;i<CASES.partialRepair;i++){const pair=choose(pairs),prod=Boolean(rnd()&1),{x,c:baseline}=cleanRisk(pair,prod),ms=mutations(pair,prod);const a=ms[rnd()%ms.length];let b=ms[rnd()%ms.length];while(b===a)b=ms[rnd()%ms.length];const onlyA=clone(x);a.apply(onlyA);const onlyB=clone(x);b.apply(onlyB);const bothAB=clone(x);a.apply(bothAB);b.apply(bothAB);const bothBA=clone(x);b.apply(bothBA);a.apply(bothBA);for(const [label,z] of [[a.name,onlyA],[b.name,onlyB],[`${a.name}+${b.name}`,bothAB],[`${b.name}+${a.name}`,bothBA]] as const){const c=act(z);assert.equal(risk(c),false,`seed=${SEED} case=${i} partial=${label} code=${c}`)}assert.equal(act(clone(x)),baseline,`seed=${SEED} case=${i} fully repaired state must converge`)}});
 
 test(`MR-03 stored-session translation ${CASES.translation} cases seed=${SEED}`,()=>{for(let i=0;i<CASES.translation;i++){const p1=choose(pairs),p2=choose(pairs),prod=Boolean(rnd()&1),up=Boolean(rnd()&1);const a=act(fx(p1,up,prod)),b=act(fx(p2,up,prod));assert.equal(risk(a),true,`seed=${SEED} case=${i} source translated fixture not actionable: ${a}`);assert.equal(b,a,`seed=${SEED} case=${i} ${p1.join("→")} vs ${p2.join("→")}`)}});
 
