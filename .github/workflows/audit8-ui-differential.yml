@@ -46,8 +46,23 @@ jobs:
           exit 0
       - name: Re-run prior Audit 8 independent families
         run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts
-      - name: Full core regression remains green
-        run: npm run test:core
+      - name: Full core regression with diagnostic capture
+        shell: bash
+        run: |
+          set +e
+          npm run test:core 2>&1 | tee /tmp/a8-core.log
+          echo "${PIPESTATUS[0]}" > /tmp/a8-core-exit
+          exit 0
+      - name: Print exact core failure context
+        if: always()
+        shell: bash
+        run: |
+          echo '=== FAIL MARKERS ==='
+          grep -nE '(^|[[:space:]])not ok|AssertionError|ERR_ASSERTION|failureType|error:|Error:' /tmp/a8-core.log || true
+          echo '=== FAIL CONTEXT ==='
+          grep -n -B 12 -A 32 -E '(^|[[:space:]])not ok' /tmp/a8-core.log || true
+          echo '=== FINAL SUMMARY ==='
+          tail -n 35 /tmp/a8-core.log || true
       - name: Full operational regression remains green
         run: npm run test:ops
       - name: User-facing Pages build
@@ -55,9 +70,15 @@ jobs:
       - name: Verify discovery did not mutate authoritative state
         run: git diff --exit-code -- public/data github-pages/public/data
       - name: Publish discovery conclusion
+        shell: bash
         run: |
-          code="$(cat /tmp/a8-ui-differential-exit)"
-          if [ "$code" != "0" ]; then
+          diff_code="$(cat /tmp/a8-ui-differential-exit)"
+          core_code="$(cat /tmp/a8-core-exit)"
+          if [ "$diff_code" != "0" ]; then
             echo "::error::Audit 8 UI differential found product/UI contract mismatches"
-            exit "$code"
+            exit "$diff_code"
+          fi
+          if [ "$core_code" != "0" ]; then
+            echo "::error::Full core regression failed with exit code $core_code; inspect diagnostic step"
+            exit "$core_code"
           fi
