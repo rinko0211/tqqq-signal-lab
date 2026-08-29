@@ -1,0 +1,49 @@
+name: Audit 8 Core Failure Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/audit8-core-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Run full core and capture complete output
+        shell: bash
+        run: |
+          set +e
+          npm run test:core 2>&1 | tee /tmp/a8-core.log
+          echo "${PIPESTATUS[0]}" > /tmp/a8-core-exit
+          exit 0
+      - name: Print exact failing TAP records
+        if: always()
+        shell: bash
+        run: |
+          echo '=== FAIL MARKERS ==='
+          grep -nE '(^|[[:space:]])not ok|AssertionError|ERR_ASSERTION|failureType|error:|Error:' /tmp/a8-core.log || true
+          echo '=== FAIL CONTEXT ==='
+          grep -n -B 12 -A 32 -E '(^|[[:space:]])not ok' /tmp/a8-core.log || true
+          echo '=== FINAL SUMMARY ==='
+          tail -n 35 /tmp/a8-core.log || true
+      - name: Preserve core result
+        if: always()
+        shell: bash
+        run: |
+          code="$(cat /tmp/a8-core-exit)"
+          if [ "$code" != "0" ]; then
+            echo "::error::Full core failed with exit code $code; see exact TAP records above"
+            exit "$code"
+          fi
