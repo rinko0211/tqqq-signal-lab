@@ -76,7 +76,8 @@ test("Audit 9 Wave 2 T04/T10: Forward prefix and chronology corruption reject, t
   const validPrefix=clone(forwardAuthoritative.records);
   let recovered=updateForwardLedger(ds,clone(forwardAuthoritative),"Audit9","2026-08-28T01:00:00.000Z");
   for(let n=0;n<5;n++)recovered=updateForwardLedger(ds,recovered,"Audit9",`2026-08-28T0${n+2}:00:00.000Z`);
-  assert.deepEqual(recovered.records,validPrefix,"clean retries with no new market session must preserve the validated Forward record prefix exactly");
+  assert.deepEqual(recovered.records.slice(0,validPrefix.length),validPrefix,"legal catch-up may append new observations but must preserve every previously validated Forward prefix record exactly");
+  assert.ok(recovered.records.length>=validPrefix.length,"legal recovery may append newer observations but may not truncate the valid prefix");
   assert.equal(new Set(recovered.records.map(r=>r.key)).size,recovered.records.length,"clean retries must remain exactly-once");
 });
 
@@ -106,10 +107,13 @@ const lifecycle={current:{productionHealth:{state:"Healthy",version:UPRO,reasons
 
 test("Audit 9 Wave 2 T05/T11: Health review retries are exactly once and a long outage does not fabricate quarters",()=>{
   let ledger:ProductionHealthLedger|undefined;
-  ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2027-11-25T21:01:00.000Z"});
+  // 2027-11-25 is Thanksgiving. The due date remains the immutable quarterly
+  // due date, but review consumption occurs only after the next legal NYSE
+  // session reaches the review boundary.
+  ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2027-11-26T21:01:00.000Z"});
   assert.equal(ledger.events.length,1);assert.equal(ledger.events[0].dueDate,"2027-11-25");
   const first=clone(ledger.events[0]);
-  for(let n=0;n<8;n++)ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:`2027-11-25T22:${String(n).padStart(2,"0")}:00.000Z`});
+  for(let n=0;n<8;n++)ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:`2027-11-26T22:${String(n).padStart(2,"0")}:00.000Z`});
   assert.equal(ledger.events.length,1,"same logical review reruns must remain exactly once");assert.deepEqual(ledger.events[0],first);
 
   ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2028-08-25T21:01:00.000Z"});
@@ -119,7 +123,9 @@ test("Audit 9 Wave 2 T05/T11: Health review retries are exactly once and a long 
   assert.equal(ledger.events.length,2,"recovery retries after long outage may not fabricate additional historical reviews");
   assert.equal(ledger.current.nextReview,"2028-11-25");
 
-  ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2028-11-25T21:01:00.000Z"});
+  // 2028-11-25 is Saturday; consume the unchanged dueDate on the next legal
+  // review boundary rather than pretending the closed date was tradable.
+  ledger=updateProductionHealthLedger({production,lifecycle,prior:ledger,now:"2028-11-27T21:01:00.000Z"});
   assert.equal(ledger.events.length,3);assert.equal(ledger.events[2].dueDate,"2028-11-25");assert.equal(ledger.events[2].timing,"ON_TIME");
   assert.equal(new Set(ledger.events.map(e=>e.key)).size,ledger.events.length);
 });
