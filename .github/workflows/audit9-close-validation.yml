@@ -1,0 +1,48 @@
+name: Audit 9 Close Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit9-close']
+    paths:
+      - 'package.json'
+      - 'tests/audit9-wave3-integrated-chaos.test.ts'
+      - '.github/workflows/audit9-close-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  close-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture exact validation head
+        run: echo "AUDIT9_CLOSE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify frozen Audit 9 governance
+        run: |
+          test "$(git hash-object research/audit-9-charter-2026-08-29.md)" = "0c9353aa74594140dfc65952dac6d21364633b04"
+          test "$(git hash-object research/audit-9-findings-wave2-2026-08-29.md)" = "14dc0b74790865a23bbb5c5f4f6667e8a9fa242f"
+          test "$(git hash-object research/audit-9-finding-003-health-recurrence-after-late-recovery-2026-08-29.md)" = "84e36a644b41c04b78513c52a2924be90380c42b"
+      - name: Verify Wave 3 permanent registration
+        run: |
+          grep -q 'tests/audit9-wave3-integrated-chaos.test.ts' package.json
+          test "$(grep -o 'tests/audit9-wave3-integrated-chaos.test.ts' package.json | wc -l)" -eq 2
+      - name: Audit 9 Wave 3 integrated chaos
+        run: node --experimental-strip-types --test tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Full core regression with registered Wave 3
+        run: npm run test:core
+      - name: Full operational regression with registered Wave 3
+        run: npm run test:ops
+      - name: User-facing Pages build
+        run: npm run build:pages
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
+      - name: Exact-head closure guard
+        run: test "$(git rev-parse HEAD)" = "$AUDIT9_CLOSE_SHA"
