@@ -1,0 +1,44 @@
+name: Audit 12 Linearizability Discovery
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['audit12-linearizability']
+    paths:
+      - 'tests/audit12-linearizability.test.mjs'
+      - '.github/workflows/audit12-linearizability.yml'
+      - '.github/workflows/daily-signal.yml'
+      - '.github/workflows/phase5-forward.yml'
+      - '.github/workflows/lifecycle-review.yml'
+      - '.github/workflows/approve-production.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+          cache: npm
+      - run: npm ci
+      - name: Verify frozen Audit 12 charter
+        run: test -f research/audit-12-charter-2026-08-29.md
+      - name: Run Audit 12 bounded exhaustive linearizability discovery
+        run: node --test tests/audit12-linearizability.test.mjs
+      - name: Audit 11 metamorphic inheritance
+        run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts tests/audit11-ledger-provenance-metamorphic.test.ts tests/audit11-pwa-persistence-metamorphic.test.ts
+      - name: Audit 10 retained meta and coverage closure
+        run: node --experimental-strip-types --test tests/audit10-m01-ledger-generation-chronology.test.ts tests/audit10-wave1-meta-coverage-v2.test.mjs tests/audit10-wave2-independence-symmetry.test.mjs tests/audit10-coverage-closure.test.mjs
+      - name: Audit 9 temporal inheritance
+        run: node --experimental-strip-types --test tests/audit9-wave1-temporal-chaos.test.ts tests/audit9-wave2-persistence-chaos.test.ts tests/audit9-wave3-integrated-chaos.test.ts
+      - name: Audit 8 independent inheritance
+        run: node --experimental-strip-types --test tests/audit8-independent-blackbox.test.ts tests/audit8-wave2-blackbox.test.ts tests/audit8-m10-production-authority-chronology.test.ts tests/audit8-ui-differential.test.ts tests/audit8-ledger-evidence-blackbox.test.ts tests/audit8-pwa-cache-differential.test.ts
+      - name: Production remains unpromoted
+        run: node -e 'const p=require("./public/data/production-config.json");if(p.mode!=="RESEARCH"||p.approvedByHuman!==false||p.selectedTicker!==null||p.selectedStrategy!==null||p.strategyVersion!==null)process.exit(1)'
+      - name: Authoritative-state no-mutation guard
+        run: git diff --exit-code -- public/data github-pages/public/data
