@@ -1,33 +1,47 @@
 # Unattended Soak Rebaseline Record — 2026-09-01
 
 Repository: `rinko0211/tqqq-signal-lab`  
-Status: **C4 — RECOVERY VERIFICATION REQUIRED / 0 OF 10**  
-Governing addendum: `research/unattended-soak-recovery-addendum-v1.1-2026-09-01.md`  
-Remediated control-plane baseline: `198c0f94e589c2c488fa7cea3b1264ecd9c71e66`  
+Status: **C4 — UNATTENDED SOAK IN PROGRESS / 0 OF 10 / COUNTING**  
+Governing addendum: `research/unattended-soak-recovery-addendum-v1.2-2026-09-01.md`  
+Old soak ID: `SOAK-2026-08-29-A`  
+New soak ID: `SOAK-2026-09-01-B`  
+Remediated control-plane baseline: `8223bc8c75f87a9714f89c935d45216d72ff5837`  
+Baseline validation: Audit 12 run `33564829913` — **SUCCESS**  
 Production authority: **RESEARCH / approvedByHuman=false / no selected identity**
 
-## Historical discontinuity
+## Old soak closure
 
-The 2026-08-31 Daily scheduled run `33458379838` failed during operational regression after generating the session state. The later scheduled recovery and publication do not rescue that session.
+The 2026-08-31 Daily scheduled run `33458379838` failed during operational regression after generating the session state. A later scheduled recovery and publication do not rescue or rewrite that result.
 
+- soak ID: `SOAK-2026-08-29-A`
 - 2026-08-31 disposition: **FAIL — NOT COUNTABLE**
-- old soak sequence: terminated
-- retained count: **0/10**
+- terminal state: **CLOSED_FAILED**
+- terminal count: **0/10**
 - historical failure evidence: retained
 - retroactive reconstruction: forbidden
 
-## Baseline transition
+## New soak independence
 
-Material control-plane changes after the failure included the Audit 11 fixture remediation and the recovery-boundary hardening. The complete remediated baseline is the commit above.
+The old soak is closed. Its failure flag, counter, and last-assessed session are not inputs to the new soak.
 
-Commits after the baseline may be ignored for baseline identity only when every changed path is evidence-only under `research/` or validated append-only operational data. Any executable, workflow, test, dependency, strategy, validation, persistence, deployment, calendar, lifecycle, ledger, Production-authority, or UI-action semantic change requires another reset and rebaseline.
+The new soak starts as:
 
-## Restart rule
+- soak ID: `SOAK-2026-09-01-B`
+- baseline: `8223bc8c75f87a9714f89c935d45216d72ff5837`
+- state: **COUNTING**
+- count: **0/10**
+- last assessed session: **null**
 
-1. The first fully successful scheduled NYSE session after this baseline is `RECOVERY_BOUNDARY_VERIFIED / NOT COUNTED`.
-2. It must include Daily, Phase 5, Lifecycle, Pages, append-only integrity, Production-unpromoted, and control-plane-diff evidence.
-3. A manual run cannot satisfy the recovery boundary.
-4. A scheduled failure or incomplete evidence keeps `RECOVERY_VERIFICATION_REQUIRED`.
-5. Only the following distinct completed NYSE session may become `PASS 1/10`.
+Evidence tagged with the old or any different soak ID must be rejected without mutating the new soak. Date-order checks apply only within one soak ID.
 
-This record freezes the restart at **0/10**. It does not certify C5 and does not authorize Production.
+## Counting rule
+
+1. The first distinct completed NYSE session that fully passes under the new soak ID and baseline is eligible for **PASS 1/10**.
+2. It is not made non-countable merely because the old soak failed.
+3. A failed scheduled attempt within a session cannot be rescued by a later success for the same session.
+4. A manual run cannot count.
+5. A failure or incomplete required evidence closes only the current soak sequence.
+6. Any material control-plane change requires another distinct soak ID and new frozen baseline.
+7. Evidence-only records under `research/` and validated append-only operational-data advances do not change the baseline.
+
+This record freezes the new independent soak at **0/10**. It does not certify C5 and does not authorize Production.
