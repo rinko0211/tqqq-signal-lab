@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {dailyBarIsComplete,nyseExecutionWindow,nyseReviewBoundaryReached} from "../lib/market-calendar.ts";
+import "./unattended-soak-recovery-boundary.test.ts";
 
 test("lifecycle review cannot open on UTC date or before the NYSE close",()=>{
   assert.equal(nyseReviewBoundaryReached("2027-08-25","2027-08-25T01:15:00Z"),false);
