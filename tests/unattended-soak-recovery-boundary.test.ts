@@ -4,6 +4,7 @@ import {
   assessSoakSession,
   freezeRemediatedBaseline,
   recordMaterialControlPlaneChange,
+  restartSoakAfterFailure,
   startSoak,
   type SoakSessionEvidence,
 } from "../lib/unattended-soak.ts";
@@ -17,9 +18,11 @@ const manualSuccess = {
 
 function cleanSession(
   sessionDate: string,
+  soakId = "soak-a",
   baseline = "baseline-v1",
 ): SoakSessionEvidence {
   return {
+    soakId,
     sessionDate,
     controlPlaneBaseline: baseline,
     daily: { attempts: [success] },
@@ -34,74 +37,106 @@ function cleanSession(
 test("a scheduled recovery cannot rescue an earlier scheduled failure for the same session", () => {
   const evidence = cleanSession("2026-08-31");
   evidence.daily.attempts = [failure, success];
-  const result = assessSoakSession(startSoak("baseline-v1"), evidence);
+  const result = assessSoakSession(startSoak("soak-a", "baseline-v1"), evidence);
   assert.equal(result.disposition, "FAIL");
   assert.equal(result.reason, "FAILED_SCHEDULED_ATTEMPT");
   assert.equal(result.state.consecutivePasses, 0);
-  assert.equal(result.state.phase, "RECOVERY_VERIFICATION_REQUIRED");
+  assert.equal(result.state.phase, "CLOSED_FAILED");
 });
 
-test("a material patch resets the counter and requires a new frozen baseline", () => {
-  const state = { ...startSoak("baseline-v1"), consecutivePasses: 4 };
+test("a material patch closes the old sequence and requires a distinct new soak id", () => {
+  const state = {
+    ...startSoak("soak-a", "baseline-v1"),
+    consecutivePasses: 4,
+  };
   const reset = recordMaterialControlPlaneChange(state);
+  assert.equal(reset.soakId, "soak-a");
   assert.equal(reset.baseline, null);
   assert.equal(reset.consecutivePasses, 0);
   assert.equal(reset.phase, "REBASELINE_REQUIRED");
-  const result = assessSoakSession(reset, cleanSession("2026-09-01"));
-  assert.equal(result.reason, "CONTROL_PLANE_MISMATCH");
-});
-
-test("the first clean scheduled session after rebaseline verifies recovery but does not count", () => {
-  const reset = recordMaterialControlPlaneChange(startSoak("baseline-v1"));
-  const rebaselined = freezeRemediatedBaseline(reset, "baseline-v2");
-  const recovery = assessSoakSession(
-    rebaselined,
-    cleanSession("2026-09-01", "baseline-v2"),
+  assert.throws(
+    () => freezeRemediatedBaseline(reset, "soak-a", "baseline-v2"),
+    /distinct new soak id/,
   );
-  assert.equal(recovery.disposition, "NOT_COUNTED");
-  assert.equal(recovery.reason, "RECOVERY_BOUNDARY_VERIFIED");
-  assert.equal(recovery.state.consecutivePasses, 0);
-  assert.equal(recovery.state.phase, "COUNTING");
+});
 
-  const firstCounted = assessSoakSession(
-    recovery.state,
-    cleanSession("2026-09-02", "baseline-v2"),
+test("a new soak does not inherit the prior soak failure, date cursor, or counter", () => {
+  const oldEvidence = cleanSession("2026-08-31");
+  oldEvidence.daily.attempts = [failure, success];
+  const oldFailed = assessSoakSession(
+    startSoak("soak-a", "baseline-v1"),
+    oldEvidence,
+  ).state;
+  assert.equal(oldFailed.phase, "CLOSED_FAILED");
+
+  const needsBaseline = recordMaterialControlPlaneChange(oldFailed);
+  const newSoak = freezeRemediatedBaseline(
+    needsBaseline,
+    "soak-b",
+    "baseline-v2",
   );
-  assert.equal(firstCounted.disposition, "PASS");
-  assert.equal(firstCounted.state.consecutivePasses, 1);
+  assert.deepEqual(newSoak, {
+    soakId: "soak-b",
+    baseline: "baseline-v2",
+    consecutivePasses: 0,
+    phase: "COUNTING",
+    lastAssessedSession: null,
+  });
+
+  const firstNewSession = assessSoakSession(
+    newSoak,
+    cleanSession("2026-09-01", "soak-b", "baseline-v2"),
+  );
+  assert.equal(firstNewSession.disposition, "PASS");
+  assert.equal(firstNewSession.state.consecutivePasses, 1);
+  assert.equal(oldFailed.phase, "CLOSED_FAILED");
 });
 
-test("manual success cannot prove either a session or the recovery boundary", () => {
-  const reset = recordMaterialControlPlaneChange(startSoak("baseline-v1"));
-  const state = freezeRemediatedBaseline(reset, "baseline-v2");
-  const evidence = cleanSession("2026-09-01", "baseline-v2");
-  evidence.daily.attempts = [manualSuccess];
-  const result = assessSoakSession(state, evidence);
-  assert.equal(result.disposition, "NOT_COUNTED");
-  assert.equal(result.reason, "INCOMPLETE_SCHEDULED_EVIDENCE");
-  assert.equal(result.state.phase, "RECOVERY_VERIFICATION_REQUIRED");
-});
-
-test("missing scheduled evidence creates a recovery boundary before counting resumes", () => {
+test("a replacement soak on the same unchanged baseline starts independently at one", () => {
   const evidence = cleanSession("2026-09-01");
   evidence.lifecycle.attempts = [];
-  const missing = assessSoakSession(startSoak("baseline-v1"), evidence);
-  assert.equal(missing.disposition, "NOT_COUNTED");
-  assert.equal(missing.reason, "INCOMPLETE_SCHEDULED_EVIDENCE");
-  assert.equal(missing.state.phase, "RECOVERY_VERIFICATION_REQUIRED");
-
-  const recovery = assessSoakSession(
-    missing.state,
-    cleanSession("2026-09-02"),
+  const failed = assessSoakSession(
+    startSoak("soak-a", "baseline-v1"),
+    evidence,
   );
-  assert.equal(recovery.disposition, "NOT_COUNTED");
-  assert.equal(recovery.reason, "RECOVERY_BOUNDARY_VERIFIED");
+  assert.equal(failed.disposition, "NOT_COUNTED");
+  assert.equal(failed.state.phase, "CLOSED_FAILED");
+
+  const replacement = restartSoakAfterFailure(failed.state, "soak-b");
+  const first = assessSoakSession(
+    replacement,
+    cleanSession("2026-09-02", "soak-b", "baseline-v1"),
+  );
+  assert.equal(first.disposition, "PASS");
+  assert.equal(first.state.consecutivePasses, 1);
 });
 
-test("a control-plane mismatch fails closed and demands another rebaseline", () => {
+test("evidence from an old soak is rejected without poisoning the new soak", () => {
+  const newSoak = startSoak("soak-b", "baseline-v2");
+  const oldEvidence = cleanSession("2026-08-31", "soak-a", "baseline-v1");
+  oldEvidence.daily.attempts = [failure];
+  const result = assessSoakSession(newSoak, oldEvidence);
+  assert.equal(result.disposition, "NOT_COUNTED");
+  assert.equal(result.reason, "SOAK_ID_MISMATCH");
+  assert.deepEqual(result.state, newSoak);
+});
+
+test("manual success cannot count and closes only its own soak sequence", () => {
+  const evidence = cleanSession("2026-09-01");
+  evidence.daily.attempts = [manualSuccess];
   const result = assessSoakSession(
-    startSoak("baseline-v1"),
-    cleanSession("2026-09-01", "unexpected-head"),
+    startSoak("soak-a", "baseline-v1"),
+    evidence,
+  );
+  assert.equal(result.disposition, "NOT_COUNTED");
+  assert.equal(result.reason, "INCOMPLETE_SCHEDULED_EVIDENCE");
+  assert.equal(result.state.phase, "CLOSED_FAILED");
+});
+
+test("a control-plane mismatch fails closed and demands rebaseline", () => {
+  const result = assessSoakSession(
+    startSoak("soak-a", "baseline-v1"),
+    cleanSession("2026-09-01", "soak-a", "unexpected-head"),
   );
   assert.equal(result.disposition, "NOT_COUNTED");
   assert.equal(result.reason, "CONTROL_PLANE_MISMATCH");
@@ -109,9 +144,9 @@ test("a control-plane mismatch fails closed and demands another rebaseline", () 
   assert.equal(result.state.consecutivePasses, 0);
 });
 
-test("session evidence cannot be replayed or assessed out of order", () => {
+test("session evidence cannot be replayed or assessed out of order within one soak", () => {
   const first = assessSoakSession(
-    startSoak("baseline-v1"),
+    startSoak("soak-a", "baseline-v1"),
     cleanSession("2026-09-01"),
   );
   assert.throws(

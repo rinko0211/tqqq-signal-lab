@@ -9,7 +9,7 @@ export type SoakDisposition = "PASS" | "FAIL" | "NOT_COUNTED";
 
 export type SoakPhase =
   | "COUNTING"
-  | "RECOVERY_VERIFICATION_REQUIRED"
+  | "CLOSED_FAILED"
   | "REBASELINE_REQUIRED";
 
 export interface ScheduledAttempt {
@@ -22,6 +22,7 @@ export interface SessionLaneEvidence {
 }
 
 export interface SoakSessionEvidence {
+  soakId: string;
   sessionDate: string;
   controlPlaneBaseline: string;
   daily: SessionLaneEvidence;
@@ -33,6 +34,7 @@ export interface SoakSessionEvidence {
 }
 
 export interface SoakState {
+  soakId: string;
   baseline: string | null;
   consecutivePasses: number;
   phase: SoakPhase;
@@ -45,7 +47,7 @@ export interface SoakAssessment {
     | "ACCEPTED"
     | "FAILED_SCHEDULED_ATTEMPT"
     | "INCOMPLETE_SCHEDULED_EVIDENCE"
-    | "RECOVERY_BOUNDARY_VERIFIED"
+    | "SOAK_ID_MISMATCH"
     | "CONTROL_PLANE_MISMATCH"
     | "INTEGRITY_OR_AUTHORITY_FAILURE";
   state: SoakState;
@@ -74,9 +76,11 @@ function hasScheduledSuccess(lane: SessionLaneEvidence): boolean {
   );
 }
 
-export function startSoak(baseline: string): SoakState {
+export function startSoak(soakId: string, baseline: string): SoakState {
+  if (!soakId) throw new Error("soak id is required");
   if (!baseline) throw new Error("soak baseline is required");
   return {
+    soakId,
     baseline,
     consecutivePasses: 0,
     phase: "COUNTING",
@@ -95,24 +99,46 @@ export function recordMaterialControlPlaneChange(state: SoakState): SoakState {
 
 export function freezeRemediatedBaseline(
   state: SoakState,
+  newSoakId: string,
   baseline: string,
 ): SoakState {
   if (state.phase !== "REBASELINE_REQUIRED") {
     throw new Error("rebaseline is legal only after a material control-plane change");
   }
+  if (!newSoakId || newSoakId === state.soakId) {
+    throw new Error("remediated baseline requires a distinct new soak id");
+  }
   if (!baseline) throw new Error("remediated baseline is required");
-  return {
-    ...state,
-    baseline,
-    consecutivePasses: 0,
-    phase: "RECOVERY_VERIFICATION_REQUIRED",
-  };
+  return startSoak(newSoakId, baseline);
+}
+
+export function restartSoakAfterFailure(
+  state: SoakState,
+  newSoakId: string,
+): SoakState {
+  if (state.phase !== "CLOSED_FAILED" || !state.baseline) {
+    throw new Error("only a closed failed soak can restart on the same baseline");
+  }
+  if (!newSoakId || newSoakId === state.soakId) {
+    throw new Error("replacement soak requires a distinct new soak id");
+  }
+  return startSoak(newSoakId, state.baseline);
 }
 
 export function assessSoakSession(
   state: SoakState,
   evidence: SoakSessionEvidence,
 ): SoakAssessment {
+  if (evidence.soakId !== state.soakId) {
+    return {
+      disposition: "NOT_COUNTED",
+      reason: "SOAK_ID_MISMATCH",
+      state,
+    };
+  }
+  if (state.phase !== "COUNTING") {
+    throw new Error("only an active counting soak can assess a session");
+  }
   if (state.lastAssessedSession && evidence.sessionDate <= state.lastAssessedSession) {
     throw new Error("soak sessions must be assessed once in strict date order");
   }
@@ -142,7 +168,7 @@ export function assessSoakSession(
       reason: "FAILED_SCHEDULED_ATTEMPT",
       state: next({
         consecutivePasses: 0,
-        phase: "RECOVERY_VERIFICATION_REQUIRED",
+        phase: "CLOSED_FAILED",
       }),
     };
   }
@@ -153,7 +179,7 @@ export function assessSoakSession(
       reason: "INCOMPLETE_SCHEDULED_EVIDENCE",
       state: next({
         consecutivePasses: 0,
-        phase: "RECOVERY_VERIFICATION_REQUIRED",
+        phase: "CLOSED_FAILED",
       }),
     };
   }
@@ -168,16 +194,8 @@ export function assessSoakSession(
       reason: "INTEGRITY_OR_AUTHORITY_FAILURE",
       state: next({
         consecutivePasses: 0,
-        phase: "RECOVERY_VERIFICATION_REQUIRED",
+        phase: "CLOSED_FAILED",
       }),
-    };
-  }
-
-  if (state.phase === "RECOVERY_VERIFICATION_REQUIRED") {
-    return {
-      disposition: "NOT_COUNTED",
-      reason: "RECOVERY_BOUNDARY_VERIFIED",
-      state: next({ consecutivePasses: 0, phase: "COUNTING" }),
     };
   }
 

@@ -10,6 +10,7 @@ on:
       - 'tests/audit5-operational-continuity.test.ts'
       - 'lib/unattended-soak.ts'
       - 'research/unattended-soak-recovery-addendum-v1.1-2026-09-01.md'
+      - 'research/unattended-soak-recovery-addendum-v1.2-2026-09-01.md'
       - '.github/workflows/audit12-linearizability.yml'
       - '.github/workflows/daily-signal.yml'
       - '.github/workflows/phase5-forward.yml'
