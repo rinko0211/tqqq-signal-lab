@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T01:24:51.491Z",
+  "generatedAt": "2026-09-01T17:19:26.511Z",
   "status": "success",
   "forwardStart": "2026-08-25",
   "latestDates": {
@@ -162,6 +162,6 @@
     }
   ],
   "records": 15,
-  "buildVersion": "8def4ce1153a",
+  "buildVersion": "a2561821aada",
   "errors": []
 }
