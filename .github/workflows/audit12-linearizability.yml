@@ -6,6 +6,10 @@ on:
     branches: ['audit12-linearizability', 'main']
     paths:
       - 'tests/audit12-linearizability.test.mjs'
+      - 'tests/unattended-soak-recovery-boundary.test.ts'
+      - 'tests/audit5-operational-continuity.test.ts'
+      - 'lib/unattended-soak.ts'
+      - 'research/unattended-soak-recovery-addendum-v1.1-2026-09-01.md'
       - '.github/workflows/audit12-linearizability.yml'
       - '.github/workflows/daily-signal.yml'
       - '.github/workflows/phase5-forward.yml'
@@ -40,6 +44,8 @@ jobs:
           NODE
       - name: Audit 12 bounded exhaustive linearizability histories
         run: node --test tests/audit12-linearizability.test.mjs
+      - name: Unattended soak failure-to-recovery discontinuity
+        run: node --experimental-strip-types --test tests/unattended-soak-recovery-boundary.test.ts
       - name: Audit 11 metamorphic inheritance
         run: node --experimental-strip-types --test tests/audit11-primary-action-metamorphic.test.ts tests/audit11-ledger-provenance-metamorphic.test.ts tests/audit11-pwa-persistence-metamorphic.test.ts
       - name: Audit 10 retained meta and coverage closure
