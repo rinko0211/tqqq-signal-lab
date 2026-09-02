@@ -1345,7 +1345,7 @@ export function freshness(date: string, now=new Date().toISOString()) {
     pending,
     state:availability.state,
     message: pending
-      ? `NYSE終了後の定時更新待ち（遅延ではありません）。更新完了までは現在シグナルを使用しないでください`
+      ? `PENDING FOR UPDATE：NYSE終了後の定時更新待ち（遅延ではありません）。更新完了までは現在シグナルを使用しないでください`
       : stale
       ? `最終データから${Number.isFinite(lagSessions)?lagSessions:"不明"}完了NYSEセッション遅延。現在シグナルとして使用しないでください`
       : `最新の完了NYSEセッションまで反映済み`,
