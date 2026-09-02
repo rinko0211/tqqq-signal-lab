@@ -1,4 +1,4 @@
-import {marketDataLagSessions,nextNyseSession} from "./market-calendar.ts";
+import {marketDataAvailability,nextNyseSession} from "./market-calendar.ts";
 
 export type Ticker = "TQQQ" | "QQQ" | "SPY" | "VIX";
 export type Bar = {
@@ -1337,12 +1337,16 @@ export function demoDataset(): Dataset {
   };
 }
 export function freshness(date: string, now=new Date().toISOString()) {
-  const age = Math.floor((Date.parse(now) - new Date(`${date}T21:00:00Z`).getTime()) / 86400000),lagSessions=marketDataLagSessions(date,now),stale=!Number.isFinite(lagSessions)||lagSessions>0;
+  const age = Math.floor((Date.parse(now) - new Date(`${date}T21:00:00Z`).getTime()) / 86400000),availability=marketDataAvailability(date,now),lagSessions=availability.lagSessions,stale=availability.state!=="CURRENT",pending=availability.state==="UPDATE_PENDING";
   return {
     age,
     lagSessions,
     stale,
-    message: stale
+    pending,
+    state:availability.state,
+    message: pending
+      ? `NYSE終了後の定時更新待ち（遅延ではありません）。更新完了までは現在シグナルを使用しないでください`
+      : stale
       ? `最終データから${Number.isFinite(lagSessions)?lagSessions:"不明"}完了NYSEセッション遅延。現在シグナルとして使用しないでください`
       : `最新の完了NYSEセッションまで反映済み`,
   };
