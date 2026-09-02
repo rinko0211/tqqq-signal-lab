@@ -1,6 +1,12 @@
 const NY_ZONE="America/New_York";
 const OPEN_MINUTES=9*60+30;
 const CLOSE_MINUTES=16*60;
+// The primary Daily workflow is scheduled after the close (17:30 ET in
+// standard time / 18:30 ET in daylight time).  Do not classify the normal
+// close-to-publication interval as an operational delay.  Trading authority
+// remains fail-closed during this window; this deadline only distinguishes
+// UPDATE_PENDING from a missed update.
+const DAILY_PUBLICATION_DEADLINE_MINUTES=20*60;
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 export function isValidIsoMarketDate(date:string){if(!DATE_RE.test(date))return false;const d=new Date(`${date}T12:00:00Z`);return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===date}
 
@@ -109,4 +115,14 @@ export function marketDataLagSessions(marketDataDate:string|undefined,now=new Da
   let count=0,guard=0;const d=new Date(`${marketDataDate}T12:00:00Z`);
   while(d.toISOString().slice(0,10)<latest&&guard++<4000){d.setUTCDate(d.getUTCDate()+1);if(isNyseSession(d.toISOString().slice(0,10)))count++}
   return count;
+}
+
+export type MarketDataAvailability="CURRENT"|"UPDATE_PENDING"|"DELAYED"|"INVALID";
+export function marketDataAvailability(marketDataDate:string|undefined,now=new Date().toISOString()):{state:MarketDataAvailability;lagSessions:number}{
+  const lagSessions=marketDataLagSessions(marketDataDate,now);
+  if(!Number.isFinite(lagSessions))return{state:"INVALID",lagSessions};
+  if(lagSessions===0)return{state:"CURRENT",lagSessions};
+  const clock=nyClock(now);
+  const pending=lagSessions===1&&Boolean(marketDataDate)&&marketDataDate!<clock.localDate&&isNyseSession(clock.localDate)&&clock.minutes<DAILY_PUBLICATION_DEADLINE_MINUTES;
+  return{state:pending?"UPDATE_PENDING":"DELAYED",lagSessions};
 }
