@@ -6,7 +6,7 @@ const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5
 
 test("browser freshness banner prioritizes pending or delayed live state over a prior persisted success message",()=>{
   assert.match(page,/fresh\?\.pending\|\|fresh\?\.state==="DELAYED"\|\|fresh\?\.state==="INVALID"\?fresh\.message:runtimeStatus\?\.message/);
-  assert.match(page,/fresh\?\.pending\|\|\["not_updated","market_pending"\]/);
+  assert.match(page,/const statusKind=fresh\?\.pending\?"warn":runtimeStatus\?\.state==="failed"/);
 });
 
 test("holdings action uses selected live ticker and never hardcodes TQQQ trade instruction",()=>{
