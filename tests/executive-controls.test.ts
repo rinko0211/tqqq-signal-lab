@@ -39,6 +39,7 @@ test("normal post-close publication window is pending, not a failed Daily update
   const pending=freshness("2026-09-01","2026-09-02T22:00:00Z");
   assert.equal(pending.stale,true,"old authority remains unusable while the new Daily is pending");
   assert.equal(pending.pending,true);
+  assert.match(pending.message,/PENDING FOR UPDATE/);
   assert.match(pending.message,/遅延ではありません/);
 });
 
