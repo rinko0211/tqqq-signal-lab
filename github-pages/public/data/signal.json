@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T17:09:01.606Z",
+  "generatedAt": "2026-09-02T00:23:28.063Z",
   "dataDate": "2026-08-31",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
@@ -8,7 +8,7 @@
   "tqqqClose": 71.92,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
-  "state": "latest",
+  "state": "not_updated",
   "signal": {
     "date": "2026-08-31",
     "score": 89,
