@@ -485,7 +485,7 @@ export default function Home() {
                   : "T+1終値・低精度"}
               </Status>
               {fresh && (
-                <Status kind={fresh.stale ? "bad" : "ok"}>
+                <Status kind={fresh.pending ? "warn" : fresh.stale ? "bad" : "ok"}>
                   {fresh.message}
                 </Status>
               )}
