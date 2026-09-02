@@ -417,7 +417,7 @@ export default function Home() {
   const holdoutMetrics=dailySignal?.validation?.holdout||analysis?.holdout?.metrics;
   const operationalCandidate=Boolean(dataset?.source!=="demo"&&holdoutMetrics&&holdoutMetrics.cagr>0&&holdoutMetrics.maxDd>-.45&&holdoutMetrics.sharpe>.5);
   const compareAnalysis=analysis?.bt&&analysis.comparison&&analysis.holdout&&analysis.tqqq&&analysis.qqq?{bt:analysis.bt,comparison:analysis.comparison,holdout:analysis.holdout,tqqq:analysis.tqqq,qqq:analysis.qqq}:null;
-  const statusKind=runtimeStatus?.state==="failed"||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?"bad":fresh?.pending||["not_updated","market_pending"].includes(runtimeStatus?.state||"")?"warn":runtimeStatus?"ok":"neutral";
+  const statusKind=fresh?.pending?"warn":runtimeStatus?.state==="failed"||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?"bad":["not_updated","market_pending"].includes(runtimeStatus?.state||"")?"warn":runtimeStatus?"ok":"neutral";
   const freshnessMessage=fresh?.pending||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?fresh.message:runtimeStatus?.message||fresh?.message;
   const generatedLabel=runtimeStatus?.generatedAt?new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",dateStyle:"medium",timeStyle:"short"}).format(new Date(runtimeStatus.generatedAt)):"未確認";
   return (
