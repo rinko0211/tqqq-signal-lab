@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {isNyseHoliday,isNyseSession,nextNyseSession,earliestLegalNyseOpen,completedNyseSessionsSince,upstreamWorkflowFresh,marketDataLagSessions} from "../lib/market-calendar.ts";
+import {isNyseHoliday,isNyseSession,nextNyseSession,earliestLegalNyseOpen,completedNyseSessionsSince,upstreamWorkflowFresh,marketDataLagSessions,marketDataAvailability} from "../lib/market-calendar.ts";
 import {freshness,nextExecutionDate} from "../lib/engine.ts";
 import {corporateActionContinuity,applyShareFactor} from "../lib/corporate-actions.ts";
 import {summarizeRegimeCoverage} from "../lib/regime-coverage.ts";
@@ -34,11 +34,30 @@ test("market data lag is measured in completed NYSE sessions",()=>{
   assert.equal(marketDataLagSessions("2026-08-28","2026-08-31T22:00:00Z"),1);
 });
 
+test("normal post-close publication window is pending, not a failed Daily update",()=>{
+  assert.deepEqual(marketDataAvailability("2026-09-01","2026-09-02T22:00:00Z"),{state:"UPDATE_PENDING",lagSessions:1});
+  const pending=freshness("2026-09-01","2026-09-02T22:00:00Z");
+  assert.equal(pending.stale,true,"old authority remains unusable while the new Daily is pending");
+  assert.equal(pending.pending,true);
+  assert.match(pending.message,/遅延ではありません/);
+});
+
+test("missing publication becomes a real delay after the Daily deadline",()=>{
+  assert.deepEqual(marketDataAvailability("2026-09-01","2026-09-03T00:01:00Z"),{state:"DELAYED",lagSessions:1});
+  const delayed=freshness("2026-09-01","2026-09-03T00:01:00Z");
+  assert.equal(delayed.pending,false);
+  assert.match(delayed.message,/1完了NYSEセッション遅延/);
+});
+
+test("a multi-session gap is never hidden by the publication window",()=>{
+  assert.deepEqual(marketDataAvailability("2026-08-31","2026-09-02T22:00:00Z"),{state:"DELAYED",lagSessions:2});
+});
+
 test("primary freshness fails closed after any completed NYSE session is missing",()=>{
   const weekend=freshness("2026-08-28","2026-08-31T12:00:00Z");
   assert.equal(weekend.stale,false);assert.equal(weekend.lagSessions,0);
   const afterMonday=freshness("2026-08-28","2026-08-31T22:00:00Z");
-  assert.equal(afterMonday.stale,true);assert.equal(afterMonday.lagSessions,1);
+  assert.equal(afterMonday.stale,true);assert.equal(afterMonday.pending,true);assert.equal(afterMonday.lagSessions,1);
   assert.match(afterMonday.message,/使用しないでください/);
 });
 
