@@ -13,7 +13,7 @@ Start a fresh unattended-soak sequence after correcting the post-close freshness
 ## Replacement sequence
 
 - soakId: `SOAK-2026-09-03-C`
-- control-plane baseline: `8be45bd9d2687c80fa10af4069e3469144bfb188`
+- control-plane baseline: `c4e9e3f65b4b0a96d90399e1bf8c1400dd14c1f8`
 - initial state: `COUNTING`
 - count: `0/10`
 - lastAssessedSession: `null`
@@ -25,7 +25,7 @@ Start a fresh unattended-soak sequence after correcting the post-close freshness
 - `DELAYED`: the deadline has passed with a session still missing, or two or more completed sessions are missing.
 - `INVALID`: malformed or impossible market-date evidence.
 
-The browser banner must prioritize the live freshness state. During the normal publication window it displays `PENDING FOR UPDATE` and explicitly says it is not delayed, even if the previously persisted Daily run was successful.
+The browser banner must prioritize the live freshness state. During the normal publication window it displays `PENDING FOR UPDATE` in the warning/amber state and explicitly says it is not delayed, even if the previously persisted Daily run was successful or failed.
 
 `UPDATE_PENDING` is not a workflow failure and must not close or fail the soak. The prior Signal remains unusable during the pending window, so trading authority remains fail-closed. A real `DELAYED`, failed/cancelled/timed-out required workflow, missing persisted data, failed Pages deployment, authority mismatch, or append-only violation remains a soak failure.
 
