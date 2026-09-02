@@ -4,6 +4,11 @@ import fs from "node:fs";
 
 const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5-ui.tsx","utf8"),life=fs.readFileSync("app/lifecycle-ui.tsx","utf8"),authority=fs.readFileSync("lib/operational-authority.ts","utf8"),primary=fs.readFileSync("lib/primary-action.ts","utf8");
 
+test("browser freshness banner prioritizes pending or delayed live state over a prior persisted success message",()=>{
+  assert.match(page,/fresh\?\.pending\|\|fresh\?\.state==="DELAYED"\|\|fresh\?\.state==="INVALID"\?fresh\.message:runtimeStatus\?\.message/);
+  assert.match(page,/fresh\?\.pending\|\|\["not_updated","market_pending"\]/);
+});
+
 test("holdings action uses selected live ticker and never hardcodes TQQQ trade instruction",()=>{
   assert.match(primary,/currentTicker=args\.signal\?\.assetTicker\|\|"TQQQ"/);
   assert.doesNotMatch(primary,/`TQQQ比率を\$\{target\*100\}%まで(?:増加|縮小)`/);
