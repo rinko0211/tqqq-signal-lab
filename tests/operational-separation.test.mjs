@@ -33,6 +33,21 @@ test("Daily uses shared NYSE calendar",()=>{
   assert.doesNotMatch(daily,/const nthWeekday=/);
 });
 
+test("Daily performs bounded three-hour scheduled retries and stops after data is current",()=>{
+  const crons=[...dailyWorkflow.matchAll(/cron: "([^"]+)"/g)].map(x=>x[1]);
+  assert.deepEqual(crons,[
+    "30 22 * * 1-5",
+    "30 1 * * 2-6",
+    "30 4 * * 2-6",
+    "30 7 * * 2-6",
+    "30 10 * * 2-6",
+    "0 13 * * 2-6",
+  ]);
+  assert.match(dailyWorkflow,/scripts\/decide-daily-pipeline\.ts/);
+  assert.match(dailyWorkflow,/steps\.pipeline\.outputs\.fetch_data == 'true'/);
+  assert.match(dailyWorkflow,/steps\.pipeline\.outputs\.run_pipeline == 'true'/);
+});
+
 test("primary Production state preserves approved Production during Decision review",()=>{
   const start=page.indexOf("function SignalView(");
   assert.ok(start>=0,"SignalView must exist");

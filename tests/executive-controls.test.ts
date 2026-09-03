@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {isNyseHoliday,isNyseSession,nextNyseSession,earliestLegalNyseOpen,completedNyseSessionsSince,upstreamWorkflowFresh,marketDataLagSessions,marketDataAvailability} from "../lib/market-calendar.ts";
+import {decideDailyPipeline} from "../lib/daily-retry.ts";
 import {freshness,nextExecutionDate} from "../lib/engine.ts";
 import {corporateActionContinuity,applyShareFactor} from "../lib/corporate-actions.ts";
 import {summarizeRegimeCoverage} from "../lib/regime-coverage.ts";
@@ -52,6 +53,33 @@ test("missing publication becomes a real delay after the Daily deadline",()=>{
 
 test("a multi-session gap is never hidden by the publication window",()=>{
   assert.deepEqual(marketDataAvailability("2026-08-31","2026-09-02T22:00:00Z"),{state:"DELAYED",lagSessions:2});
+});
+
+test("scheduled Daily retries stop mutating after the completed session is current",()=>{
+  assert.deepEqual(decideDailyPipeline({eventName:"schedule",deployPersistedOnly:false,marketDataDate:"2026-09-02",now:"2026-09-03T12:00:00Z"}),{
+    mode:"SKIP_CURRENT",runPipeline:false,fetchData:false,availability:"CURRENT",
+  });
+});
+
+test("scheduled Daily retries continue for pending delayed or invalid market data",()=>{
+  for(const [date,now,state] of [
+    ["2026-09-01","2026-09-02T22:00:00Z","UPDATE_PENDING"],
+    ["2026-09-01","2026-09-03T00:01:00Z","DELAYED"],
+    [undefined,"2026-09-03T00:01:00Z","INVALID"],
+  ] as const){
+    assert.deepEqual(decideDailyPipeline({eventName:"schedule",deployPersistedOnly:false,marketDataDate:date,now}),{
+      mode:"FETCH_AND_DEPLOY",runPipeline:true,fetchData:true,availability:state,
+    });
+  }
+});
+
+test("direct refresh and persisted approval deployment preserve their distinct authority",()=>{
+  assert.deepEqual(decideDailyPipeline({eventName:"workflow_dispatch",deployPersistedOnly:false,marketDataDate:"2026-09-02",now:"2026-09-03T12:00:00Z"}),{
+    mode:"FETCH_AND_DEPLOY",runPipeline:true,fetchData:true,availability:"NOT_APPLICABLE",
+  });
+  assert.deepEqual(decideDailyPipeline({eventName:"workflow_call",deployPersistedOnly:true,marketDataDate:"2026-09-01",now:"2026-09-03T12:00:00Z"}),{
+    mode:"DEPLOY_PERSISTED",runPipeline:true,fetchData:false,availability:"NOT_APPLICABLE",
+  });
 });
 
 test("primary freshness fails closed after any completed NYSE session is missing",()=>{

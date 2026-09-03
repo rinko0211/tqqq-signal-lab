@@ -13,9 +13,17 @@ on:
         type: string
         default: ""
   schedule:
+    # Primary post-close attempt: 07:30 JST every Tue-Sat after a Mon-Fri
+    # US session. GitHub schedule delivery may start later than the cron time.
     - cron: "30 22 * * 1-5"
-    # Recovery fetch before the next US open: 09:00 EDT / 08:00 EST.
-    # Tue-Sat UTC corresponds to the morning after each Mon-Fri US session.
+    # Bounded three-hour retries while the latest completed NYSE session is
+    # still missing. Once current, the preflight exits without fetch, mutation,
+    # regression, commit, or Pages deployment.
+    - cron: "30 1 * * 2-6"
+    - cron: "30 4 * * 2-6"
+    - cron: "30 7 * * 2-6"
+    - cron: "30 10 * * 2-6"
+    # Final recovery attempt: 22:00 JST, before the next US open.
     - cron: "0 13 * * 2-6"
   workflow_dispatch:
   push:
@@ -60,14 +68,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Decide whether this run needs the Daily pipeline
+        id: pipeline
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DEPLOY_PERSISTED_ONLY: ${{ inputs.deploy_persisted_only || false }}
+        run: node --experimental-strip-types scripts/decide-daily-pipeline.ts
       - run: npm ci
+        if: steps.pipeline.outputs.run_pipeline == 'true'
       - name: Fetch data and generate signal
-        if: ${{ inputs.deploy_persisted_only != true }}
+        if: steps.pipeline.outputs.fetch_data == 'true'
         run: npm run generate:daily
       - name: Run operational regression tests
+        if: steps.pipeline.outputs.run_pipeline == 'true'
         run: npm run test:ops
       - name: Save append-only live signal history
-        if: ${{ inputs.deploy_persisted_only != true }}
+        if: steps.pipeline.outputs.fetch_data == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -83,18 +99,24 @@ jobs:
             echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           fi
       - name: Confirm validated source remains authoritative
+        if: steps.pipeline.outputs.run_pipeline == 'true'
         run: |
           git fetch origin main
           test "$(git rev-parse origin/main)" = "$VALIDATED_MAIN_SHA"
           test "$(git rev-parse HEAD)" = "$VALIDATED_MAIN_SHA"
       - name: Build PWA from the persisted validated head
+        if: steps.pipeline.outputs.run_pipeline == 'true'
         run: npm run build:pages
       - uses: actions/configure-pages@v6
+        if: steps.pipeline.outputs.run_pipeline == 'true'
       - uses: actions/upload-pages-artifact@v5
+        if: steps.pipeline.outputs.run_pipeline == 'true'
         with:
           path: dist-pages
       - name: Deploy GitHub Pages
+        if: steps.pipeline.outputs.run_pipeline == 'true'
         id: deployment
         uses: actions/deploy-pages@v5
       - name: Mark data failure after publishing status
+        if: steps.pipeline.outputs.run_pipeline == 'true'
         run: test ! -s github-pages/public/data/.failed
