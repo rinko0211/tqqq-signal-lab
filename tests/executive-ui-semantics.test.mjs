@@ -5,8 +5,9 @@ import fs from "node:fs";
 const page=fs.readFileSync("app/page.tsx","utf8"),p5=fs.readFileSync("app/phase5-ui.tsx","utf8"),life=fs.readFileSync("app/lifecycle-ui.tsx","utf8"),authority=fs.readFileSync("lib/operational-authority.ts","utf8"),primary=fs.readFileSync("lib/primary-action.ts","utf8");
 
 test("browser freshness banner prioritizes pending or delayed live state over a prior persisted success message",()=>{
-  assert.match(page,/fresh\?\.pending\|\|fresh\?\.state==="DELAYED"\|\|fresh\?\.state==="INVALID"\?fresh\.message:runtimeStatus\?\.message/);
-  assert.match(page,/const statusKind=fresh\?\.pending\?"warn":runtimeStatus\?\.state==="failed"/);
+  assert.match(page,/providerPending=Boolean\(latestProviderAttempt&&providerAttempt\?\.state==="PROVIDER_PENDING"/);
+  assert.match(page,/const statusKind=providerPending\|\|fresh\?\.pending\?"warn"/);
+  assert.match(page,/const freshnessMessage=providerPending\?providerAttempt\?\.message/);
 });
 
 test("holdings action uses selected live ticker and never hardcodes TQQQ trade instruction",()=>{

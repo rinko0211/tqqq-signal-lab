@@ -100,6 +100,14 @@ export type ForwardCorrection = {
   replacement: Partial<ForwardRecord>;
 };
 
+export type ForwardCoverageGap={
+  key:string;
+  strategyVersion:string;
+  marketDataDate:string;
+  recordedAt:string;
+  reason:"SOURCE_DATA_MISSING";
+};
+
 export type ForwardLedger = {
   schemaVersion: number;
   createdAt: string;
@@ -111,6 +119,7 @@ export type ForwardLedger = {
   reviewSchedule: { sixMonth: string; twelveMonth: string; twentyFourMonth: string };
   records: ForwardRecord[];
   corrections: ForwardCorrection[];
+  coverageGaps?:ForwardCoverageGap[];
 };
 
 const champion = STRATEGIES.defensive;
@@ -174,7 +183,7 @@ export function emptyForwardLedger(now = new Date().toISOString()): ForwardLedge
     freezes: structuredClone(STRATEGY_FREEZES),
     promotionRule: PROMOTION_RULE,
     reviewSchedule: { sixMonth: "2027-02-22", twelveMonth: "2027-08-23", twentyFourMonth: "2028-08-21" },
-    records: [], corrections: [],
+    records: [], corrections: [], coverageGaps:[],
   };
 }
 
@@ -187,6 +196,7 @@ const syntheticBenchmarkSignal = (date: string, target: number, previous: number
 const keyOf = (version: string, date: string) => `${version}|${date}`;
 
 function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFreeze, generatedAt: string, source: string) {
+  ledger.coverageGaps??=[];
   const priorRecords = ledger.records.filter(r => r.strategyVersion === freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate));
   const last = priorRecords.at(-1);
   const anchorIndex=last?ds.days.findIndex(d=>d.date===last.marketDataDate):-1;
@@ -196,7 +206,7 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
   const endIndex = ds.days.length - 1;
   for (let i = startIndex; i <= endIndex; i++) {
     const day = ds.days[i];
-    if (ledger.records.some(r => r.key === keyOf(freeze.version, day.date))) continue;
+    if (ledger.records.some(r => r.key === keyOf(freeze.version, day.date))||ledger.coverageGaps.some(g=>g.strategyVersion===freeze.version&&g.marketDataDate===day.date)) continue;
     const isLatest = i === endIndex;
     const previous = ledger.records.filter(r => r.strategyVersion === freeze.version).sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)).at(-1);
     const assetBar = freeze.asset === "QQQ" ? day.qqq : day.tqqq;
@@ -254,6 +264,19 @@ function appendForFreeze(ds: Dataset, ledger: ForwardLedger, freeze: StrategyFre
     };
     ledger.records.push(record);
   }
+  const horizon=ds.days.at(-1)?.date;
+  if(horizon){
+    const covered=new Set([...ledger.records.filter(r=>r.strategyVersion===freeze.version).map(r=>r.marketDataDate),...ledger.coverageGaps.filter(g=>g.strategyVersion===freeze.version).map(g=>g.marketDataDate)]);
+    const d=new Date(`${freeze.startDate}T12:00:00Z`);
+    while(d.toISOString().slice(0,10)<=horizon){
+      const date=d.toISOString().slice(0,10);
+      if(isNyseSession(date)&&!covered.has(date)){
+        ledger.coverageGaps.push({key:`${freeze.version}|${date}|GAP`,strategyVersion:freeze.version,marketDataDate:date,recordedAt:generatedAt,reason:"SOURCE_DATA_MISSING"});
+        covered.add(date);
+      }
+      d.setUTCDate(d.getUTCDate()+1);
+    }
+  }
 }
 
 export function assertForwardLedgerInternalIntegrity(ledger:ForwardLedger){
@@ -261,6 +284,8 @@ export function assertForwardLedgerInternalIntegrity(ledger:ForwardLedger){
   assertForwardFreezeIntegrity(ledger);
   const canonical=[...ledger.records].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
   for(let i=0;i<ledger.records.length;i++)if(canonical[i]?.key!==ledger.records[i]?.key)throw Error(`Forward integrity: non-canonical record order at index ${i}`);
+  const gaps=ledger.coverageGaps??[],canonicalGaps=[...gaps].sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
+  for(let i=0;i<gaps.length;i++)if(canonicalGaps[i]?.key!==gaps[i]?.key)throw Error(`Forward integrity: non-canonical coverage gap order at index ${i}`);
   const keys=new Set<string>(),logical=new Set<string>();
   for(const r of ledger.records){
     const freeze=ledger.freezes.find(f=>f.version===r.strategyVersion);if(!freeze)throw Error(`Forward integrity: unknown strategy version ${r.strategyVersion}`);
@@ -271,13 +296,21 @@ export function assertForwardLedgerInternalIntegrity(ledger:ForwardLedger){
     if(r.marketDataDate<freeze.startDate)throw Error(`Forward integrity: pre-start record ${r.key}`);
     if(keys.has(r.key)||logical.has(expected))throw Error(`Forward integrity: duplicate record ${r.key}`);keys.add(r.key);logical.add(expected);
   }
+  for(const g of gaps){
+    const freeze=ledger.freezes.find(f=>f.version===g.strategyVersion);if(!freeze)throw Error(`Forward integrity: unknown gap strategy version ${g.strategyVersion}`);
+    if(!isNyseSession(g.marketDataDate)||g.marketDataDate<freeze.startDate)throw Error(`Forward integrity: invalid gap date ${g.key}`);
+    if(!Number.isFinite(Date.parse(g.recordedAt))||Date.parse(g.recordedAt)>Date.parse(ledger.updatedAt))throw Error(`Forward integrity: invalid gap chronology ${g.key}`);
+    const expected=`${g.strategyVersion}|${g.marketDataDate}|GAP`,logicalKey=`${g.strategyVersion}|${g.marketDataDate}`;
+    if(g.key!==expected||g.reason!=="SOURCE_DATA_MISSING")throw Error(`Forward integrity: invalid gap evidence ${g.key}`);
+    if(keys.has(g.key)||logical.has(logicalKey))throw Error(`Forward integrity: duplicate/conflicting coverage ${g.key}`);keys.add(g.key);logical.add(logicalKey);
+  }
   const ledgerStarted=ledger.records.length>0;
   for(const freeze of ledger.freezes){
     const rows=ledger.records.filter(r=>r.strategyVersion===freeze.version);
     if(!rows.length){if(ledgerStarted)throw Error(`Forward integrity: missing started series history ${freeze.version}`);continue}
     const last=rows.at(-1)!;
-    const expectedSessions=countNyseSessions(freeze.startDate,last.marketDataDate);
-    if(rows.length!==expectedSessions)throw Error(`Forward integrity: incomplete session history ${freeze.version}`);
+    const freezeGaps=gaps.filter(g=>g.strategyVersion===freeze.version&&g.marketDataDate<=last.marketDataDate),expectedSessions=countNyseSessions(freeze.startDate,last.marketDataDate);
+    if(rows.length+freezeGaps.length!==expectedSessions)throw Error(`Forward integrity: incomplete session history ${freeze.version}`);
   }
 }
 
@@ -287,7 +320,9 @@ export function updateForwardLedger(ds: Dataset, input: ForwardLedger | null | u
   assertForwardLedgerInternalIntegrity(ledger);
   for (const freeze of ledger.freezes) appendForFreeze(ds, ledger, freeze, generatedAt, source);
   ledger.records.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
+  ledger.coverageGaps!.sort((a,b)=>a.marketDataDate.localeCompare(b.marketDataDate)||a.strategyVersion.localeCompare(b.strategyVersion));
   ledger.updatedAt = generatedAt;
+  assertForwardLedgerInternalIntegrity(ledger);
   return ledger;
 }
 

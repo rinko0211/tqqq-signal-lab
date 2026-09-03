@@ -16,11 +16,13 @@ test("all autonomous operational writers serialize through one concurrency group
   assert.match(approval,/approve:[\s\S]*concurrency:[\s\S]*group: daily-signal-pages/);
 });
 
-test("Daily failure publishes failed status without fabricating a new signal",()=>{
+test("Daily separates external pending from internal failure without fabricating a new signal",()=>{
   assert.match(generator,/catch\(error\)/);
+  assert.match(generator,/error instanceof ExternalDataUnavailableError/);
+  assert.match(generator,/unavailableProviderAttempt/);
   assert.match(generator,/actionStatus:"failed"/);
   assert.match(generator,/state:"failed"/);
-  assert.match(generator,/データ取得失敗。新しいSignal・Forward Recordは生成していません/);
+  assert.match(generator,/データ取得後の検証または内部処理に失敗しました。新しいSignal・Forward Recordは生成していません/);
   assert.match(generator,/writeFile\(new URL\("\.failed",dir\),"failed\\n"\)/);
   const catchStart=generator.indexOf("} catch(error)");
   assert.ok(catchStart>=0);

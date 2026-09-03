@@ -8,6 +8,7 @@ import {summarizeRegimeCoverage} from "../lib/regime-coverage.ts";
 import {compareCandidateToIncumbent} from "../lib/forward-pareto.ts";
 import {emptyPhase5Ledger,type Phase5Record} from "../lib/phase5-forward.ts";
 import {emptyForwardLedger,type ForwardRecord} from "../lib/forward.ts";
+import {assessProviderAttempt,unavailableProviderAttempt} from "../lib/provider-attempt.ts";
 
 const rec=(version:string,date:string,r:number,dd=0,position=.75,execution:Phase5Record["execution"]|ForwardRecord["execution"]=null)=>({key:`${version}|${date}`,marketDataDate:date,recordedAt:`${date}T22:00:00Z`,recordMode:"LIVE",strategyId:"UPRO_SPBT",ticker:"UPRO",strategyName:"x",strategyVersion:version,score:70,components:{trend:70,momentum:70,volatility:70,market:70},regime:"弱い上昇",targetExposure:position,previousExposure:position,signal:"HOLD",tradeReason:"x",intendedExecutionDate:date,execution,assetClose:100,position,quantity:1,cash:0,equity:1,dailyReturn:r,currentDrawdown:dd,cumulativeCosts:0,dataSource:"test",dataStatus:"VALID",buildVersion:"test"});
 const sessions=(start:string,count:number)=>{const out:string[]=[],d=new Date(`${start}T12:00:00Z`);while(out.length<count){const date=d.toISOString().slice(0,10);if(isNyseSession(date))out.push(date);d.setUTCDate(d.getUTCDate()+1)}return out};
@@ -18,6 +19,11 @@ test("NYSE calendar handles 2026 holidays and historical Juneteenth correctly",(
   assert.equal(nextNyseSession("2026-07-02"),"2026-07-06");
   assert.equal(isNyseHoliday("2021-06-18"),false);
   assert.equal(nextExecutionDate("2021-06-17"),"2021-06-18");
+});
+
+test("one-off full-market closures are not mistaken for missing provider bars",()=>{
+  assert.equal(isNyseSession("2018-12-05"),false);
+  assert.equal(isNyseSession("2025-01-09"),false);
 });
 
 test("earliest legal open never returns an NYSE holiday",()=>{
@@ -53,6 +59,31 @@ test("missing publication becomes a real delay after the Daily deadline",()=>{
 
 test("a multi-session gap is never hidden by the publication window",()=>{
   assert.deepEqual(marketDataAvailability("2026-08-31","2026-09-02T22:00:00Z"),{state:"DELAYED",lagSessions:2});
+});
+
+test("successful stale official response is external pending rather than an internal failure",()=>{
+  const series=Object.fromEntries(["TQQQ","QQQ","SPY","VIX"].map(k=>[k,[{date:"2026-09-01"}]]));
+  const out=assessProviderAttempt({series,priorDataDate:"2026-09-01",attemptedAt:"2026-09-03T00:28:57Z",source:"test"});
+  assert.equal(out.state,"PROVIDER_PENDING");
+  assert.equal(out.commonDataDate,"2026-09-01");
+  assert.equal(out.missingCompletedSessions,1);
+  assert.match(out.message,/EXTERNAL DATA PENDING/);
+});
+
+test("multi-session provider recovery is ordered and exposes only the newest Signal date",()=>{
+  const dates=["2026-09-01","2026-09-02","2026-09-03"],series=Object.fromEntries(["TQQQ","QQQ","SPY","VIX"].map(k=>[k,dates.map(date=>({date}))]));
+  const out=assessProviderAttempt({series,priorDataDate:"2026-09-01",attemptedAt:"2026-09-04T01:00:00Z",source:"test"});
+  assert.equal(out.state,"CURRENT");
+  assert.deepEqual(out.catchupDates,["2026-09-02","2026-09-03"]);
+  assert.deepEqual(out.observationOnlyDates,["2026-09-02"]);
+  assert.equal(out.displayedSignalDate,"2026-09-03");
+});
+
+test("official endpoint outage remains a fail-closed external pending attempt",()=>{
+  const out=unavailableProviderAttempt({error:new Error("TQQQ: HTTP 503"),priorDataDate:"2026-09-01",attemptedAt:"2026-09-03T01:00:00Z"});
+  assert.equal(out.state,"PROVIDER_PENDING");
+  assert.equal(out.displayedSignalDate,"2026-09-01");
+  assert.match(out.errors[0],/503/);
 });
 
 test("scheduled Daily retries stop mutating after the completed session is current",()=>{

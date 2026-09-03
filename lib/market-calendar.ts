@@ -8,6 +8,13 @@ const CLOSE_MINUTES=16*60;
 // UPDATE_PENDING from a missed update.
 const DAILY_PUBLICATION_DEADLINE_MINUTES=20*60;
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+// One-off full-market closures are not expressible as recurring holidays.
+// Keep them explicit so a real closure is never misclassified as a missing
+// provider bar in historical validation.
+const SPECIAL_FULL_MARKET_CLOSURES=new Set([
+  "2018-12-05", // National Day of Mourning for President George H.W. Bush
+  "2025-01-09", // National Day of Mourning for President Jimmy Carter
+]);
 export function isValidIsoMarketDate(date:string){if(!DATE_RE.test(date))return false;const d=new Date(`${date}T12:00:00Z`);return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===date}
 
 const nthWeekday=(year:number,month:number,weekday:number,n:number)=>{const d=new Date(Date.UTC(year,month,1));while(d.getUTCDay()!==weekday)d.setUTCDate(d.getUTCDate()+1);d.setUTCDate(d.getUTCDate()+7*(n-1));return d.toISOString().slice(0,10)};
@@ -17,6 +24,7 @@ const easter=(year:number)=>{const a=year%19,b=Math.floor(year/100),c=year%100,d
 
 export function isNyseHoliday(date:string){
   if(!isValidIsoMarketDate(date))return false;
+  if(SPECIAL_FULL_MARKET_CLOSURES.has(date))return true;
   const y=+date.slice(0,4),goodFriday=easter(y);goodFriday.setUTCDate(goodFriday.getUTCDate()-2);
   const holidays=[observed(y,0,1),nthWeekday(y,0,1,3),nthWeekday(y,1,1,3),goodFriday.toISOString().slice(0,10),lastWeekday(y,4,1),observed(y,6,4),nthWeekday(y,8,1,1),nthWeekday(y,10,4,4),observed(y,11,25)];
   if(y>=2022)holidays.push(observed(y,5,19));

@@ -48,6 +48,14 @@ test("失敗日を後日補完しても過去Signalを後知恵生成しない",
   assert.equal(caught.records.find(x=>x.strategyId==="VS13"&&x.marketDataDate==="2026-08-25")?.recordMode,"LIVE");
 });
 
+test("providerが永久に返さない中間セッションは明示Gapとして残し次の実日を処理する",()=>{
+  const first=updateForwardLedger(forwardDataset(),null,"test","2026-08-21T22:00:00Z");
+  const missing=forwardDataset(2);missing.days=missing.days.filter(x=>x.date!=="2026-08-24");
+  const caught=updateForwardLedger(missing,first,"test","2026-08-25T22:00:00Z");
+  assert.ok(caught.coverageGaps?.some(x=>x.strategyVersion==="VS13-v1.0"&&x.marketDataDate==="2026-08-24"&&x.reason==="SOURCE_DATA_MISSING"));
+  assert.equal(caught.records.find(x=>x.strategyVersion==="VS13-v1.0"&&x.marketDataDate==="2026-08-25")?.recordMode,"LIVE");
+});
+
 test("Evidenceは短いForward期間をStrongと誤表示しない",()=>{
   const ledger=updateForwardLedger(forwardDataset(),null,"test","2026-08-24T00:00:00Z");
   assert.ok(summarizeForward(ledger).every(x=>x.evidence==="Insufficient"));

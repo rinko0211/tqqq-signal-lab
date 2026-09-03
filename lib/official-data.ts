@@ -16,6 +16,22 @@ type NasdaqRow = {
   low: string;
 };
 
+export class ExternalDataUnavailableError extends Error {
+  override name="ExternalDataUnavailableError";
+  constructor(message:string,options?:{cause?:unknown}){super(message,options)}
+}
+
+async function officialFetch(label:string,url:string,headers:Record<string,string>){
+  try{
+    const response=await fetch(url,{headers,signal:AbortSignal.timeout(20000)});
+    if(!response.ok)throw new ExternalDataUnavailableError(`${label}: HTTP ${response.status}`);
+    return response;
+  }catch(error){
+    if(error instanceof ExternalDataUnavailableError)throw error;
+    throw new ExternalDataUnavailableError(`${label}: 公式データ提供元へ接続できません (${error instanceof Error?error.message:String(error)})`,{cause:error});
+  }
+}
+
 const number = (value: string) => Number(value.replace(/[$,]/g, ""));
 const isoDate = (value: string) => {
   const [month, day, year] = value.split("/");
@@ -25,16 +41,12 @@ const isoDate = (value: string) => {
 async function fetchNasdaq(symbol: string, fromDate = "2016-01-01", minimumRows = 1500) {
   const today = new Date().toISOString().slice(0, 10);
   const url = `https://api.nasdaq.com/api/quote/${symbol}/historical?assetclass=etf&fromdate=${fromDate}&todate=${today}&limit=10000`;
-  const response = await fetch(url, {
-    headers: {
+  const response = await officialFetch(`${symbol}: Nasdaq`,url,{
       "User-Agent": "Mozilla/5.0 TQQQ-Signal-Lab/3.0",
       Accept: "application/json, text/plain, */*",
       Origin: "https://www.nasdaq.com",
       Referer: "https://www.nasdaq.com/",
-    },
-    signal: AbortSignal.timeout(20000),
   });
-  if (!response.ok) throw new Error(`${symbol}: Nasdaq ${response.status}`);
   const json = (await response.json()) as {
     data?: { tradesTable?: { rows?: NasdaqRow[] } };
   };
@@ -57,19 +69,16 @@ async function fetchNasdaq(symbol: string, fromDate = "2016-01-01", minimumRows 
     })
     .sort((a, b) => a.date.localeCompare(b.date));
   if (bars.length < minimumRows)
-    throw new Error(`${symbol}: Nasdaqデータ件数不足 (${bars.length})`);
+    throw new ExternalDataUnavailableError(`${symbol}: Nasdaqデータ件数不足 (${bars.length})`);
   return bars;
 }
 
 async function fetchVix() {
-  const response = await fetch(
+  const response = await officialFetch(
+    "VIX: Cboe",
     "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
-    {
-      headers: { "User-Agent": "TQQQ-Signal-Lab/3.0" },
-      signal: AbortSignal.timeout(20000),
-    },
+    { "User-Agent": "TQQQ-Signal-Lab/3.0" },
   );
-  if (!response.ok) throw new Error(`VIX: Cboe ${response.status}`);
   const csv = await response.text();
   const bars = csv
     .trim()
@@ -94,7 +103,7 @@ async function fetchVix() {
     .filter((bar) => bar.date >= "2008-01-01")
     .sort((a, b) => a.date.localeCompare(b.date));
   if (bars.length < 1500)
-    throw new Error(`VIX: Cboeデータ件数不足 (${bars.length})`);
+    throw new ExternalDataUnavailableError(`VIX: Cboeデータ件数不足 (${bars.length})`);
   return bars;
 }
 

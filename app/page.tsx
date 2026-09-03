@@ -29,7 +29,8 @@ import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStat
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
 import {derivePrimaryAction} from "../lib/primary-action";
 
-type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"failed";message?:string;errors?:string[]};
+type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"provider_pending"|"failed";message?:string;errors?:string[];catchup?:{priorDataDate?:string|null;processedDates?:string[];observationOnlyDates?:string[];displayedSignalDate?:string|null}};
+type ProviderAttemptStatus={attemptedAt:string;state:"CURRENT"|"PROVIDER_PENDING"|"FAILED";source:string;priorDataDate:string|null;commonDataDate:string|null;latestDates:Record<string,string|null>;missingCompletedSessions:number|null;catchupDates:string[];observationOnlyDates:string[];displayedSignalDate:string|null;message:string;errors:string[]};
 type SignalShape=Backtest["daily"][number]["signal"];
 type DailySignalFile={generatedAt:string;dataDate:string;source:string;platformMode?:string;assetTicker?:string;assetClose?:number;tqqqClose:number;strategy:string;strategyVersion?:string;state:RuntimeStatus["state"];signal:SignalShape&{executionDate?:string};suggestion:string;validation?:{holdout?:Backtest["metrics"]|null};warnings?:string[]};
 type AnalysisBundle={bt?:Backtest;wf?:ReturnType<typeof walkForward>;rob?:ReturnType<typeof robustness>;research?:ReturnType<typeof researchBundle>;comparison?:ReturnType<typeof oosComparison>;holdout?:ReturnType<typeof holdoutForConfig>;tqqq?:Backtest["metrics"];qqq?:Backtest["metrics"]};
@@ -209,6 +210,7 @@ export default function Home() {
     [holdings, setHoldings] = useState<Holdings>(EMPTY),
     [query, setQuery] = useState(""),
     [runtimeStatus,setRuntimeStatus]=useState<RuntimeStatus|null>(null),
+    [providerAttempt,setProviderAttempt]=useState<ProviderAttemptStatus|null>(null),
     [dailySignal,setDailySignal]=useState<DailySignalFile|null>(null),
     [analysis,setAnalysis]=useState<AnalysisBundle|null>(null),
     [analysisLoading,setAnalysisLoading]=useState(false),
@@ -241,6 +243,7 @@ export default function Home() {
       fetchJson(new URL("production-config.json",staticData)).then(setProductionConfig),
       fetchJson(new URL("phase-5-forward-ledger.json",staticData)).then(setPhase5Ledger),
       fetchJson(new URL("phase-5-forward-status.json",staticData)).then(setPhase5Status),
+      fetchJson(new URL("provider-attempt.json",staticData)).then(setProviderAttempt),
     ]).then((results)=>{
       if([0,1,3,4].some(i=>results[i]?.status==="rejected"))setMessage("運用authorityを確認できません。売買せずSystem Statusを確認してください。");
       else if(results[0].status==="rejected")setMessage("最新Signalを取得できません。System Statusを確認してください。");
@@ -417,8 +420,9 @@ export default function Home() {
   const holdoutMetrics=dailySignal?.validation?.holdout||analysis?.holdout?.metrics;
   const operationalCandidate=Boolean(dataset?.source!=="demo"&&holdoutMetrics&&holdoutMetrics.cagr>0&&holdoutMetrics.maxDd>-.45&&holdoutMetrics.sharpe>.5);
   const compareAnalysis=analysis?.bt&&analysis.comparison&&analysis.holdout&&analysis.tqqq&&analysis.qqq?{bt:analysis.bt,comparison:analysis.comparison,holdout:analysis.holdout,tqqq:analysis.tqqq,qqq:analysis.qqq}:null;
-  const statusKind=fresh?.pending?"warn":runtimeStatus?.state==="failed"||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?"bad":["not_updated","market_pending"].includes(runtimeStatus?.state||"")?"warn":runtimeStatus?"ok":"neutral";
-  const freshnessMessage=fresh?.pending||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?fresh.message:runtimeStatus?.message||fresh?.message;
+  const latestProviderAttempt=Boolean(providerAttempt&&Date.parse(providerAttempt.attemptedAt)>=Date.parse(runtimeStatus?.generatedAt||"1970-01-01T00:00:00Z")),providerPending=Boolean(latestProviderAttempt&&providerAttempt?.state==="PROVIDER_PENDING"),providerFailed=Boolean(latestProviderAttempt&&providerAttempt?.state==="FAILED");
+  const statusKind=providerPending||fresh?.pending?"warn":runtimeStatus?.state==="failed"||providerFailed||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?"bad":["not_updated","market_pending","provider_pending"].includes(runtimeStatus?.state||"")?"warn":runtimeStatus?"ok":"neutral";
+  const freshnessMessage=providerPending?providerAttempt?.message:fresh?.pending||fresh?.state==="DELAYED"||fresh?.state==="INVALID"?fresh.message:runtimeStatus?.message||fresh?.message;
   const generatedLabel=runtimeStatus?.generatedAt?new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",dateStyle:"medium",timeStyle:"short"}).format(new Date(runtimeStatus.generatedAt)):"未確認";
   return (
     <main>
@@ -603,7 +607,7 @@ export default function Home() {
           source={dataset?.source||(dailySignal?"auto":undefined)}
           ticker={dailySignal?.assetTicker||"TQQQ"}
         /><Phase5PaperPanel ledger={phase5Ledger} productionVersion={productionConfig?.strategyVersion||undefined}/></>}
-        {tab === "status" && <><SystemStatusView status={runtimeStatus} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/><Phase5SystemStatus ledger={phase5Ledger} status={phase5Status}/></>}
+        {tab === "status" && <><SystemStatusView status={runtimeStatus} providerAttempt={providerAttempt} latestDate={latestDate} history={liveHistory} forward={forwardLedger}/><Phase5SystemStatus ledger={phase5Ledger} status={phase5Status}/></>}
         {tab === "guide" && <><GuideView/><LifecycleGuide/><RecoveryPromptPack/></>}
         {tab === "roadmap" && <RoadmapV2 config={productionConfig}/>}
         {tab === "glossary" && <GlossaryView/>}
@@ -1370,9 +1374,9 @@ function PaperView({history,latestDate,source,ticker}:{history:LiveSnapshot[];la
   </>;
 }
 
-function SystemStatusView({status,latestDate,history,forward}:{status:RuntimeStatus|null;latestDate?:string;history:LiveSnapshot[];forward:ForwardLedger|null}){
+function SystemStatusView({status,providerAttempt,latestDate,history,forward}:{status:RuntimeStatus|null;providerAttempt:ProviderAttemptStatus|null;latestDate?:string;history:LiveSnapshot[];forward:ForwardLedger|null}){
   const [pwa,setPwa]=useState<boolean|null>(null);useEffect(()=>{const check=()=>"serviceWorker" in navigator?navigator.serviceWorker.getRegistration().then(r=>setPwa(Boolean(r))).catch(()=>setPwa(false)):setPwa(false);if(document.readyState==="complete")check();else{window.addEventListener("load",check,{once:true});return()=>window.removeEventListener("load",check)}},[]);
-  const operational=Boolean(status&&status.actionStatus==="success"&&status.jsonValid&&status.paperHistoryValid&&status.forwardPersistent&&forward),delayed=status?.state==="not_updated",state=(ok?:boolean)=>ok?"正常":"要確認",errorCode=!status?"SIGNAL-002":status.actionStatus==="failed"?"ACTION-003":!status.jsonValid?"SIGNAL-002":!status.forwardPersistent||!forward?"FORWARD-001":!status.paperHistoryValid?"PAPER-004":pwa===false?"PWA-005":null;
+  const operational=Boolean(status&&status.actionStatus==="success"&&status.jsonValid&&status.paperHistoryValid&&status.forwardPersistent&&forward),latestProviderAttempt=Boolean(providerAttempt&&Date.parse(providerAttempt.attemptedAt)>=Date.parse(status?.generatedAt||"1970-01-01T00:00:00Z")),providerPending=latestProviderAttempt&&providerAttempt?.state==="PROVIDER_PENDING",providerFailed=latestProviderAttempt&&providerAttempt?.state==="FAILED",delayed=providerPending||status?.state==="not_updated"||status?.state==="provider_pending",state=(ok?:boolean)=>ok?"正常":"要確認",errorCode=!status?"SIGNAL-002":status.actionStatus==="failed"||providerFailed?"ACTION-003":!status.jsonValid?"SIGNAL-002":!status.forwardPersistent||!forward?"FORWARD-001":!status.paperHistoryValid?"PAPER-004":pwa===false?"PWA-005":null;
   const copyPrompt=()=>{const prompt=`私はGitHub・プログラミング初心者です。TQQQ Signal Labで${errorCode||"状態確認"}が発生しました。\n\nRepository: rinko0211/tqqq-signal-lab\nSystem Status:\nActions: ${status?.actionStatus||"未確認"}\n最新市場データ: ${status?.marketDataDate||latestDate||"不明"}\nSignal生成日: ${status?.signalDate||"不明"}\nForward最終記録: ${status?.lastForwardRecord||"不明"}\nForward件数: ${status?.forwardRecords??"不明"}\nBuild: ${status?.buildVersion||"不明"}\nData source: ${status?.dataSource||"不明"}\nJSON: ${state(status?.jsonValid)}\nPaper: ${state(status?.paperHistoryValid)}\nMessage: ${status?.message||"なし"}\nError: ${(status?.errors||[]).join(" / ")||"なし"}\n\n期待動作は、日次データ取得→Signal→Forward追記→Pages更新です。秘密情報はありません。専門用語を使わず、一度に1操作ずつ、どこを押すか説明してください。`;navigator.clipboard.writeText(prompt).catch(()=>window.prompt("この内容をコピーしてください",prompt))};
   return <>
     <article className={`systemHero ${operational?"ok":"bad"}`}><em>SYSTEM STATUS</em><h2>{operational?(delayed?"System Operational · Data Update Pending":"All Systems Operational"):"確認が必要です"}</h2><p>{delayed?"自動処理は成功しています。データ提供元が新しい日足を返すまで、最後の有効Signalを保持します。":status?.message||"status.jsonをまだ確認できません"}</p></article>
@@ -1387,9 +1391,10 @@ function SystemStatusView({status,latestDate,history,forward}:{status:RuntimeSta
       <Metric label="Forward最終日" value={status?.lastForwardRecord||forward?.records.at(-1)?.marketDataDate||"—"}/>
       <Metric label="Build version" value={status?.buildVersion||"—"}/>
       <Metric label="Data source" value={status?.dataSource||"—"}/>
+      <Metric label="最終データ取得試行" value={providerAttempt?.attemptedAt||"—"} sub={providerAttempt?.state||"未確認"}/>
     </section>
     {errorCode&&<article className="issueBlock"><em>ERROR {errorCode}</em><h2>{errorCode==="DATA-001"?"最新市場データを確認できません":errorCode==="ACTION-003"?"GitHub Actionsが失敗しました":errorCode==="FORWARD-001"?"Forward永続台帳を確認できません":errorCode==="PAPER-004"?"Paper Trading履歴を確認できません":errorCode==="PWA-005"?"PWA登録を確認できません":"Signal JSONを確認できません"}</h2><button onClick={copyPrompt}>ChatGPTに相談する内容をコピー</button></article>}
-    {delayed&&!errorCode&&<article className="panel"><em>WARNING DATA-002</em><h2>市場データ更新待ち</h2><p>取得処理は成功していますが、データ提供元の最終日は{status?.marketDataDate||latestDate||"未確認"}です。新しいSignalを推測生成せず、最後の有効Signalを維持しています。</p></article>}
+    {delayed&&!errorCode&&<article className="panel"><em>WARNING DATA-002</em><h2>外部市場データ更新待ち</h2><p>{providerAttempt?.message||`取得処理は成功していますが、データ提供元の最終日は${status?.marketDataDate||latestDate||"未確認"}です。`} 新しいSignalを推測生成せず、最後の有効Signalを維持しています。</p>{providerAttempt?.errors?.length?<p className="note">取得元応答：{providerAttempt.errors.join(" / ")}</p>:null}{providerAttempt?.observationOnlyDates?.length?<p className="note">復旧時は {providerAttempt.observationOnlyDates.join(" / ")} を観測専用で順番に追記し、{providerAttempt.displayedSignalDate||"最新日"}だけを画面のSignalとして残します。</p>:null}</article>}
     {status?.errors?.length?<article className="issueBlock"><h2>発生した問題</h2>{status.errors.map((e,i)=><p key={i}>× {e}</p>)}</article>:<article className="panel"><em>NO ACTIVE ERROR</em><h2>エラー記録なし</h2><p className="note">休場日は「米国市場休場・新規判定なし」、平日にデータが変わらなければ「最新データ未更新」と明示します。取得失敗時は以前のSignalを上書きしません。</p></article>}
   </>;
 }
