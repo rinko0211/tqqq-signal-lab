@@ -50,9 +50,16 @@ test("normal post-close publication window is pending, not a failed Daily update
   assert.match(pending.message,/遅延ではありません/);
 });
 
-test("missing publication becomes a real delay after the Daily deadline",()=>{
-  assert.deepEqual(marketDataAvailability("2026-09-01","2026-09-03T00:01:00Z"),{state:"DELAYED",lagSessions:1});
-  const delayed=freshness("2026-09-01","2026-09-03T00:01:00Z");
+test("one missing session remains pending through the bounded recovery window",()=>{
+  assert.deepEqual(marketDataAvailability("2026-09-01","2026-09-03T00:01:00Z"),{state:"UPDATE_PENDING",lagSessions:1});
+  const pending=freshness("2026-09-01","2026-09-03T00:01:00Z");
+  assert.equal(pending.pending,true);
+  assert.match(pending.message,/PENDING FOR UPDATE/);
+});
+
+test("one missing session becomes a real delay at the following NYSE open",()=>{
+  assert.deepEqual(marketDataAvailability("2026-09-02","2026-09-04T13:30:00Z"),{state:"DELAYED",lagSessions:1});
+  const delayed=freshness("2026-09-02","2026-09-04T13:30:00Z");
   assert.equal(delayed.pending,false);
   assert.match(delayed.message,/1完了NYSEセッション遅延/);
 });
@@ -95,7 +102,7 @@ test("scheduled Daily retries stop mutating after the completed session is curre
 test("scheduled Daily retries continue for pending delayed or invalid market data",()=>{
   for(const [date,now,state] of [
     ["2026-09-01","2026-09-02T22:00:00Z","UPDATE_PENDING"],
-    ["2026-09-01","2026-09-03T00:01:00Z","DELAYED"],
+    ["2026-09-01","2026-09-03T00:01:00Z","UPDATE_PENDING"],
     [undefined,"2026-09-03T00:01:00Z","INVALID"],
   ] as const){
     assert.deepEqual(decideDailyPipeline({eventName:"schedule",deployPersistedOnly:false,marketDataDate:date,now}),{

@@ -1,12 +1,11 @@
 const NY_ZONE="America/New_York";
 const OPEN_MINUTES=9*60+30;
 const CLOSE_MINUTES=16*60;
-// The primary Daily workflow is scheduled after the close (17:30 ET in
-// standard time / 18:30 ET in daylight time).  Do not classify the normal
-// close-to-publication interval as an operational delay.  Trading authority
-// remains fail-closed during this window; this deadline only distinguishes
-// UPDATE_PENDING from a missed update.
-const DAILY_PUBLICATION_DEADLINE_MINUTES=20*60;
+// A completed session may remain unavailable at the provider for several
+// hours. Bounded retries continue until the following NYSE session opens, so
+// a one-session gap remains UPDATE_PENDING for that whole recovery window.
+// Trading authority still fails closed; DELAYED begins at the following open
+// or immediately when two or more completed sessions are missing.
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 // One-off full-market closures are not expressible as recurring holidays.
 // Keep them explicit so a real closure is never misclassified as a missing
@@ -131,6 +130,11 @@ export function marketDataAvailability(marketDataDate:string|undefined,now=new D
   if(!Number.isFinite(lagSessions))return{state:"INVALID",lagSessions};
   if(lagSessions===0)return{state:"CURRENT",lagSessions};
   const clock=nyClock(now);
-  const pending=lagSessions===1&&Boolean(marketDataDate)&&marketDataDate!<clock.localDate&&isNyseSession(clock.localDate)&&clock.minutes<DAILY_PUBLICATION_DEADLINE_MINUTES;
+  const missingSession=marketDataDate?nextNyseSession(marketDataDate):null;
+  const recoveryDeadline=missingSession?nextNyseSession(missingSession):null;
+  const pending=lagSessions===1&&Boolean(recoveryDeadline)&&(
+    clock.localDate<recoveryDeadline!||
+    (clock.localDate===recoveryDeadline&&clock.minutes<OPEN_MINUTES)
+  );
   return{state:pending?"UPDATE_PENDING":"DELAYED",lagSessions};
 }
