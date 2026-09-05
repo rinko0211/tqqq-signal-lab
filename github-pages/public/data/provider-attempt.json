@@ -1,8 +1,8 @@
 {
-  "attemptedAt": "2026-09-05T06:05:18.544Z",
+  "attemptedAt": "2026-09-05T16:32:18.478Z",
   "state": "CURRENT",
   "source": "Nasdaq Historical + Cboe VIX History",
-  "priorDataDate": "2026-09-03",
+  "priorDataDate": "2026-09-04",
   "commonDataDate": "2026-09-04",
   "latestDates": {
     "TQQQ": "2026-09-04",
@@ -11,9 +11,7 @@
     "VIX": "2026-09-04"
   },
   "missingCompletedSessions": 0,
-  "catchupDates": [
-    "2026-09-04"
-  ],
+  "catchupDates": [],
   "observationOnlyDates": [],
   "displayedSignalDate": "2026-09-04",
   "message": "公式データは2026-09-04まで揃っています。",
