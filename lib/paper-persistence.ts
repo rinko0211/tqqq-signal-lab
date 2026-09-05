@@ -24,7 +24,9 @@ export function normalizePaperConfig(value: unknown): PaperConfig | null {
   const startDate = typeof candidate.startDate === "string" ? candidate.startDate : "";
   if (!Number.isFinite(initialJpy) || initialJpy <= 0) return null;
   if (!Number.isFinite(fxRate) || fxRate <= 0) return null;
-  if (!datePattern.test(startDate) || Number.isNaN(Date.parse(`${startDate}T00:00:00Z`))) return null;
+  if (!datePattern.test(startDate)) return null;
+  const parsed = new Date(`${startDate}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== startDate) return null;
   return { initialJpy, startDate, fxRate };
 }
 
@@ -75,6 +77,14 @@ function readLocalConfig(): PaperConfig | null {
   }
 }
 
+function hasLocalConfigValue(): boolean {
+  try {
+    return localStorage.getItem(PAPER_CONFIG_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function writeLocalConfig(config: PaperConfig): boolean {
   try {
     localStorage.setItem(PAPER_CONFIG_KEY, canonical(config));
@@ -82,6 +92,10 @@ function writeLocalConfig(config: PaperConfig): boolean {
   } catch {
     return false;
   }
+}
+
+function removeLocalConfig(): void {
+  try { localStorage.removeItem(PAPER_CONFIG_KEY); } catch {}
 }
 
 function openDb(): Promise<IDBDatabase | null> {
@@ -162,11 +176,15 @@ async function deleteBackup(): Promise<void> {
 export async function restorePaperConfig(): Promise<PaperConfig | null> {
   const local = readLocalConfig();
   if (local) {
-    await writeBackup(local);
+    void writeBackup(local);
     return local;
   }
+  const hadInvalidPrimary = hasLocalConfigValue();
   const backup = await readBackup();
-  if (!backup) return null;
+  if (!backup) {
+    if (hadInvalidPrimary) removeLocalConfig();
+    return null;
+  }
   if (!writeLocalConfig(backup.config)) return null;
   return backup.config;
 }
@@ -203,6 +221,7 @@ export function installPaperPersistenceGuard(): void {
       try {
         const config = normalizePaperConfig(JSON.parse(event.newValue));
         if (config) void writeBackup(config);
+        else repairIfNeeded();
       } catch {
         repairIfNeeded();
       }
@@ -216,7 +235,7 @@ export function installPaperPersistenceGuard(): void {
       const config = normalizePaperConfig(event.data.config);
       if (config) writeLocalConfig(config);
     } else if (event.data?.type === "reset") {
-      try { localStorage.removeItem(PAPER_CONFIG_KEY); } catch {}
+      removeLocalConfig();
       void deleteBackup();
     }
   });
