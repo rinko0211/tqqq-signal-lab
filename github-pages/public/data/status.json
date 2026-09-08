@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-09-05T16:32:18.478Z",
-  "actionRunId": "33978155856",
+  "generatedAt": "2026-09-08T22:39:57.583Z",
+  "actionRunId": "34254763927",
   "actionStatus": "success",
   "marketDataDate": "2026-09-04",
   "signalDate": "2026-09-04",
   "lastForwardRecord": "2026-09-04",
   "forwardRecords": 55,
   "forwardPersistent": true,
-  "buildVersion": "a804d5649d58",
+  "buildVersion": "5ca5a5e88b4f",
   "dataSource": "Nasdaq Historical + Cboe VIX History",
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
-  "state": "market_closed",
+  "state": "provider_pending",
   "catchup": {
     "priorDataDate": "2026-09-04",
     "processedDates": [],
     "observationOnlyDates": [],
     "displayedSignalDate": "2026-09-04"
   },
-  "message": "米国市場休場・新規判定なし",
+  "message": "EXTERNAL DATA PENDING：公式データ提供元の共通日足は2026-09-04までです。再取得を継続し、現在シグナルは使用しないでください。",
   "errors": []
 }
