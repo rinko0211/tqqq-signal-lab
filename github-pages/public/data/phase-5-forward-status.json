@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08T17:14:41.528Z",
+  "generatedAt": "2026-09-09T00:41:16.934Z",
   "status": "success",
   "forwardStart": "2026-08-25",
   "latestDates": {
@@ -8,7 +8,7 @@
     "QLD": "2026-09-04",
     "SPY": "2026-09-04",
     "QQQ": "2026-09-04",
-    "VIX": "2026-09-04"
+    "VIX": "2026-09-08"
   },
   "systems": {
     "UPRO-SPBT-v1.0": {
@@ -162,6 +162,6 @@
     }
   ],
   "records": 27,
-  "buildVersion": "5ca5a5e88b4f",
+  "buildVersion": "0b7904f8c478",
   "errors": []
 }
