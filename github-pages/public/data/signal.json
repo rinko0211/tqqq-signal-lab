@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T06:21:17.400Z",
+  "generatedAt": "2026-09-11T00:20:34.708Z",
   "dataDate": "2026-09-09",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
@@ -8,7 +8,7 @@
   "tqqqClose": 71.55,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
-  "state": "latest",
+  "state": "provider_pending",
   "signal": {
     "date": "2026-09-09",
     "score": 90,
@@ -32,7 +32,7 @@
       "atrPct": 1.1020403479530694,
       "vix": 16.46
     },
-    "executionDate": "2026-09-10"
+    "executionDate": "2026-09-11"
   },
   "suggestion": "100%を維持。売買なし。",
   "warnings": [
