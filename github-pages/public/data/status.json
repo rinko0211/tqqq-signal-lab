@@ -1,26 +1,24 @@
 {
-  "generatedAt": "2026-09-11T06:24:00.874Z",
-  "actionRunId": "34569728977",
+  "generatedAt": "2026-09-12T00:26:50.802Z",
+  "actionRunId": "34661638545",
   "actionStatus": "success",
   "marketDataDate": "2026-09-10",
   "signalDate": "2026-09-10",
   "lastForwardRecord": "2026-09-10",
   "forwardRecords": 70,
   "forwardPersistent": true,
-  "buildVersion": "f27d871cfe45",
+  "buildVersion": "d21bd20f988d",
   "dataSource": "Nasdaq Historical + Cboe VIX History",
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
-  "state": "latest",
+  "state": "provider_pending",
   "catchup": {
-    "priorDataDate": "2026-09-09",
-    "processedDates": [
-      "2026-09-10"
-    ],
+    "priorDataDate": "2026-09-10",
+    "processedDates": [],
     "observationOnlyDates": [],
     "displayedSignalDate": "2026-09-10"
   },
-  "message": "最新データでSignal・Forward台帳を生成済み",
+  "message": "EXTERNAL DATA PENDING：公式データ提供元の共通日足は2026-09-10までです。再取得を継続し、現在シグナルは使用しないでください。",
   "errors": []
 }
