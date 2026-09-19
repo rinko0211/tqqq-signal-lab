@@ -1,6 +1,6 @@
 {
   "source": "Nasdaq Historical + Cboe VIX History",
-  "retrievedAt": "2026-09-18T06:19:11.490Z",
+  "retrievedAt": "2026-09-19T06:17:24.800Z",
   "series": {
     "TQQQ": [
       {
@@ -22619,6 +22619,15 @@
         "close": 71.38,
         "adjClose": 71.38,
         "volume": 41937870
+      },
+      {
+        "date": "2026-09-18",
+        "open": 71.915,
+        "high": 72.7777,
+        "low": 70.8094,
+        "close": 72.64,
+        "adjClose": 72.64,
+        "volume": 41007910
       }
     ],
     "QQQ": [
@@ -45238,6 +45247,15 @@
         "close": 716.92,
         "adjClose": 716.92,
         "volume": 37270290
+      },
+      {
+        "date": "2026-09-18",
+        "open": 718.83,
+        "high": 721.73,
+        "low": 715.08,
+        "close": 721.45,
+        "adjClose": 721.45,
+        "volume": 48478710
       }
     ],
     "SPY": [
@@ -67857,6 +67875,15 @@
         "close": 762.6,
         "adjClose": 762.6,
         "volume": 49652750
+      },
+      {
+        "date": "2026-09-18",
+        "open": 761.31,
+        "high": 762,
+        "low": 757.971,
+        "close": 761.69,
+        "adjClose": 761.69,
+        "volume": 65395150
       }
     ],
     "VIX": [
@@ -110518,6 +110545,15 @@
         "low": 15.38,
         "close": 15.44,
         "adjClose": 15.44,
+        "volume": 0
+      },
+      {
+        "date": "2026-09-18",
+        "open": 15.07,
+        "high": 15.63,
+        "low": 14.8,
+        "close": 14.81,
+        "adjClose": 14.81,
         "volume": 0
       }
     ]
