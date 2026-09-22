@@ -2,7 +2,7 @@ name: Legacy UPRO Forward
 on:
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: upro-forward
   cancel-in-progress: false
