@@ -19,14 +19,17 @@ on:
       confirmation:
         description: "PRODUCTION: APPROVE PRODUCTION / active Production exit: EXIT PRODUCTION"
         required: false
+
 permissions:
   contents: write
   pages: write
   id-token: write
+
 concurrency:
   group: production-approval
   cancel-in-progress: false
   queue: max
+
 jobs:
   approve:
     runs-on: ubuntu-latest
@@ -36,14 +39,26 @@ jobs:
       cancel-in-progress: false
       queue: max
     outputs:
-      persisted_sha: ${{ steps.persist.outputs.persisted_sha }}
+      persisted_state_sha: ${{ steps.persist.outputs.persisted_sha }}
+      validated_code_sha: ${{ steps.code.outputs.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {ref: main}
-      - name: Capture validated main head
-        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Capture protected code head
+        id: code
+        run: |
+          echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Overlay authoritative operational state
+        env:
+          OPS_STATE_BRANCH: ops-state
+        run: bash scripts/ops-state.sh overlay
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
-        with: {node-version: 22, cache: npm}
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - name: Refresh authoritative review inputs immediately before Production approval
         if: inputs.mode == 'PRODUCTION'
@@ -70,24 +85,22 @@ jobs:
           npm run generate:production-health-review
           npm run test:ops
           npm run build:pages
-      - name: Atomically persist decision and validated live state
+      - name: Atomically persist decision and validated live state to ops-state
         id: persist
+        env:
+          OPS_STATE_BRANCH: ops-state
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data
           git fetch origin main
           if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
-            echo "::error::main changed after approval preflight; refusing to rebase unvalidated source into the human decision"
+            echo "::error::protected main changed after approval preflight; refusing state persistence"
             exit 1
           fi
-          git commit -m "Record human control decision with validated live state"
-          git push origin HEAD:main
-          echo "persisted_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          bash scripts/ops-state.sh persist "Record human control decision with validated live state"
 
   deploy-validated-state:
     needs: approve
     uses: ./.github/workflows/daily-signal.yml
     with:
       deploy_persisted_only: true
-      expected_sha: ${{ needs.approve.outputs.persisted_sha }}
+      expected_code_sha: ${{ needs.approve.outputs.validated_code_sha }}
+      expected_state_sha: ${{ needs.approve.outputs.persisted_state_sha }}
