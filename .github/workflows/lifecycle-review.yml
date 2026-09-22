@@ -1,17 +1,19 @@
 name: Autonomous Lifecycle Review
 on:
   schedule:
-    # Daily, including weekends. This schedule is the authoritative autonomous review path.
     - cron: "15 1 * * *"
   workflow_dispatch:
+
 permissions:
   contents: write
   pages: write
   id-token: write
+
 concurrency:
   group: daily-signal-pages
   cancel-in-progress: false
   queue: max
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -21,11 +23,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {ref: main}
-      - name: Capture validated main head
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Capture protected code head
         run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Overlay authoritative operational state
+        env:
+          OPS_STATE_BRANCH: ops-state
+        run: bash scripts/ops-state.sh overlay
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
-        with: {node-version: 22, cache: npm}
+        with:
+          node-version: 22
+          cache: npm
       - run: npm ci
       - name: Run hardened lifecycle/regime/health acceptance tests
         run: node --experimental-strip-types --test tests/lifecycle-review.test.ts tests/production-health-review.test.ts tests/operations-regimes.test.ts tests/production-lifecycle.test.ts tests/execution-integrity.test.ts tests/executive-controls.test.ts tests/corporate-action-ledger.test.ts tests/operational-separation.test.mjs
@@ -33,31 +43,28 @@ jobs:
         run: node --experimental-strip-types scripts/generate-lifecycle-review.ts
       - name: Generate quarterly Production health ledger
         run: node --experimental-strip-types scripts/generate-production-health-review.ts
-      - name: Persist append-only review state
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/lifecycle-review.json github-pages/public/data/production-health-review.json
-          if ! git diff --cached --quiet; then
-            git fetch origin main
-            if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
-              echo "::error::main changed after validation; refusing to rebase unvalidated source into Lifecycle state"
-              exit 1
-            fi
-            git commit -m "Update autonomous lifecycle review"
-            git push origin HEAD:main
-            echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-          fi
-      - name: Confirm validated source remains authoritative
+      - name: Persist append-only review state to ops-state
+        id: persist
+        env:
+          OPS_STATE_BRANCH: ops-state
         run: |
           git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::protected main changed after validation; refusing Lifecycle state persistence"
+            exit 1
+          fi
+          bash scripts/ops-state.sh persist "Update autonomous lifecycle review"
+      - name: Confirm protected code and state remain authoritative
+        run: |
+          git fetch origin main ops-state
           test "$(git rev-parse origin/main)" = "$VALIDATED_MAIN_SHA"
-          test "$(git rev-parse HEAD)" = "$VALIDATED_MAIN_SHA"
+          test "$(git rev-parse origin/ops-state)" = "$OPS_STATE_PERSISTED_SHA"
       - name: Build integrated PWA
         run: npm run build:pages
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
-        with: {path: dist-pages}
+        with:
+          path: dist-pages
       - name: Deploy integrated Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
