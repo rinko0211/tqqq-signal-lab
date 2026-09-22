@@ -11,7 +11,7 @@ on:
       - '.github/workflows/audit10-m01-guarded-remediation.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: audit10-m01-remediation
@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: audit10-meta-coverage
           fetch-depth: 0
       - name: Capture exact candidate head
         run: echo "CANDIDATE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22.13.0'
           cache: npm
