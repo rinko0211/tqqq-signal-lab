@@ -1,18 +1,20 @@
 name: Phase 5 Forward Gate
 on:
   schedule:
-    # Authoritative true-Forward observation path; code/research pushes do not create observations.
     - cron: "45 22 * * 1-5"
     - cron: "15 13 * * 2-6"
   workflow_dispatch:
+
 permissions:
   contents: write
   pages: write
   id-token: write
+
 concurrency:
   group: daily-signal-pages
   cancel-in-progress: false
   queue: max
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -24,8 +26,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: main
-      - name: Capture validated main head
+          fetch-depth: 0
+      - name: Capture protected code head
         run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Overlay authoritative operational state
+        env:
+          OPS_STATE_BRANCH: ops-state
+        run: bash scripts/ops-state.sh overlay
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 22
@@ -38,30 +45,25 @@ jobs:
         id: generate
         continue-on-error: true
         run: npm run generate:phase5-forward
-      - name: Persist append-only Phase 5 ledger/status
+      - name: Persist append-only Phase 5 ledger/status to ops-state
         id: persist
         if: always()
+        env:
+          OPS_STATE_BRANCH: ops-state
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/phase-5-forward-ledger.json github-pages/public/data/phase-5-forward-status.json 2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git fetch origin main
-            if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
-              echo "::error::main changed after validation; refusing to rebase unvalidated source into Phase 5 state"
-              exit 1
-            fi
-            git commit -m "Update Phase 5 true Forward ledger"
-            git push origin HEAD:main
-            echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
+            echo "::error::protected main changed after validation; refusing Phase 5 state persistence"
+            exit 1
           fi
-      - name: Confirm validated source remains authoritative
+          bash scripts/ops-state.sh persist "Update Phase 5 true Forward ledger"
+      - name: Confirm protected code and state remain authoritative
         id: authority
         if: always() && steps.persist.outcome == 'success'
         run: |
-          git fetch origin main
+          git fetch origin main ops-state
           test "$(git rev-parse origin/main)" = "$VALIDATED_MAIN_SHA"
-          test "$(git rev-parse HEAD)" = "$VALIDATED_MAIN_SHA"
+          test "$(git rev-parse origin/ops-state)" = "$OPS_STATE_PERSISTED_SHA"
       - name: Build integrated PWA
         id: pages_build
         if: always() && steps.integrity.outcome == 'success' && steps.persist.outcome == 'success' && steps.authority.outcome == 'success'
