@@ -1,25 +1,25 @@
 {
-  "generatedAt": "2026-09-19T06:17:24.059Z",
-  "actionRunId": "35426184153",
+  "generatedAt": "2026-09-22T00:59:23.706Z",
+  "actionRunId": "35674064571",
   "actionStatus": "success",
-  "marketDataDate": "2026-09-18",
-  "signalDate": "2026-09-18",
-  "lastForwardRecord": "2026-09-18",
-  "forwardRecords": 100,
+  "marketDataDate": "2026-09-21",
+  "signalDate": "2026-09-21",
+  "lastForwardRecord": "2026-09-21",
+  "forwardRecords": 105,
   "forwardPersistent": true,
-  "buildVersion": "fb6ae172a462",
+  "buildVersion": "ad6895243d55",
   "dataSource": "Nasdaq Historical + Cboe VIX History",
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
   "state": "latest",
   "catchup": {
-    "priorDataDate": "2026-09-17",
+    "priorDataDate": "2026-09-18",
     "processedDates": [
-      "2026-09-18"
+      "2026-09-21"
     ],
     "observationOnlyDates": [],
-    "displayedSignalDate": "2026-09-18"
+    "displayedSignalDate": "2026-09-21"
   },
   "message": "最新データでSignal・Forward台帳を生成済み",
   "errors": []
