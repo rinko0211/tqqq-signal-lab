@@ -1,18 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
+import { join } from "node:path";
 
-const activeWorkflows = [
-  ".github/workflows/daily-signal.yml",
-  ".github/workflows/phase5-forward.yml",
-  ".github/workflows/lifecycle-review.yml",
-  ".github/workflows/approve-production.yml",
-  ".github/workflows/phase6-final-acceptance.yml",
-  ".github/workflows/daily-ticker-forward.yml",
-];
+const WORKFLOW_DIR = ".github/workflows";
+const ACTIVE_WRITERS = new Set([
+  "daily-signal.yml",
+  "phase5-forward.yml",
+  "lifecycle-review.yml",
+  "approve-production.yml",
+]);
 
-test("active security-sensitive workflows pin external actions to immutable SHAs", async () => {
-  for (const path of activeWorkflows) {
+async function workflows() {
+  return (await readdir(WORKFLOW_DIR))
+    .filter((name) => name.endsWith(".yml"))
+    .map((name) => ({ name, path: join(WORKFLOW_DIR, name) }));
+}
+
+test("all external GitHub Actions are pinned to immutable SHAs", async () => {
+  for (const { path } of await workflows()) {
     const text = await readFile(path, "utf8");
     for (const line of text.split(/\r?\n/)) {
       const m = line.match(/^\s*-?\s*uses:\s*([^\s#]+)/);
@@ -24,7 +30,29 @@ test("active security-sensitive workflows pin external actions to immutable SHAs
   }
 });
 
-test("Production approval does not implicitly inherit repository secrets", async () => {
-  const text = await readFile(".github/workflows/approve-production.yml", "utf8");
-  assert.doesNotMatch(text, /secrets:\s*inherit/);
+test("repository write authority is limited to current operational writers", async () => {
+  for (const { name, path } of await workflows()) {
+    const text = await readFile(path, "utf8");
+    const hasContentsWrite = /^\s*contents:\s*write\s*$/m.test(text);
+    assert.equal(
+      hasContentsWrite,
+      ACTIVE_WRITERS.has(name),
+      `${path}: unexpected contents:write authority boundary`,
+    );
+  }
+});
+
+test("Pages/OIDC write authority is limited to current deployment-capable writers", async () => {
+  for (const { name, path } of await workflows()) {
+    const text = await readFile(path, "utf8");
+    const privileged = /^\s*(pages|id-token):\s*write\s*$/m.test(text);
+    if (privileged) assert.ok(ACTIVE_WRITERS.has(name), `${path}: unexpected Pages/OIDC write authority`);
+  }
+});
+
+test("no workflow implicitly inherits all repository secrets", async () => {
+  for (const { path } of await workflows()) {
+    const text = await readFile(path, "utf8");
+    assert.doesNotMatch(text, /secrets:\s*inherit/, `${path}: implicit secret inheritance is forbidden`);
+  }
 });
