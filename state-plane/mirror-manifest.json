@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "mode": "SHADOW_STATE_MIRROR",
+  "authoritative": false,
+  "sourceBranch": "main",
+  "sourceMainSha": "a093cf54b2290953e58144fd30a46d7db9f30613",
+  "dataTreeSha256": "43086609c1a6e9def67e9b3044e6502bfb860f6efc6574c4602565b8f6184be4"
+}
