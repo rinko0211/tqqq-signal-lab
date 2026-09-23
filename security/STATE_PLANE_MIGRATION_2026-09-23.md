@@ -1,0 +1,60 @@
+# State Plane Migration — Security P1
+
+Date: 2026-09-23
+Status: P1a SHADOW ONLY
+
+## Objective
+
+Remove autonomous operational-state writes from `main` before branch protection is enabled, without changing strategy behavior, signal semantics, execution timing, or user-visible authority.
+
+## P1a — Shadow mirror
+
+Authoritative runtime remains unchanged:
+
+- code/config authority: `main`
+- operational state authority: still `main/github-pages/public/data`
+- shadow copy: `ops-state/github-pages/public/data`
+- `ops-state` is explicitly non-authoritative
+- no broker or Production authority is created
+
+The mirror runs only after a push to `main` changes operational data (or when the mirror workflow itself is first installed). It checks out the exact triggering main SHA without write credentials, copies only `github-pages/public/data`, writes a non-authoritative manifest, rejects unexpected staged paths, and pushes only to `ops-state`.
+
+No npm install, strategy evaluation, provider fetch, broker secret, Pages deployment, or Production decision occurs in the mirror.
+
+## P1a acceptance gate
+
+Before cutover, observe at least three consecutive completed NYSE sessions after deployment and require all of the following:
+
+1. every triggering main operational-state generation is mirrored successfully;
+2. mirror manifest `sourceMainSha` identifies the exact source commit;
+3. mirrored data tree hash matches the source data tree for that commit;
+4. no file outside `github-pages/public/data/**` and `state-plane/mirror-manifest.json` is changed by the mirror;
+5. no strategy/version/mapping or authority field changes as a consequence of mirroring;
+6. Daily, Phase 5, Lifecycle, Pages, and existing operational regression remain green;
+7. `platformMode=RESEARCH` and broker order authority remains absent.
+
+A mirror failure does not alter or invalidate the current authoritative state; P1a is fail-isolated.
+
+## P1b — Writer cutover
+
+Only after the P1a gate passes:
+
+- Daily / Phase 5 / Lifecycle state commits move from `main` to `ops-state`;
+- code remains read from protected `main`;
+- Pages build overlays the exact validated `ops-state` snapshot onto the exact validated `main` code snapshot;
+- approval flow records authority through the state plane rather than by modifying code branch history;
+- cross-branch generation hashes and CAS checks replace the current same-branch checks.
+
+This cutover is a separate PR and must pass the full operational regression suite before merge.
+
+## P1c — Main protection
+
+After P1b demonstrates that no autonomous workflow needs to push to `main`:
+
+- require PRs for `main`;
+- require the relevant security/operational CI checks;
+- block force push and deletion;
+- restrict workflow-file changes to reviewed PRs;
+- preserve the existing explicit human Production gate.
+
+Repository administration controls are not changed during P1a.

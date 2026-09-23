@@ -4,7 +4,14 @@ import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const WORKFLOW_DIR = ".github/workflows";
-const ACTIVE_WRITERS = new Set([
+const CONTENT_WRITERS = new Set([
+  "daily-signal.yml",
+  "phase5-forward.yml",
+  "lifecycle-review.yml",
+  "approve-production.yml",
+  "state-plane-shadow-mirror.yml",
+]);
+const PAGE_OIDC_WRITERS = new Set([
   "daily-signal.yml",
   "phase5-forward.yml",
   "lifecycle-review.yml",
@@ -36,7 +43,7 @@ test("repository write authority is limited to current operational writers", asy
     const hasContentsWrite = /^\s*contents:\s*write\s*$/m.test(text);
     assert.equal(
       hasContentsWrite,
-      ACTIVE_WRITERS.has(name),
+      CONTENT_WRITERS.has(name),
       `${path}: unexpected contents:write authority boundary`,
     );
   }
@@ -46,7 +53,7 @@ test("Pages/OIDC write authority is limited to current deployment-capable writer
   for (const { name, path } of await workflows()) {
     const text = await readFile(path, "utf8");
     const privileged = /^\s*(pages|id-token):\s*write\s*$/m.test(text);
-    if (privileged) assert.ok(ACTIVE_WRITERS.has(name), `${path}: unexpected Pages/OIDC write authority`);
+    if (privileged) assert.ok(PAGE_OIDC_WRITERS.has(name), `${path}: unexpected Pages/OIDC write authority`);
   }
 });
 

@@ -1,0 +1,83 @@
+name: State Plane Shadow Mirror
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "github-pages/public/data/**"
+      - ".github/workflows/state-plane-shadow-mirror.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: state-plane-shadow-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact main source without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: source
+          persist-credentials: false
+      - name: Checkout isolated ops-state target
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops-state
+          path: state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Mirror operational state only
+        shell: bash
+        env:
+          SOURCE_MAIN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          rm -rf state/github-pages/public/data
+          mkdir -p state/github-pages/public/data state/state-plane
+          cp -a source/github-pages/public/data/. state/github-pages/public/data/
+          diff -qr source/github-pages/public/data state/github-pages/public/data
+
+          DATA_TREE_SHA="$(
+            cd source
+            find github-pages/public/data -type f -print0               | sort -z               | xargs -0 sha256sum               | sha256sum               | awk '{print $1}'
+          )"
+
+          node - "$SOURCE_MAIN_SHA" "$DATA_TREE_SHA" > state/state-plane/mirror-manifest.json <<'NODE'
+          const [sourceMainSha, dataTreeSha256] = process.argv.slice(2);
+          process.stdout.write(JSON.stringify({
+            schemaVersion: 1,
+            mode: "SHADOW_STATE_MIRROR",
+            authoritative: false,
+            sourceBranch: "main",
+            sourceMainSha,
+            dataTreeSha256
+          }, null, 2) + "\n");
+          NODE
+
+      - name: Enforce state-only mutation boundary
+        working-directory: state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add github-pages/public/data state-plane/mirror-manifest.json
+          unexpected="$(git diff --cached --name-only | grep -Ev '^(github-pages/public/data/|state-plane/mirror-manifest\.json$)' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "::error::Unexpected path in ops-state mirror:"
+            echo "$unexpected"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "No state change to mirror"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Mirror operational state from main ${GITHUB_SHA}"
+          git push origin HEAD:ops-state
