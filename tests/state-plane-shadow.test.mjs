@@ -14,11 +14,12 @@ test("shadow state mirror is non-authoritative and cannot write main", async () 
   assert.doesNotMatch(text, /^\s*schedule:\s*$/m);
 });
 
-test("shadow state mirror copies only operational data plus its manifest", async () => {
+test("shadow state mirror copies only operational data plus its non-authoritative state-plane metadata", async () => {
   const text = await readFile(path, "utf8");
   assert.match(text, /rm -rf state\/github-pages\/public\/data/);
   assert.match(text, /cp -a source\/github-pages\/public\/data\/\. state\/github-pages\/public\/data\//);
-  assert.match(text, /git add github-pages\/public\/data state-plane\/mirror-manifest\.json/);
+  assert.match(text, /git add github-pages\/public\/data state-plane\/mirror-manifest\.json state-plane\/canary\.json/);
+  assert.match(text, /updateStatePlaneCanary/);
   assert.match(text, /Unexpected path in ops-state mirror/);
 });
 

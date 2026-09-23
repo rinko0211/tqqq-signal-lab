@@ -15,20 +15,21 @@ Authoritative runtime remains unchanged:
 - operational state authority: still `main/github-pages/public/data`
 - shadow copy: `ops-state/github-pages/public/data`
 - `ops-state` is explicitly non-authoritative
+- `state-plane/canary.json` is a non-authoritative migration canary only
 - no broker or Production authority is created
 
-The mirror runs only after a push to `main` changes operational data (or when the mirror workflow itself is first installed). It checks out the exact triggering main SHA without write credentials, copies only `github-pages/public/data`, writes a non-authoritative manifest, rejects unexpected staged paths, and pushes only to `ops-state`.
+The mirror runs only after a push to `main` changes operational data (or when the mirror workflow itself is first installed). It checks out the exact triggering main SHA without write credentials, copies only `github-pages/public/data`, writes a non-authoritative manifest plus fail-closed canary metadata, rejects unexpected staged paths, and pushes only to `ops-state`.
 
 No npm install, strategy evaluation, provider fetch, broker secret, Pages deployment, or Production decision occurs in the mirror.
 
 ## P1a acceptance gate
 
-Before cutover, observe at least three consecutive completed NYSE sessions after deployment and require all of the following:
+Before cutover, observe at least three consecutive completed NYSE sessions after deployment. The canary starts strictly after market date `2026-09-22`, counts only `success/latest/errors=[]` source states, rejects duplicates, and enters `RESET_REQUIRED` if a NYSE session is skipped. Require all of the following:
 
 1. every triggering main operational-state generation is mirrored successfully;
 2. mirror manifest `sourceMainSha` identifies the exact source commit;
 3. mirrored data tree hash matches the source data tree for that commit;
-4. no file outside `github-pages/public/data/**` and `state-plane/mirror-manifest.json` is changed by the mirror;
+4. no file outside `github-pages/public/data/**`, `state-plane/mirror-manifest.json`, and `state-plane/canary.json` is changed by the mirror;
 5. no strategy/version/mapping or authority field changes as a consequence of mirroring;
 6. Daily, Phase 5, Lifecycle, Pages, and existing operational regression remain green;
 7. `platformMode=RESEARCH` and broker order authority remains absent.
