@@ -33,6 +33,10 @@ jobs:
           path: state
           fetch-depth: 0
           persist-credentials: true
+      - name: Setup Node for fail-closed canary validation
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22
       - name: Mirror operational state only
         shell: bash
         env:
@@ -61,13 +65,24 @@ jobs:
           }, null, 2) + "\n");
           NODE
 
+          node --experimental-strip-types --input-type=module - "$SOURCE_MAIN_SHA" "$DATA_TREE_SHA" <<'NODE'
+          import { existsSync, readFileSync, writeFileSync } from "node:fs";
+          import { updateStatePlaneCanary } from "./source/lib/state-plane-canary.ts";
+          const [sourceMainSha, dataTreeSha256] = process.argv.slice(2);
+          const status = JSON.parse(readFileSync("source/github-pages/public/data/status.json", "utf8"));
+          const path = "state/state-plane/canary.json";
+          const prior = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : null;
+          const next = updateStatePlaneCanary({ prior, status, sourceMainSha, dataTreeSha256 });
+          writeFileSync(path, JSON.stringify(next, null, 2) + "\n", "utf8");
+          NODE
+
       - name: Enforce state-only mutation boundary
         working-directory: state
         shell: bash
         run: |
           set -euo pipefail
-          git add github-pages/public/data state-plane/mirror-manifest.json
-          unexpected="$(git diff --cached --name-only | grep -Ev '^(github-pages/public/data/|state-plane/mirror-manifest\.json$)' || true)"
+          git add github-pages/public/data state-plane/mirror-manifest.json state-plane/canary.json
+          unexpected="$(git diff --cached --name-only | grep -Ev '^(github-pages/public/data/|state-plane/(mirror-manifest|canary)\.json$)' || true)"
           if [ -n "$unexpected" ]; then
             echo "::error::Unexpected path in ops-state mirror:"
             echo "$unexpected"
