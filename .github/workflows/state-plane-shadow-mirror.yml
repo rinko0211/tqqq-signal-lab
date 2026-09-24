@@ -1,11 +1,19 @@
 name: State Plane Shadow Mirror
 
 on:
+  workflow_run:
+    workflows:
+      - "Daily TQQQ Signal"
+      - "Phase 5 Forward Gate"
+      - "Autonomous Lifecycle Review"
+      - "Human Production Approval"
+    types: [completed]
+    branches: [main]
   push:
     branches: [main]
     paths:
-      - "github-pages/public/data/**"
       - ".github/workflows/state-plane-shadow-mirror.yml"
+      - "lib/state-plane-canary.ts"
   workflow_dispatch:
 
 permissions:
@@ -17,13 +25,15 @@ concurrency:
 
 jobs:
   mirror:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout exact main source without write credentials
+      - name: Checkout current authoritative main source without write credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ github.sha }}
+          ref: main
+          fetch-depth: 0
           path: source
           persist-credentials: false
       - name: Checkout isolated ops-state target
@@ -39,10 +49,9 @@ jobs:
           node-version: 22
       - name: Mirror operational state only
         shell: bash
-        env:
-          SOURCE_MAIN_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          SOURCE_MAIN_SHA="$(git -C source rev-parse HEAD)"
           rm -rf state/github-pages/public/data
           mkdir -p state/github-pages/public/data state/state-plane
           cp -a source/github-pages/public/data/. state/github-pages/public/data/
@@ -94,5 +103,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Mirror operational state from main ${GITHUB_SHA}"
+          source_main_sha="$(node -p 'JSON.parse(require("fs").readFileSync("state-plane/mirror-manifest.json","utf8")).sourceMainSha')"
+          git commit -m "Mirror operational state from main ${source_main_sha}"
           git push origin HEAD:ops-state
