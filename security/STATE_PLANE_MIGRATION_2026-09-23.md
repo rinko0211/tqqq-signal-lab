@@ -18,7 +18,7 @@ Authoritative runtime remains unchanged:
 - `state-plane/canary.json` is a non-authoritative migration canary only
 - no broker or Production authority is created
 
-The mirror runs only after a push to `main` changes operational data (or when the mirror workflow itself is first installed). It checks out the exact triggering main SHA without write credentials, copies only `github-pages/public/data`, writes a non-authoritative manifest plus fail-closed canary metadata, rejects unexpected staged paths, and pushes only to `ops-state`.
+The mirror runs after the operational writer workflows (Daily, Phase 5, Lifecycle, or Human Production Approval) complete successfully. This uses `workflow_run` rather than relying on a second push-triggered workflow, because commits pushed by GitHub Actions with `GITHUB_TOKEN` do not recursively start another push workflow. The mirror then checks out the current authoritative `main` head without write credentials, records that exact checked-out SHA, copies only `github-pages/public/data`, writes a non-authoritative manifest plus fail-closed canary metadata, rejects unexpected staged paths, and pushes only to `ops-state`. A limited push trigger is retained only for mirror/canary code changes so a deployment change can self-bootstrap.
 
 No npm install, strategy evaluation, provider fetch, broker secret, Pages deployment, or Production decision occurs in the mirror.
 
