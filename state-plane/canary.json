@@ -9,10 +9,10 @@
   "canaryState": "ACTIVE",
   "gap": null,
   "lastObservation": {
-    "sourceMainSha": "6ec0ec69b826a948878cdb69dab69bf6aa6fa96c",
-    "dataTreeSha256": "c8f6ecb8af208774d134f880c22ec59c361042271251ec9ccb1123ecc917d612",
+    "sourceMainSha": "83aa49cfd8477beef9555ff9324c50b3b4c7e316",
+    "dataTreeSha256": "ba19c63e5736d874e3c7f1c7a2e476c1640190037cff8580544b466ad6f130b1",
     "marketDataDate": "2026-09-22",
-    "generatedAt": "2026-09-24T09:27:29.767Z",
+    "generatedAt": "2026-09-24T12:50:52.135Z",
     "classification": "PRE_CANARY_BASELINE"
   }
 }
