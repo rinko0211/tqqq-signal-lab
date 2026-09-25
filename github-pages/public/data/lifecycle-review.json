@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-09-24T06:12:26.539Z",
+  "updatedAt": "2026-09-25T06:10:53.452Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -10,7 +10,7 @@
   },
   "events": [],
   "current": {
-    "asOf": "2026-09-24",
+    "asOf": "2026-09-25",
     "stage": "ACCUMULATING",
     "systemDecision": "ACCUMULATING",
     "userAction": "NONE",
@@ -23,7 +23,9 @@
         "eligible": false,
         "promotionSelectable": false,
         "promotionMerit": "INCUMBENT",
-        "reasons": [],
+        "reasons": [
+          "TQQQ reference Forward data lags 2 completed NYSE session(s)"
+        ],
         "observations": 22,
         "liveObservations": 22,
         "missingRatio": 0,
@@ -52,6 +54,7 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
+          "Phase 5 UPRO-SPBT-v1.0 market data lags 2 completed NYSE session(s)",
           "Only 20 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
         "observations": 20,
@@ -82,6 +85,7 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
+          "Phase 5 SSO-SPBT-Scaled-v1.0 market data lags 2 completed NYSE session(s)",
           "Only 20 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
         "observations": 20,
@@ -112,6 +116,7 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
+          "Phase 5 QLD-VS13-Scaled-v1.0 market data lags 2 completed NYSE session(s)",
           "Only 20 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
         "observations": 20,
