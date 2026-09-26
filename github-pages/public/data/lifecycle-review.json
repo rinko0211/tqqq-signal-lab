@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-09-25T06:10:53.452Z",
+  "updatedAt": "2026-09-26T06:10:55.347Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -10,7 +10,7 @@
   },
   "events": [],
   "current": {
-    "asOf": "2026-09-25",
+    "asOf": "2026-09-26",
     "stage": "ACCUMULATING",
     "systemDecision": "ACCUMULATING",
     "userAction": "NONE",
@@ -24,21 +24,21 @@
         "promotionSelectable": false,
         "promotionMerit": "INCUMBENT",
         "reasons": [
-          "TQQQ reference Forward data lags 2 completed NYSE session(s)"
+          "Missing/invalid ratio 4.17% > 1%"
         ],
-        "observations": 22,
-        "liveObservations": 22,
-        "missingRatio": 0,
+        "observations": 23,
+        "liveObservations": 23,
+        "missingRatio": 0.041666666666666664,
         "executions": 2,
-        "actionDaysPerYear": 22.90909090909091,
+        "actionDaysPerYear": 21.91304347826087,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.14252045864061746,
-        "sortino": 8.627018563171143,
-        "calmar": 49.71365631367326,
+        "totalReturn": 0.11071703130000876,
+        "sortino": 6.226444337074939,
+        "calmar": 27.778687633943985,
         "maxDd": -0.07242489908528327,
         "historicalDd": -0.3816,
         "adverseDdFloor": -0.48160000000000003,
@@ -54,27 +54,27 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Phase 5 UPRO-SPBT-v1.0 market data lags 2 completed NYSE session(s)",
-          "Only 20 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
+          "Missing/invalid ratio 4.55% > 1%",
+          "Only 22 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 20,
-        "liveObservations": 20,
-        "missingRatio": 0,
+        "observations": 22,
+        "liveObservations": 21,
+        "missingRatio": 0.045454545454545456,
         "executions": 1,
-        "actionDaysPerYear": 12.600000000000001,
+        "actionDaysPerYear": 12,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.03155109263976419,
-        "sortino": 3.606346616280986,
-        "calmar": 6.332297862470312,
+        "totalReturn": 0.004625338517227462,
+        "sortino": 0.7568982013749724,
+        "calmar": 0.7175077419032897,
         "maxDd": -0.07565211734859789,
         "historicalDd": -0.3457,
         "adverseDdFloor": -0.4457,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 20,
+        "paretoCommonDays": 22,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -85,27 +85,27 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Phase 5 SSO-SPBT-Scaled-v1.0 market data lags 2 completed NYSE session(s)",
-          "Only 20 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
+          "Missing/invalid ratio 4.55% > 1%",
+          "Only 22 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 20,
-        "liveObservations": 20,
-        "missingRatio": 0,
+        "observations": 22,
+        "liveObservations": 21,
+        "missingRatio": 0.045454545454545456,
         "executions": 1,
-        "actionDaysPerYear": 12.600000000000001,
+        "actionDaysPerYear": 12,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.022350800915331925,
-        "sortino": 3.6962106181627554,
-        "calmar": 6.367229024731817,
+        "totalReturn": 0.004058810068650054,
+        "sortino": 0.7676280589780525,
+        "calmar": 0.9415079809141574,
         "maxDd": -0.050441361916771954,
         "historicalDd": -0.2416,
         "adverseDdFloor": -0.3416,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 20,
+        "paretoCommonDays": 22,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -116,27 +116,27 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Phase 5 QLD-VS13-Scaled-v1.0 market data lags 2 completed NYSE session(s)",
-          "Only 20 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
+          "Missing/invalid ratio 4.55% > 1%",
+          "Only 22 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 20,
-        "liveObservations": 20,
-        "missingRatio": 0,
+        "observations": 22,
+        "liveObservations": 21,
+        "missingRatio": 0.045454545454545456,
         "executions": 2,
-        "actionDaysPerYear": 25.200000000000003,
+        "actionDaysPerYear": 24,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.10106802021971983,
-        "sortino": 9.608764522253775,
-        "calmar": 48.87419487994261,
+        "totalReturn": 0.08170759295762675,
+        "sortino": 7.142858947713512,
+        "calmar": 30.158358043090722,
         "maxDd": -0.048369446268330174,
         "historicalDd": -0.2705,
         "adverseDdFloor": -0.37050000000000005,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 20,
+        "paretoCommonDays": 22,
         "decision": "CONTINUE_FORWARD"
       }
     ],
