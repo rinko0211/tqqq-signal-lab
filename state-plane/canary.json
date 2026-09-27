@@ -24,8 +24,8 @@
   "canaryState": "ACTIVE",
   "gap": null,
   "lastObservation": {
-    "sourceMainSha": "62cfb3b7cb9dce1f90d2bb61716f54114696f0e1",
-    "dataTreeSha256": "7d054ef53907d02ced0504a6be22c27ebe5e197a852fa19405a1e1744bf2e15f",
+    "sourceMainSha": "ebf0dbf6e1108e00f59fe86136bd17d8536fbfa2",
+    "dataTreeSha256": "0236ed8f8d9717004dc4e63117fd0ddcd996055752221073afd9e3350dd5d28a",
     "marketDataDate": "2026-09-25",
     "generatedAt": "2026-09-26T06:24:59.457Z",
     "classification": "DUPLICATE_OR_OLD"
