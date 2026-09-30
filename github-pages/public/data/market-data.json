@@ -1,6 +1,6 @@
 {
   "source": "Nasdaq Historical + Cboe VIX History",
-  "retrievedAt": "2026-09-30T01:24:00.212Z",
+  "retrievedAt": "2026-09-30T07:06:40.971Z",
   "series": {
     "TQQQ": [
       {
@@ -110581,6 +110581,15 @@
         "low": 15.68,
         "close": 16.07,
         "adjClose": 16.07,
+        "volume": 0
+      },
+      {
+        "date": "2026-09-29",
+        "open": 16.17,
+        "high": 16.44,
+        "low": 15.73,
+        "close": 16.04,
+        "adjClose": 16.04,
         "volume": 0
       }
     ]
