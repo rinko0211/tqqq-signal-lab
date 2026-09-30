@@ -30,6 +30,6 @@
     "dataTreeSha256": "ec535d0e9fe3aab0a6b5f1100fd65ad3afaa87c0aaa608b03f3bb6b32d1772f6",
     "marketDataDate": "2026-09-29",
     "generatedAt": "2026-09-30T07:06:40.491Z",
-    "classification": "PASS_COUNTABLE"
+    "classification": "COMPLETE_NO_COUNT"
   }
 }
