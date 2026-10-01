@@ -1,7 +1,7 @@
 # State Plane Migration — Security P1
 
 Date: 2026-09-23
-Status: P1a SHADOW ONLY
+Status: P1b CUTOVER CANDIDATE
 
 ## Objective
 
@@ -76,3 +76,51 @@ The first canary failure is retained as a valid fail-closed result, not erased:
 - counter restarts at `S0/3`; 2026-09-23 and 2026-09-24 are not retroactively counted
 
 Only the exact historical RESET signature above is authorized for this one-time normalization. Any different or future RESET remains fail-closed and requires a separate explicit review.
+
+
+## P1a acceptance completion — 2026-10-01
+
+The rebaselined P1a canary completed the required three consecutive NYSE sessions:
+
+- 2026-09-25
+- 2026-09-28
+- 2026-09-29
+- counter: `S3/3`
+- state: `COMPLETE`
+- gap: `null`
+
+Daily, Phase 5, Lifecycle, and the shadow mirror remained green through completion. The P1a shadow workflow is therefore retired from autonomous execution and retained only as a manual, read-only archive verifier.
+
+## P1b cutover design
+
+After merge, operational authority changes as follows:
+
+- `main`: code/config/policy source only; autonomous workflows do not commit runtime state to it.
+- `ops-state`: authoritative operational state under `github-pages/public/data/**`.
+- `state-plane/runtime-manifest.json`: authoritative generation metadata for the latest persisted state generation.
+- archived `state-plane/canary.json` and `state-plane/mirror-manifest.json`: retained P1a evidence only and remain non-authoritative.
+
+Each operational writer is split into three security domains:
+
+1. **Read-only generation** — exact `main` plus exact `ops-state` are checked out without persisted credentials. Provider access, npm, strategy logic, regression tests, and candidate generation run only here.
+2. **Minimal state persistence** — a separate `contents:write` job downloads the validated artifact, independently checks the data-tree hash and runtime manifest, verifies the base `ops-state` SHA with compare-and-swap semantics, and pushes only to `ops-state`. It does not run npm, provider code, or repository scripts.
+3. **Exact Pages deployment** — a reusable deployment workflow checks out the exact validated `main` SHA and exact persisted `ops-state` SHA, verifies the authoritative runtime manifest/data hash, overlays state onto code, builds with read-only repository permission, and delegates actual Pages/OIDC authority to a package-free deploy job.
+
+The writer concurrency group remains `daily-signal-pages`, and CAS checks fail closed if `ops-state` advances unexpectedly.
+
+The Human Production Approval workflow follows the same split. The human decision and its refreshed validated live state are committed atomically to `ops-state`; it no longer depends on a state commit to `main` or on GitHub Actions push recursion.
+
+## P1b acceptance gate
+
+Before P1c branch protection, require:
+
+1. migration CI is green on the P1b branch;
+2. PR diff contains only intended state-plane/workflow/test/documentation changes;
+3. after merge, at least one real Daily writer run persists to `ops-state` and never changes `main`;
+4. the persisted `runtime-manifest.json` records `mode=OPS_STATE_AUTHORITATIVE`, `authoritative=true`, the exact source `main` SHA, prior `ops-state` SHA, and matching data-tree hash;
+5. Pages is built from that exact main/state pair and deploys successfully;
+6. Phase 5 and Lifecycle also complete successfully against authoritative `ops-state`;
+7. archived P1a evidence remains unchanged and non-authoritative;
+8. `platformMode=RESEARCH` and no broker authority is introduced.
+
+Only after this gate is satisfied should P1c protect `main`.
