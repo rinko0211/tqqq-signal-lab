@@ -1,6 +1,6 @@
 # P1c Main Protection — 2026-10-02
 
-Status: IMPLEMENTED IN REPOSITORY / PLATFORM RULESET PENDING
+Status: COMPLETE — REPOSITORY GATE + ACTIVE PLATFORM RULESET
 
 ## Objective
 
@@ -27,11 +27,11 @@ It enforces:
 5. validation itself leaves no tracked changes;
 6. all external GitHub Actions remain immutable-SHA pinned through the permanent security regression.
 
-## Target GitHub ruleset
+## Active GitHub ruleset
 
-Create one branch ruleset targeting only `main`.
+Verified live ruleset: `main-protection` (repository ruleset ID `24335859`).
 
-Recommended settings for this single-maintainer repository:
+Active settings:
 
 - Enforcement: Active
 - Target branch: `main` only
@@ -65,3 +65,33 @@ After the platform ruleset is active:
 This phase does not grant broker authority, Production authority, or secret access.
 
 `platformMode` remains RESEARCH unless the explicit Human Production Approval process is separately invoked.
+
+
+## Post-P1c cleanup — 2026-10-02
+
+After platform enforcement became active, legacy workflows were audited for stale repository-write intent.
+
+The permanent security boundary is now:
+
+- only `daily-signal.yml`, `phase5-forward.yml`, `lifecycle-review.yml`, and `approve-production.yml` may contain repository push commands;
+- every allowed push is explicitly `git -C state push origin HEAD:ops-state`;
+- historical Audit 5/7/8/10 remediation workflows are manual read-only archive verifiers;
+- historical Phase 1/1.5/2/3/4, legacy UPRO Forward, and historical quant research workflows are manual read-only generators that return artifacts only;
+- no legacy workflow attempts to persist generated state or remediation changes to `main` or any other branch.
+
+This invariant is enforced permanently by `tests/security-workflow-pinning.test.mjs`.
+
+The active `main-protection` ruleset was independently verified through the GitHub API with:
+
+- target: `refs/heads/main` only;
+- enforcement: `active`;
+- pull request required;
+- approving reviews: 0;
+- required check: `P1c Main Protection`;
+- strict status-check freshness enabled;
+- linear history required;
+- deletion blocked;
+- non-fast-forward / force push blocked;
+- bypass actors: none.
+
+`ops-state` is not targeted by this ruleset.

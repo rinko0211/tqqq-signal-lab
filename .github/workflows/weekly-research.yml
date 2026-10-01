@@ -1,12 +1,11 @@
-# Historical research is frozen while Phase 5 accumulates true Forward evidence.
-name: Historical Quant Research
+name: Historical Quant Research Artifact
+
 on:
   workflow_dispatch:
+
 permissions:
   contents: read
-concurrency:
-  group: weekly-research
-  cancel-in-progress: false
+
 jobs:
   research:
     runs-on: ubuntu-latest
@@ -15,23 +14,19 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: main
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Generate bounded deep research
-        run: npm run generate:research
-      - name: Run calculation tests
-        run: npm run test:core
-      - name: Save research report
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/deep-research.json github-pages/public/data/cross-ticker.json github-pages/public/data/native-research.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update historical quant research"
-            git pull --rebase origin main
-            git push
-          fi
-      # Manual-only by design: Phase 5 must not continuously mine the same history.
+      - run: npm run generate:research
+      - run: npm run test:core
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: historical-quant-research
+          path: |
+            github-pages/public/data/deep-research.json
+            github-pages/public/data/cross-ticker.json
+            github-pages/public/data/native-research.json
+          if-no-files-found: error

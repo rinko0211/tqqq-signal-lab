@@ -98,3 +98,19 @@ test("generation jobs use read-only checkouts for both code and state", async ()
     assert.match(generate, /persist-credentials:\s*false/g);
   }
 });
+
+
+test("only validated ops-state writers contain repository push commands", async () => {
+  for (const { name, path } of await workflows()) {
+    const text = await readFile(path, "utf8");
+    const pushes = text.split(/\r?\n/).filter((line) => /\bgit\s+(?:-C\s+\S+\s+)?push\b/.test(line));
+    if (CONTENT_WRITERS.has(name)) {
+      assert.ok(pushes.length > 0, `${path}: validated writer must retain explicit ops-state push`);
+      for (const line of pushes) {
+        assert.match(line, /git -C state push origin HEAD:ops-state/, `${path}: writer push must target ops-state explicitly`);
+      }
+    } else {
+      assert.equal(pushes.length, 0, `${path}: non-writer workflow must not contain repository push commands`);
+    }
+  }
+});
