@@ -39,5 +39,5 @@ test("P1c guard uses immutable external action pins", async()=>{
 test("P1c guard rejects main PRs that modify authoritative runtime-state paths", async()=>{
   const y=await readFile(workflowPath,"utf8");
   assert.match(y,/github-pages\/public\/data\//);
-  assert.match(y,/runtime state belongs on ops-state/);
+  assert.match(y,/runtime state belongs on ops-state/i);
 });
