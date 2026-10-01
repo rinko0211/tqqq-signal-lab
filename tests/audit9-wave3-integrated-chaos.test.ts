@@ -113,10 +113,14 @@ test("A9 Wave3 H5: review failure × long outage × holiday boundary remains ret
 });
 
 test("A9 Wave3 H6: deploy failure × newer persisted generation × reload cannot manufacture the newer action before a successful deploy",async()=>{
-  const workflow=fs.readFileSync(".github/workflows/daily-signal.yml","utf8");
-  const order=["Run operational regression tests","Save append-only live signal history","Confirm validated source remains authoritative","Build PWA from the persisted validated head","Deploy GitHub Pages"].map(x=>workflow.indexOf(x));
-  assert.ok(order.every(x=>x>=0));for(let i=1;i<order.length;i++)assert.ok(order[i]>order[i-1],"Daily workflow must validate/persist/confirm/build before deploy");
-  assert.match(workflow,/origin\/main[^\n]*VALIDATED_MAIN_SHA|VALIDATED_MAIN_SHA[^\n]*origin\/main/s,"source-head coherence must gate deployment");
+  const workflow=fs.readFileSync(".github/workflows/daily-signal.yml","utf8"),deployWorkflow=fs.readFileSync(".github/workflows/state-plane-deploy.yml","utf8");
+  const order=["Run operational regression tests","Stage validated operational state candidate","CAS verify and persist state only","uses: ./.github/workflows/state-plane-deploy.yml"].map(x=>workflow.indexOf(x));
+  assert.ok(order.every(x=>x>=0));for(let i=1;i<order.length;i++)assert.ok(order[i]>order[i-1],"Daily workflow must validate/stage/persist before exact deploy");
+  assert.match(workflow,/git -C state rev-parse origin\/ops-state[^\n]*EXPECTED_BASE_STATE_SHA|EXPECTED_BASE_STATE_SHA[^\n]*git -C state rev-parse origin\/ops-state/s,"state-head CAS must gate persistence");
+  assert.match(workflow,/state_sha:\s*\$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
+  assert.match(deployWorkflow,/Verify exact code\/state generation pair/);
+  assert.match(deployWorkflow,/Build Pages from exact code\/state pair/);
+  assert.match(deployWorkflow,/Deploy exact validated Pages artifact/);
 
   const staleDeployed=actionFx({now:"2026-08-31T12:00:00.000Z"});
   assert.equal(action(staleDeployed),"CHECK_DATA","reload after failed deploy sees stale deployed JSON and must not infer the newer persisted action");

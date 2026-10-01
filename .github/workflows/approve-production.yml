@@ -1,4 +1,5 @@
 name: Human Production Approval
+
 on:
   workflow_dispatch:
     inputs:
@@ -19,40 +20,68 @@ on:
       confirmation:
         description: "PRODUCTION: APPROVE PRODUCTION / active Production exit: EXIT PRODUCTION"
         required: false
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+
 concurrency:
-  group: production-approval
+  group: daily-signal-pages
   cancel-in-progress: false
-  queue: max
+
 jobs:
-  approve:
+  generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    concurrency:
-      group: daily-signal-pages
-      cancel-in-progress: false
-      queue: max
+    timeout-minutes: 20
+    permissions:
+      contents: read
     outputs:
-      persisted_sha: ${{ steps.persist.outputs.persisted_sha }}
+      source_main_sha: ${{ steps.capture.outputs.source_main_sha }}
+      base_state_sha: ${{ steps.capture.outputs.base_state_sha }}
+      data_sha256: ${{ steps.stage.outputs.data_sha256 }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {ref: main}
-      - name: Capture validated main head
-        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Checkout current main code without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          path: source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Checkout current ops-state without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops-state
+          path: state
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Capture exact code/state inputs
+        id: capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "source_main_sha=$(git -C source rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "base_state_sha=$(git -C state rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Overlay authoritative ops-state for approval
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf source/github-pages/public/data
+          mkdir -p source/github-pages/public/data
+          cp -a state/github-pages/public/data/. source/github-pages/public/data/
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
-        with: {node-version: 22, cache: npm}
-      - run: npm ci
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Install exact dependencies
+        working-directory: source
+        run: npm ci
       - name: Refresh authoritative review inputs immediately before Production approval
         if: inputs.mode == 'PRODUCTION'
+        working-directory: source
         run: |
           npm run generate:daily
           test ! -s github-pages/public/data/.failed
           npm run generate:phase5-forward
           npm run generate:lifecycle-review
       - name: Record explicit human decision locally
+        working-directory: source
         env:
           MODE: ${{ inputs.mode }}
           TICKER: ${{ inputs.ticker }}
@@ -61,8 +90,10 @@ jobs:
           CONFIRMATION: ${{ inputs.confirmation }}
         run: npm run approve:production
       - name: Full policy/configuration regression before persistence
+        working-directory: source
         run: npm run test:core
       - name: Preflight the exact resulting operational state
+        working-directory: source
         run: |
           npm run generate:daily
           test ! -s github-pages/public/data/.failed
@@ -70,24 +101,137 @@ jobs:
           npm run generate:production-health-review
           npm run test:ops
           npm run build:pages
-      - name: Atomically persist decision and validated live state
-        id: persist
+      - name: Stage exact approved operational state candidate
+        id: stage
+        env:
+          SOURCE_MAIN_SHA: ${{ steps.capture.outputs.source_main_sha }}
+          BASE_STATE_SHA: ${{ steps.capture.outputs.base_state_sha }}
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data
-          git fetch origin main
-          if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
-            echo "::error::main changed after approval preflight; refusing to rebase unvalidated source into the human decision"
+          set -euo pipefail
+          rm -rf candidate
+          mkdir -p candidate/github-pages/public/data candidate/state-plane
+          cp -a source/github-pages/public/data/. candidate/github-pages/public/data/
+          DATA_SHA="$(
+            cd candidate
+            find github-pages/public/data -type f -print0               | sort -z               | xargs -0 sha256sum               | sha256sum               | awk '{print $1}'
+          )"
+          export DATA_SHA
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          m={
+            "schemaVersion":1,
+            "mode":"OPS_STATE_AUTHORITATIVE",
+            "authoritative":True,
+            "writer":"human-production-approval",
+            "sourceMainSha":os.environ["SOURCE_MAIN_SHA"],
+            "baseOpsStateSha":os.environ["BASE_STATE_SHA"],
+            "dataTreeSha256":os.environ["DATA_SHA"],
+            "generatedAt":datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
+          }
+          with open("candidate/state-plane/runtime-manifest.json","w",encoding="utf-8") as f:
+              json.dump(m,f,indent=2)
+              f.write("\n")
+          PY
+          echo "data_sha256=$DATA_SHA" >> "$GITHUB_OUTPUT"
+      - name: Upload approved state candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: state-candidate
+          path: candidate
+          include-hidden-files: true
+          if-no-files-found: error
+
+  persist:
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      state_sha: ${{ steps.persist.outputs.state_sha }}
+    steps:
+      - name: Checkout isolated ops-state writer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops-state
+          path: state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Download approved state candidate
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: state-candidate
+          path: candidate
+      - name: CAS verify and atomically persist approved state
+        id: persist
+        env:
+          EXPECTED_MAIN_SHA: ${{ needs.generate.outputs.source_main_sha }}
+          EXPECTED_BASE_STATE_SHA: ${{ needs.generate.outputs.base_state_sha }}
+          EXPECTED_DATA_SHA: ${{ needs.generate.outputs.data_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C state rev-parse HEAD)" = "$EXPECTED_BASE_STATE_SHA"
+          git -C state fetch origin main:refs/remotes/origin/main ops-state:refs/remotes/origin/ops-state
+          test "$(git -C state rev-parse origin/main)" = "$EXPECTED_MAIN_SHA"
+          test "$(git -C state rev-parse origin/ops-state)" = "$EXPECTED_BASE_STATE_SHA"
+
+          calculated="$(
+            cd candidate
+            find github-pages/public/data -type f -print0               | sort -z               | xargs -0 sha256sum               | sha256sum               | awk '{print $1}'
+          )"
+          test "$calculated" = "$EXPECTED_DATA_SHA"
+
+          python - <<'PY'
+          import json, os
+          with open("candidate/state-plane/runtime-manifest.json",encoding="utf-8") as f:
+              m=json.load(f)
+          assert m["schemaVersion"] == 1
+          assert m["mode"] == "OPS_STATE_AUTHORITATIVE"
+          assert m["authoritative"] is True
+          assert m["writer"] == "human-production-approval"
+          assert m["sourceMainSha"] == os.environ["EXPECTED_MAIN_SHA"]
+          assert m["baseOpsStateSha"] == os.environ["EXPECTED_BASE_STATE_SHA"]
+          assert m["dataTreeSha256"] == os.environ["EXPECTED_DATA_SHA"]
+          PY
+
+          rm -rf state/github-pages/public/data
+          mkdir -p state/github-pages/public/data state/state-plane
+          cp -a candidate/github-pages/public/data/. state/github-pages/public/data/
+          cp candidate/state-plane/runtime-manifest.json state/state-plane/runtime-manifest.json
+
+          git -C state add github-pages/public/data state-plane/runtime-manifest.json
+          unexpected="$(git -C state diff --cached --name-only | grep -Ev '^(github-pages/public/data/|state-plane/runtime-manifest\.json$)' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "::error::Unexpected path in approval ops-state writer:"
+            echo "$unexpected"
             exit 1
           fi
-          git commit -m "Record human control decision with validated live state"
-          git push origin HEAD:main
-          echo "persisted_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-  deploy-validated-state:
-    needs: approve
-    uses: ./.github/workflows/daily-signal.yml
+          if git -C state diff --cached --quiet; then
+            echo "state_sha=$EXPECTED_BASE_STATE_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git -C state config user.name "github-actions[bot]"
+          git -C state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C state commit -m "Record human control decision with validated operational state"
+          git -C state fetch origin main:refs/remotes/origin/main ops-state:refs/remotes/origin/ops-state
+          test "$(git -C state rev-parse origin/main)" = "$EXPECTED_MAIN_SHA"
+          test "$(git -C state rev-parse origin/ops-state)" = "$EXPECTED_BASE_STATE_SHA"
+          git -C state push origin HEAD:ops-state
+          echo "state_sha=$(git -C state rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: [generate, persist]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/state-plane-deploy.yml
     with:
-      deploy_persisted_only: true
-      expected_sha: ${{ needs.approve.outputs.persisted_sha }}
+      source_main_sha: ${{ needs.generate.outputs.source_main_sha }}
+      state_sha: ${{ needs.persist.outputs.state_sha }}
+      expected_data_sha256: ${{ needs.generate.outputs.data_sha256 }}

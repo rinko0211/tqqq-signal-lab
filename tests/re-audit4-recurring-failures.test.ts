@@ -47,18 +47,22 @@ test("Decision state regression permits an approved incumbent while review is pe
 
 test("required operational writers preserve queued runs and never rebase unvalidated source",()=>{
   for(const [name,y] of [["Daily",daily],["Phase5",phase5],["Lifecycle",lifecycle],["Approval",approval]] as const){
-    assert.match(y,/queue: max/,`${name} queue`);
-    assert.match(y,/VALIDATED_MAIN_SHA/,`${name} validated head`);
-    assert.doesNotMatch(y,/git pull --rebase origin main/,`${name} rebase`);
+    assert.match(y,/concurrency:\s*\n\s*group: daily-signal-pages\s*\n\s*cancel-in-progress: false/,`${name} serialized queue`);
+    assert.match(y,/source_main_sha=\$\(git -C source rev-parse HEAD\)/,`${name} validated main head`);
+    assert.match(y,/base_state_sha=\$\(git -C state rev-parse HEAD\)/,`${name} validated state head`);
+    assert.match(y,/git -C state rev-parse origin\/ops-state/,`${name} state CAS`);
+    assert.doesNotMatch(y,/git pull --rebase origin (main|ops-state)/,`${name} rebase`);
   }
-  assert.match(approval,/expected_sha: \$\{\{ needs\.approve\.outputs\.persisted_sha \}\}/);
-  assert.match(daily,/Enforce exact persisted SHA for deploy-only approval calls/);
-  assert.match(daily,/ref: \$\{\{ inputs\.expected_sha != '' && inputs\.expected_sha \|\| 'main' \}\}/);
+  assert.match(approval,/state_sha: \$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
+  assert.match(approval,/source_main_sha: \$\{\{ needs\.generate\.outputs\.source_main_sha \}\}/);
+  assert.match(daily,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
+  assert.match(daily,/expected_data_sha256: \$\{\{ needs\.generate\.outputs\.data_sha256 \}\}/);
 });
 
 test("workflow maintenance pushes cannot create Forward or Lifecycle observations",()=>{
   assert.doesNotMatch(phase5,/\n\s*push:\s*\n/);
   assert.doesNotMatch(lifecycle,/\n\s*push:\s*\n/);
-  assert.doesNotMatch(daily,/\.github\/workflows\/daily-signal\.yml/);
-  assert.match(daily,/github-pages\/public\/data\/production-config\.json/);
+  assert.doesNotMatch(daily,/\n\s*push:\s*\n/);
+  assert.doesNotMatch(approval,/\n\s*push:\s*\n/);
+  assert.match(approval,/workflow_dispatch:/);
 });

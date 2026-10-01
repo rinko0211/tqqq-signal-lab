@@ -13,7 +13,7 @@ const writerWorkflows=[daily,phase5,lifecycle];
 
 test("all autonomous operational writers serialize through one concurrency group",()=>{
   for(const y of writerWorkflows)assert.match(y,/concurrency:\s*\n\s*group: daily-signal-pages\s*\n\s*cancel-in-progress: false/);
-  assert.match(approval,/approve:[\s\S]*concurrency:[\s\S]*group: daily-signal-pages/);
+  assert.match(approval,/concurrency:\s*\n\s*group: daily-signal-pages\s*\n\s*cancel-in-progress: false/);
 });
 
 test("Daily separates external pending from internal failure without fabricating a new signal",()=>{
@@ -32,28 +32,34 @@ test("Daily separates external pending from internal failure without fabricating
 });
 
 test("Daily deploys failure status before deliberately failing the workflow",()=>{
-  const deploy=daily.indexOf("Deploy GitHub Pages");
-  const finalFail=daily.indexOf("Mark data failure after publishing status");
-  assert.ok(deploy>=0&&finalFail>deploy);
-  assert.match(daily,/git add github-pages\/public\/data/);
-  assert.match(daily,/test ! -s github-pages\/public\/data\/\.failed/);
+  const persist=daily.indexOf("CAS verify and persist state only");
+  const deploy=daily.indexOf("\n  deploy:");
+  const finalFail=daily.indexOf("\n  enforce:");
+  assert.ok(persist>=0&&deploy>persist&&finalFail>deploy);
+  assert.match(daily,/git -C state add github-pages\/public\/data state-plane\/runtime-manifest\.json/);
+  assert.match(daily,/data_failure=true/);
+  assert.match(daily,/test "\$DATA_FAILURE" != "true"/);
+  assert.match(daily,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
 });
 
 test("Phase 5 persists status on generation failure and then reports red",()=>{
   assert.match(phase5,/Update true Forward ledger[\s\S]*continue-on-error: true/);
-  assert.match(phase5,/Persist append-only Phase 5 ledger\/status[\s\S]*if: always\(\)/);
-  assert.match(phase5,/phase-5-forward-ledger\.json github-pages\/public\/data\/phase-5-forward-status\.json/);
-  assert.match(phase5,/Enforce Phase 5 generation, persistence, authority and build success[\s\S]*test "\$\{\{ steps\.generate\.outcome \}\}" = "success"/);
-  assert.match(phase5,/id: persist/);assert.match(phase5,/id: authority/);
-  assert.match(phase5,/Build integrated PWA[\s\S]*steps\.persist\.outcome == 'success'[\s\S]*steps\.authority\.outcome == 'success'/);
+  assert.match(phase5,/Stage validated operational state candidate/);
+  assert.match(phase5,/CAS verify and persist Phase 5 state only/);
+  assert.match(phase5,/git -C state add github-pages\/public\/data\/phase-5-forward-ledger\.json github-pages\/public\/data\/phase-5-forward-status\.json state-plane\/runtime-manifest\.json/);
+  assert.match(phase5,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
+  assert.match(phase5,/Enforce Phase 5 generation, persistence and deployment success/);
+  assert.match(phase5,/GENERATE_OUTCOME: \$\{\{ needs\.generate\.outputs\.generate_outcome \}\}/);
+  assert.match(phase5,/test "\$GENERATE_OUTCOME" = "success"/);
 });
 
 test("Human Approval preflight is serialized and deploys persisted validated state explicitly",()=>{
   assert.match(approval,/group: daily-signal-pages/);
   assert.match(approval,/Preflight the exact resulting operational state/);
-  assert.match(approval,/Atomically persist decision and validated live state/);
-  assert.match(approval,/deploy-validated-state:/);
-  assert.match(approval,/deploy_persisted_only: true/);
+  assert.match(approval,/CAS verify and atomically persist approved state/);
+  assert.match(approval,/git -C state push origin HEAD:ops-state/);
+  assert.match(approval,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
+  assert.match(approval,/state_sha: \$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
 });
 
 test("only Daily Lifecycle and Phase5 retain schedules",()=>{
