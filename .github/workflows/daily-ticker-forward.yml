@@ -1,36 +1,31 @@
-name: Legacy UPRO Forward
+name: Legacy UPRO Forward Artifact
+
 on:
   workflow_dispatch:
+
 permissions:
   contents: read
-concurrency:
-  group: upro-forward
-  cancel-in-progress: false
+
 jobs:
-  forward:
+  generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: main
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Generate isolated legacy UPRO Forward record
-        run: npm run generate:ticker-forward
-      - name: Run integrity tests
-        run: npm run test:core
-      - name: Persist append-only legacy Track B ledger
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/ticker-forward-ledger.json github-pages/public/data/ticker-forward-status.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update legacy UPRO forward"
-            git pull --rebase origin main
-            git push
-          fi
-      # Historical Track B is retained for auditability, but Phase 5 SPBT is the
-      # active S&P challenger path. This workflow no longer consumes daily resources.
+      - run: npm run generate:ticker-forward
+      - run: npm run test:core
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: legacy-upro-forward
+          path: |
+            github-pages/public/data/ticker-forward-ledger.json
+            github-pages/public/data/ticker-forward-status.json
+          if-no-files-found: error
