@@ -1,0 +1,101 @@
+name: State Plane Pages Deploy
+
+on:
+  workflow_call:
+    inputs:
+      source_main_sha:
+        description: "Exact validated main code commit"
+        required: true
+        type: string
+      state_sha:
+        description: "Exact persisted ops-state commit"
+        required: true
+        type: string
+      expected_data_sha256:
+        description: "Expected operational data-tree SHA-256"
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact validated main code without credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_main_sha }}
+          path: source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Checkout exact authoritative ops-state without credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.state_sha }}
+          path: state
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact code/state generation pair
+        env:
+          EXPECTED_MAIN_SHA: ${{ inputs.source_main_sha }}
+          EXPECTED_STATE_SHA: ${{ inputs.state_sha }}
+          EXPECTED_DATA_SHA: ${{ inputs.expected_data_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "$EXPECTED_MAIN_SHA"
+          test "$(git -C state rev-parse HEAD)" = "$EXPECTED_STATE_SHA"
+          calculated="$(
+            cd state
+            find github-pages/public/data -type f -print0               | sort -z               | xargs -0 sha256sum               | sha256sum               | awk '{print $1}'
+          )"
+          test "$calculated" = "$EXPECTED_DATA_SHA"
+          python - <<'PY'
+          import json, os
+          with open("state/state-plane/runtime-manifest.json", encoding="utf-8") as f:
+              m=json.load(f)
+          assert m["schemaVersion"] == 1
+          assert m["mode"] == "OPS_STATE_AUTHORITATIVE"
+          assert m["authoritative"] is True
+          assert m["sourceMainSha"] == os.environ["EXPECTED_MAIN_SHA"]
+          assert m["dataTreeSha256"] == os.environ["EXPECTED_DATA_SHA"]
+          PY
+      - name: Overlay authoritative state onto validated code
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf source/github-pages/public/data
+          mkdir -p source/github-pages/public/data
+          cp -a state/github-pages/public/data/. source/github-pages/public/data/
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Install exact dependencies
+        working-directory: source
+        run: npm ci
+      - name: Build Pages from exact code/state pair
+        working-directory: source
+        run: npm run build:pages
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: source/dist-pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy exact validated Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
