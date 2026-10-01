@@ -59,30 +59,31 @@ test("primary Production state preserves approved Production during Decision rev
   assert.doesNotMatch(signalView,/holdoutMetrics/);
 });
 
-test("Human Approval validates config plus live state before one atomic persistence commit",()=>{
+test("Human Approval validates config plus live state before one atomic ops-state persistence commit",()=>{
   assert.match(approvalWorkflow,/Record explicit human decision locally/);
   assert.match(approvalWorkflow,/Preflight the exact resulting operational state/);
   assert.match(approvalWorkflow,/npm run generate:daily/);
   assert.match(approvalWorkflow,/test ! -s github-pages\/public\/data\/\.failed/);
   assert.match(approvalWorkflow,/npm run test:ops/);
   assert.match(approvalWorkflow,/npm run build:pages/);
-  assert.match(approvalWorkflow,/Atomically persist decision and validated live state/);
-  assert.match(approvalWorkflow,/git add github-pages\/public\/data/);
-  assert.doesNotMatch(approvalWorkflow,/git add github-pages\/public\/data\/production-config\.json\s*$/m);
+  assert.match(approvalWorkflow,/Stage exact approved operational state candidate/);
+  assert.match(approvalWorkflow,/CAS verify and atomically persist approved state/);
+  assert.match(approvalWorkflow,/git -C state add github-pages\/public\/data state-plane\/runtime-manifest\.json/);
+  assert.match(approvalWorkflow,/git -C state push origin HEAD:ops-state/);
+  assert.doesNotMatch(approvalWorkflow,/git[^\n]*push[^\n]*HEAD:main/);
 });
 
-test("Human Approval deploys persisted state explicitly instead of relying on GITHUB_TOKEN push recursion",()=>{
-  assert.match(dailyWorkflow,/workflow_call:/);
-  assert.match(dailyWorkflow,/deploy_persisted_only:/);
-  assert.match(approvalWorkflow,/deploy-validated-state:/);
-  assert.match(approvalWorkflow,/uses: \.\/\.github\/workflows\/daily-signal\.yml/);
-  assert.match(approvalWorkflow,/deploy_persisted_only: true/);
-  assert.match(approvalWorkflow,/needs: approve/);
+test("Human Approval deploys the exact persisted ops-state through the dedicated state-plane deploy workflow",()=>{
+  assert.doesNotMatch(dailyWorkflow,/workflow_call:/);
+  assert.doesNotMatch(dailyWorkflow,/deploy_persisted_only:/);
+  assert.match(approvalWorkflow,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
+  assert.match(approvalWorkflow,/state_sha: \$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
+  assert.match(approvalWorkflow,/source_main_sha: \$\{\{ needs\.generate\.outputs\.source_main_sha \}\}/);
+  assert.match(approvalWorkflow,/expected_data_sha256: \$\{\{ needs\.generate\.outputs\.data_sha256 \}\}/);
 });
 
 test("Approval preflight serializes with operational writers",()=>{
-  assert.match(approvalWorkflow,/approve:[\s\S]*concurrency:[\s\S]*group: daily-signal-pages/);
-  for(const y of [dailyWorkflow,lifecycleWorkflow,fs.readFileSync(".github/workflows/phase5-forward.yml","utf8")])assert.match(y,/group: daily-signal-pages/);
+  for(const y of [approvalWorkflow,dailyWorkflow,lifecycleWorkflow,fs.readFileSync(".github/workflows/phase5-forward.yml","utf8")])assert.match(y,/concurrency:[\s\S]*?group: daily-signal-pages/);
 });
 
 test("Lifecycle retains an autonomous scheduled path",()=>{
