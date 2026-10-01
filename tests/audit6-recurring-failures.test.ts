@@ -29,11 +29,17 @@ test("missed-open UI safety does not depend on browser-local holdings",()=>{
 });
 
 test("Phase 5 never deploys an unpersisted or authority-stale workspace",()=>{
-  const y=fs.readFileSync(".github/workflows/phase5-forward.yml","utf8");
-  assert.match(y,/id: persist/);assert.match(y,/id: authority/);
-  const build=y.slice(y.indexOf("- name: Build integrated PWA"),y.indexOf("- uses: actions\/configure-pages@v6"));
-  assert.match(build,/steps\.persist\.outcome == 'success'/);assert.match(build,/steps\.authority\.outcome == 'success'/);assert.match(build,/steps\.integrity\.outcome == 'success'/);
-  const deploy=y.slice(y.indexOf("- name: Deploy integrated Pages"),y.indexOf("- name: Enforce Phase 5"));assert.match(deploy,/steps\.persist\.outcome == 'success'/);assert.match(deploy,/steps\.authority\.outcome == 'success'/);
+  const y=fs.readFileSync(".github/workflows/phase5-forward.yml","utf8"),d=fs.readFileSync(".github/workflows/state-plane-deploy.yml","utf8");
+  assert.match(y,/Stage validated operational state candidate/);
+  assert.match(y,/CAS verify and persist Phase 5 state only/);
+  assert.match(y,/git -C state rev-parse origin\/ops-state/);
+  assert.match(y,/EXPECTED_BASE_STATE_SHA/);
+  assert.match(y,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
+  assert.match(y,/state_sha: \$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
+  assert.match(y,/expected_data_sha256: \$\{\{ needs\.generate\.outputs\.data_sha256 \}\}/);
+  assert.match(d,/Verify exact code\/state generation pair/);
+  assert.match(d,/runtime-manifest\.json/);
+  assert.match(d,/Deploy exact validated Pages artifact/);
 });
 
 test("Audit 6 lifecycle and health episode regressions are permanent source tests",()=>{
