@@ -138,7 +138,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C state rev-parse HEAD)" = "$EXPECTED_BASE_STATE_SHA"
-          git -C state fetch origin ops-state
+          git -C state fetch origin main:refs/remotes/origin/main ops-state:refs/remotes/origin/ops-state
+          test "$(git -C state rev-parse origin/main)" = "$EXPECTED_MAIN_SHA"
           test "$(git -C state rev-parse origin/ops-state)" = "$EXPECTED_BASE_STATE_SHA"
 
           calculated="$(
@@ -187,7 +188,8 @@ jobs:
           git -C state config user.name "github-actions[bot]"
           git -C state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git -C state commit -m "Update autonomous lifecycle state"
-          git -C state fetch origin ops-state
+          git -C state fetch origin main:refs/remotes/origin/main ops-state:refs/remotes/origin/ops-state
+          test "$(git -C state rev-parse origin/main)" = "$EXPECTED_MAIN_SHA"
           test "$(git -C state rev-parse origin/ops-state)" = "$EXPECTED_BASE_STATE_SHA"
           git -C state push origin HEAD:ops-state
           echo "state_sha=$(git -C state rev-parse HEAD)" >> "$GITHUB_OUTPUT"
