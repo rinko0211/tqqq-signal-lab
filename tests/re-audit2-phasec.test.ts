@@ -45,7 +45,7 @@ test("Production health remains active while human Decision is pending",()=>{
 test("approval workflow exposes cancel, explicit baseline exit, live preflight and atomic persistence",()=>{
   const y=fs.readFileSync(".github/workflows/approve-production.yml","utf8"),s=fs.readFileSync("scripts/approve-production.ts","utf8"),d=fs.readFileSync("scripts/generate-daily.ts","utf8");
   assert.match(y,/CANCEL_DECISION/);assert.match(y,/RESEARCH/);assert.match(y,/EXIT PRODUCTION/);
-  assert.match(y,/Preflight the exact resulting operational state/);assert.match(y,/Atomically persist decision and validated live state/);
+  assert.match(y,/Preflight the exact resulting operational state/);assert.match(y,/Stage exact approved operational state candidate/);assert.match(y,/CAS verify and atomically persist approved state/);assert.match(y,/git -C state push origin HEAD:ops-state/);
   assert.match(y,/npm run generate:daily/);assert.match(y,/npm run test:ops/);assert.match(y,/npm run build:pages/);
   assert.match(s,/cancelDecision/);assert.match(s,/EXIT PRODUCTION/);assert.match(s,/lifecycleReviewIsFresh/);assert.match(s,/productionEligibleVersions/);
   assert.match(d,/hasActiveProduction\(production\)/);
