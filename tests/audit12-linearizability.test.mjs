@@ -22,8 +22,10 @@ function bindActualWorkflowContracts(){
     must(s,/state_sha:\s*\$\{\{ needs\.persist\.outputs\.state_sha \}\}/,`${name} state SHA handoff`);
     must(s,/expected_data_sha256:\s*\$\{\{ needs\.generate\.outputs\.data_sha256 \}\}/,`${name} data hash handoff`);
   }
-  must(files.W5,/ref:\s*\$\{\{ inputs\.source_main_sha \}\}/,'deploy exact main ref');
-  must(files.W5,/ref:\s*\$\{\{ inputs\.state_sha \}\}/,'deploy exact state ref');
+  must(files.W5,/ref:\s*main/,'deploy reads current main head');
+  must(files.W5,/ref:\s*ops-state/,'deploy reads current state head');
+  must(files.W5,/git -C source rev-parse HEAD\)" = "\$EXPECTED_MAIN_SHA"/,'deploy rejects advanced main');
+  must(files.W5,/git -C state rev-parse HEAD\)" = "\$EXPECTED_STATE_SHA"/,'deploy rejects advanced state');
   must(files.W5,/runtime-manifest\.json/,'deploy runtime manifest verification');
   must(files.W5,/EXPECTED_DATA_SHA/,'deploy exact data hash');
   must(files.W5,/Build Pages from exact code\/state pair/,'deploy exact build');
