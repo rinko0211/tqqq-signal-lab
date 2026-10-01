@@ -106,7 +106,7 @@ Each operational writer is split into three security domains:
 2. **Minimal state persistence** — a separate `contents:write` job downloads the validated artifact, independently checks the data-tree hash and runtime manifest, verifies the base `ops-state` SHA with compare-and-swap semantics, and pushes only to `ops-state`. It does not run npm, provider code, or repository scripts.
 3. **Exact Pages deployment** — a reusable deployment workflow checks out the exact validated `main` SHA and exact persisted `ops-state` SHA, verifies the authoritative runtime manifest/data hash, overlays state onto code, builds with read-only repository permission, and delegates actual Pages/OIDC authority to a package-free deploy job.
 
-The writer concurrency group remains `daily-signal-pages`, and CAS checks fail closed if `ops-state` advances unexpectedly.
+The writer concurrency group remains `daily-signal-pages`. Persistence re-checks both the current `main` head and the current `ops-state` head before commit and again before push; Pages deployment also refuses to run if either branch head no longer equals the validated SHA. This prevents both stale-state commits and deployment of an older code/state pair after a concurrent code update.
 
 The Human Production Approval workflow follows the same split. The human decision and its refreshed validated live state are committed atomically to `ops-state`; it no longer depends on a state commit to `main` or on GitHub Actions push recursion.
 
