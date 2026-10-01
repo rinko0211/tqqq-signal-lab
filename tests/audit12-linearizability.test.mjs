@@ -2,15 +2,33 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const files={W1:fs.readFileSync('.github/workflows/daily-signal.yml','utf8'),W2:fs.readFileSync('.github/workflows/phase5-forward.yml','utf8'),W3:fs.readFileSync('.github/workflows/lifecycle-review.yml','utf8'),W4:fs.readFileSync('.github/workflows/approve-production.yml','utf8')};
+const files={W1:fs.readFileSync('.github/workflows/daily-signal.yml','utf8'),W2:fs.readFileSync('.github/workflows/phase5-forward.yml','utf8'),W3:fs.readFileSync('.github/workflows/lifecycle-review.yml','utf8'),W4:fs.readFileSync('.github/workflows/approve-production.yml','utf8'),W5:fs.readFileSync('.github/workflows/state-plane-deploy.yml','utf8')};
 const must=(s,re,msg)=>assert.match(s,re,msg);
 const pos=(s,label)=>{const n=s.indexOf(label);assert.ok(n>=0,`missing workflow marker: ${label}`);return n};
 function bindActualWorkflowContracts(){
-  for(const [name,s] of Object.entries(files))must(s,/group:\s*daily-signal-pages/,`${name} must participate in shared operational serialization`);
-  for(const name of ['W1','W2','W3','W4']){const s=files[name];must(s,/VALIDATED_MAIN_SHA=\$\(git rev-parse HEAD\)/,`${name} capture head`);must(s,/git fetch origin main/,`${name} refresh main`);must(s,/git rev-parse origin\/main[^\n]*VALIDATED_MAIN_SHA|VALIDATED_MAIN_SHA[^\n]*git rev-parse origin\/main/s,`${name} stale CAS`)}
-  for(const name of ['W1','W2','W3']){const s=files[name];const persist=name==='W1'?pos(s,'Save append-only live signal history'):name==='W2'?pos(s,'Persist append-only Phase 5 ledger/status'):pos(s,'Persist append-only review state');const confirm=pos(s,'Confirm validated source remains authoritative');const build=name==='W1'?pos(s,'Build PWA from the persisted validated head'):pos(s,'Build integrated PWA');const deploy=name==='W1'?pos(s,'Deploy GitHub Pages'):pos(s,'Deploy integrated Pages');assert.ok(persist<confirm&&confirm<build&&build<deploy,`${name} persist -> confirm -> build -> deploy`)}
-  must(files.W4,/persisted_sha=\$\(git rev-parse HEAD\)/,'approval exact persisted SHA');must(files.W4,/deploy_persisted_only:\s*true/,'approval deploy-only');must(files.W4,/expected_sha:\s*\$\{\{\s*needs\.approve\.outputs\.persisted_sha\s*\}\}/,'approval exact SHA handoff');must(files.W4,/needs:\s*approve/,'deploy-only job must depend on approval persistence');
-  must(files.W1,/inputs\.deploy_persisted_only == true && inputs\.expected_sha != ''/,'daily exact-SHA mode');must(files.W1,/origin\/main[^\n]*EXPECTED_SHA|EXPECTED_SHA[^\n]*origin\/main/s,'deploy-only rejects head advance');return true;
+  for(const name of ['W1','W2','W3','W4'])must(files[name],/group:\s*daily-signal-pages/,`${name} must participate in shared operational serialization`);
+  for(const name of ['W1','W2','W3','W4']){
+    const s=files[name];
+    must(s,/source_main_sha=\$\(git -C source rev-parse HEAD\)/,`${name} capture exact main`);
+    must(s,/base_state_sha=\$\(git -C state rev-parse HEAD\)/,`${name} capture exact state`);
+    must(s,/git -C state fetch origin ops-state/,`${name} refresh ops-state`);
+    must(s,/git -C state rev-parse origin\/ops-state[^\n]*EXPECTED_BASE_STATE_SHA|EXPECTED_BASE_STATE_SHA[^\n]*git -C state rev-parse origin\/ops-state/s,`${name} stale-state CAS`);
+    must(s,/git -C state push origin HEAD:ops-state/,`${name} state-only push`);
+    assert.doesNotMatch(s,/git[^\n]*push[^\n]*HEAD:main/,`${name} must not push main`);
+    must(s,/OPS_STATE_AUTHORITATIVE/,`${name} authoritative runtime manifest`);
+    must(s,/dataTreeSha256/,`${name} data-tree binding`);
+    must(s,/uses:\s*\.\/\.github\/workflows\/state-plane-deploy\.yml/,`${name} exact deploy handoff`);
+    must(s,/source_main_sha:\s*\$\{\{ needs\.generate\.outputs\.source_main_sha \}\}/,`${name} main SHA handoff`);
+    must(s,/state_sha:\s*\$\{\{ needs\.persist\.outputs\.state_sha \}\}/,`${name} state SHA handoff`);
+    must(s,/expected_data_sha256:\s*\$\{\{ needs\.generate\.outputs\.data_sha256 \}\}/,`${name} data hash handoff`);
+  }
+  must(files.W5,/ref:\s*\$\{\{ inputs\.source_main_sha \}\}/,'deploy exact main ref');
+  must(files.W5,/ref:\s*\$\{\{ inputs\.state_sha \}\}/,'deploy exact state ref');
+  must(files.W5,/runtime-manifest\.json/,'deploy runtime manifest verification');
+  must(files.W5,/EXPECTED_DATA_SHA/,'deploy exact data hash');
+  must(files.W5,/Build Pages from exact code\/state pair/,'deploy exact build');
+  must(files.W5,/Deploy exact validated Pages artifact/,'deploy exact publish');
+  return true;
 }
 function interleave(a,b){const out=[];function rec(i,j,p){if(i===a.length&&j===b.length){out.push(p);return}if(i<a.length)rec(i+1,j,[...p,a[i]]);if(j<b.length)rec(i,j+1,[...p,b[j]])}rec(0,0,[]);return out}
 const routine=['W1','W2','W3'];
