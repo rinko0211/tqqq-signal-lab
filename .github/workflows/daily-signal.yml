@@ -1,122 +1,241 @@
 name: Daily TQQQ Signal
+
 on:
-  workflow_call:
-    inputs:
-      deploy_persisted_only:
-        description: "Deploy an already validated/persisted operational state without fetching or mutating data"
-        required: false
-        type: boolean
-        default: false
-      expected_sha:
-        description: "Optional exact persisted commit SHA required for deploy-only calls"
-        required: false
-        type: string
-        default: ""
   schedule:
-    # Primary post-close attempt: 07:30 JST every Tue-Sat after a Mon-Fri
-    # US session. GitHub schedule delivery may start later than the cron time.
     - cron: "30 22 * * 1-5"
-    # Bounded three-hour retries while the latest completed NYSE session is
-    # still missing. Once current, the preflight exits without fetch, mutation,
-    # regression, commit, or Pages deployment.
     - cron: "30 1 * * 2-6"
     - cron: "30 4 * * 2-6"
     - cron: "30 7 * * 2-6"
     - cron: "30 10 * * 2-6"
-    # Final recovery attempt: 22:00 JST, before the next US open.
     - cron: "0 13 * * 2-6"
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      # Explicit user-authored Production config changes may refresh immediately.
-      # Workflow/code maintenance must never create an observation implicitly.
-      - "github-pages/public/data/production-config.json"
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+
 concurrency:
   group: daily-signal-pages
   cancel-in-progress: false
-  queue: max
+
 jobs:
-  update:
+  generate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+    outputs:
+      run_pipeline: ${{ steps.pipeline.outputs.run_pipeline }}
+      source_main_sha: ${{ steps.capture.outputs.source_main_sha }}
+      base_state_sha: ${{ steps.capture.outputs.base_state_sha }}
+      data_sha256: ${{ steps.stage.outputs.data_sha256 }}
+      data_failure: ${{ steps.stage.outputs.data_failure }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Checkout current main code without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ inputs.expected_sha != '' && inputs.expected_sha || 'main' }}
-      - name: Capture validated main head
-        run: echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-      - name: Enforce exact persisted SHA for deploy-only approval calls
-        if: ${{ inputs.deploy_persisted_only == true && inputs.expected_sha != '' }}
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          ref: main
+          path: source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Checkout current ops-state without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops-state
+          path: state
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Capture exact code/state inputs
+        id: capture
+        shell: bash
         run: |
-          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-          git fetch origin main
-          if [ "$(git rev-parse origin/main)" != "$EXPECTED_SHA" ]; then
-            echo "::error::main advanced after Human Approval persistence; refusing to deploy a different runtime/state"
-            exit 1
-          fi
+          set -euo pipefail
+          echo "source_main_sha=$(git -C source rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "base_state_sha=$(git -C state rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Overlay authoritative ops-state for generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf source/github-pages/public/data
+          mkdir -p source/github-pages/public/data
+          cp -a state/github-pages/public/data/. source/github-pages/public/data/
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: source/package-lock.json
       - name: Decide whether this run needs the Daily pipeline
         id: pipeline
+        working-directory: source
         env:
           EVENT_NAME: ${{ github.event_name }}
-          DEPLOY_PERSISTED_ONLY: ${{ inputs.deploy_persisted_only || false }}
+          DEPLOY_PERSISTED_ONLY: "false"
         run: node --experimental-strip-types scripts/decide-daily-pipeline.ts
-      - run: npm ci
+      - name: Install exact dependencies
         if: steps.pipeline.outputs.run_pipeline == 'true'
+        working-directory: source
+        run: npm ci
       - name: Fetch data and generate signal
         if: steps.pipeline.outputs.fetch_data == 'true'
+        working-directory: source
         run: npm run generate:daily
       - name: Run operational regression tests
         if: steps.pipeline.outputs.run_pipeline == 'true'
+        working-directory: source
         run: npm run test:ops
-      - name: Save append-only live signal history
-        if: steps.pipeline.outputs.fetch_data == 'true'
+      - name: Stage validated operational state candidate
+        id: stage
+        if: steps.pipeline.outputs.run_pipeline == 'true'
+        env:
+          SOURCE_MAIN_SHA: ${{ steps.capture.outputs.source_main_sha }}
+          BASE_STATE_SHA: ${{ steps.capture.outputs.base_state_sha }}
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data
-          if ! git diff --cached --quiet; then
-            git fetch origin main
-            if [ "$(git rev-parse origin/main)" != "$VALIDATED_MAIN_SHA" ]; then
-              echo "::error::main changed after validation; refusing to rebase unvalidated source into Daily state"
-              exit 1
-            fi
-            git commit -m "Update daily TQQQ signal"
-            git push origin HEAD:main
-            echo "VALIDATED_MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          set -euo pipefail
+          rm -rf candidate
+          mkdir -p candidate/github-pages/public/data candidate/state-plane
+          cp -a source/github-pages/public/data/. candidate/github-pages/public/data/
+          DATA_SHA="$(
+            cd candidate
+            find github-pages/public/data -type f -print0               | sort -z               | xargs -0 sha256sum               | sha256sum               | awk '{print $1}'
+          )"
+          export DATA_SHA
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          m={
+            "schemaVersion":1,
+            "mode":"OPS_STATE_AUTHORITATIVE",
+            "authoritative":True,
+            "writer":"daily-signal",
+            "sourceMainSha":os.environ["SOURCE_MAIN_SHA"],
+            "baseOpsStateSha":os.environ["BASE_STATE_SHA"],
+            "dataTreeSha256":os.environ["DATA_SHA"],
+            "generatedAt":datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
+          }
+          with open("candidate/state-plane/runtime-manifest.json","w",encoding="utf-8") as f:
+              json.dump(m,f,indent=2)
+              f.write("\n")
+          PY
+          echo "data_sha256=$DATA_SHA" >> "$GITHUB_OUTPUT"
+          if [ -s source/github-pages/public/data/.failed ]; then
+            echo "data_failure=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "data_failure=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Confirm validated source remains authoritative
+      - name: Upload state candidate
         if: steps.pipeline.outputs.run_pipeline == 'true'
-        run: |
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "$VALIDATED_MAIN_SHA"
-          test "$(git rev-parse HEAD)" = "$VALIDATED_MAIN_SHA"
-      - name: Build PWA from the persisted validated head
-        if: steps.pipeline.outputs.run_pipeline == 'true'
-        run: npm run build:pages
-      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
-        if: steps.pipeline.outputs.run_pipeline == 'true'
-      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
-        if: steps.pipeline.outputs.run_pipeline == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          path: dist-pages
-      - name: Deploy GitHub Pages
-        if: steps.pipeline.outputs.run_pipeline == 'true'
-        id: deployment
-        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
-      - name: Mark data failure after publishing status
-        if: steps.pipeline.outputs.run_pipeline == 'true'
-        run: test ! -s github-pages/public/data/.failed
+          name: state-candidate
+          path: candidate
+          include-hidden-files: true
+          if-no-files-found: error
+
+  persist:
+    needs: generate
+    if: needs.generate.outputs.run_pipeline == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      state_sha: ${{ steps.persist.outputs.state_sha }}
+    steps:
+      - name: Checkout isolated ops-state writer
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops-state
+          path: state
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Download validated state candidate
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: state-candidate
+          path: candidate
+      - name: CAS verify and persist state only
+        id: persist
+        env:
+          EXPECTED_MAIN_SHA: ${{ needs.generate.outputs.source_main_sha }}
+          EXPECTED_BASE_STATE_SHA: ${{ needs.generate.outputs.base_state_sha }}
+          EXPECTED_DATA_SHA: ${{ needs.generate.outputs.data_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C state rev-parse HEAD)" = "$EXPECTED_BASE_STATE_SHA"
+          git -C state fetch origin ops-state
+          test "$(git -C state rev-parse origin/ops-state)" = "$EXPECTED_BASE_STATE_SHA"
+
+          calculated="$(
+            cd candidate
+            find github-pages/public/data -type f -print0               | sort -z               | xargs -0 sha256sum               | sha256sum               | awk '{print $1}'
+          )"
+          test "$calculated" = "$EXPECTED_DATA_SHA"
+
+          python - <<'PY'
+          import json, os
+          with open("candidate/state-plane/runtime-manifest.json",encoding="utf-8") as f:
+              m=json.load(f)
+          assert m["schemaVersion"] == 1
+          assert m["mode"] == "OPS_STATE_AUTHORITATIVE"
+          assert m["authoritative"] is True
+          assert m["writer"] == "daily-signal"
+          assert m["sourceMainSha"] == os.environ["EXPECTED_MAIN_SHA"]
+          assert m["baseOpsStateSha"] == os.environ["EXPECTED_BASE_STATE_SHA"]
+          assert m["dataTreeSha256"] == os.environ["EXPECTED_DATA_SHA"]
+          PY
+
+          rm -rf state/github-pages/public/data
+          mkdir -p state/github-pages/public/data state/state-plane
+          cp -a candidate/github-pages/public/data/. state/github-pages/public/data/
+          cp candidate/state-plane/runtime-manifest.json state/state-plane/runtime-manifest.json
+
+          git -C state add github-pages/public/data state-plane/runtime-manifest.json
+          unexpected="$(git -C state diff --cached --name-only | grep -Ev '^(github-pages/public/data/|state-plane/runtime-manifest\.json$)' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "::error::Unexpected path in ops-state writer:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+          if git -C state diff --cached --quiet; then
+            echo "state_sha=$EXPECTED_BASE_STATE_SHA" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git -C state config user.name "github-actions[bot]"
+          git -C state config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C state commit -m "Update Daily operational state"
+          git -C state fetch origin ops-state
+          test "$(git -C state rev-parse origin/ops-state)" = "$EXPECTED_BASE_STATE_SHA"
+          git -C state push origin HEAD:ops-state
+          echo "state_sha=$(git -C state rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: [generate, persist]
+    if: needs.generate.outputs.run_pipeline == 'true' && needs.persist.result == 'success'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/state-plane-deploy.yml
+    with:
+      source_main_sha: ${{ needs.generate.outputs.source_main_sha }}
+      state_sha: ${{ needs.persist.outputs.state_sha }}
+      expected_data_sha256: ${{ needs.generate.outputs.data_sha256 }}
+
+  enforce:
+    needs: [generate, persist, deploy]
+    if: always() && needs.generate.outputs.run_pipeline == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Enforce generation, persistence and deployment success
+        env:
+          DATA_FAILURE: ${{ needs.generate.outputs.data_failure }}
+          PERSIST_RESULT: ${{ needs.persist.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PERSIST_RESULT" = "success"
+          test "$DEPLOY_RESULT" = "success"
+          test "$DATA_FAILURE" != "true"
