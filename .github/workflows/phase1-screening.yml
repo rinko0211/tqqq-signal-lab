@@ -1,35 +1,29 @@
-name: Phase 1 Leverage Screening
+name: Phase 1 Leverage Screening Artifact
+
 on:
   workflow_dispatch:
+
 permissions:
   contents: read
-concurrency:
-  group: phase1-bounded-screen-v2
-  cancel-in-progress: true
+
 jobs:
-  screen:
+  generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: main
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Generate bounded Phase 1 only
-        run: npm run generate:phase1
-      - name: Run core calculation tests
-        run: npm run test:core
-      - name: Save isolated Phase 1 result
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add github-pages/public/data/phase-1-bounded-screening.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update bounded Phase 1 leverage screening"
-            git pull --rebase origin main
-            git push
-          fi
+      - run: npm run generate:phase1
+      - run: npm run test:core
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: phase1-leverage-screening
+          path: github-pages/public/data/phase-1-bounded-screening.json
+          if-no-files-found: error
