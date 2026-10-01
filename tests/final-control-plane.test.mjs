@@ -9,6 +9,7 @@ const workflowFiles=fs.readdirSync(workflowsDir).filter(x=>x.endsWith(".yml")).s
 const workflow=(name)=>read(path.join(workflowsDir,name));
 const daily=workflow("daily-signal.yml");
 const approval=workflow("approve-production.yml");
+const stateDeploy=workflow("state-plane-deploy.yml");
 const approveScript=read("scripts/approve-production.ts");
 const production=read("lib/production.ts");
 const official=read("lib/official-data.ts");
@@ -34,12 +35,14 @@ test("closed research and legacy workflows remain manual-only",()=>{
 });
 
 test("Human Approval cannot rely on suppressed GITHUB_TOKEN push recursion",()=>{
-  assert.match(daily,/workflow_call:/);
-  assert.match(daily,/deploy_persisted_only:/);
-  assert.match(approval,/deploy-validated-state:/);
-  assert.match(approval,/needs: approve/);
-  assert.match(approval,/uses: \.\/\.github\/workflows\/daily-signal\.yml/);
-  assert.match(approval,/deploy_persisted_only: true/);
+  assert.doesNotMatch(daily,/workflow_call:/);
+  assert.doesNotMatch(daily,/deploy_persisted_only:/);
+  assert.match(approval,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
+  assert.match(approval,/state_sha: \$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
+  assert.match(approval,/source_main_sha: \$\{\{ needs\.generate\.outputs\.source_main_sha \}\}/);
+  assert.match(stateDeploy,/ref: \$\{\{ inputs\.state_sha \}\}/);
+  assert.match(stateDeploy,/ref: \$\{\{ inputs\.source_main_sha \}\}/);
+  assert.doesNotMatch(approval,/git[^\n]*push[^\n]*HEAD:main/);
 });
 
 test("Human Approval atomically persists validated config and live state",()=>{
@@ -49,9 +52,11 @@ test("Human Approval atomically persists validated config and live state",()=>{
   assert.match(approval,/test ! -s github-pages\/public\/data\/\.failed/);
   assert.match(approval,/npm run test:ops/);
   assert.match(approval,/npm run build:pages/);
-  assert.match(approval,/Atomically persist decision and validated live state/);
-  assert.match(approval,/git add github-pages\/public\/data/);
-  assert.match(approval,/approve:[\s\S]*concurrency:[\s\S]*group: daily-signal-pages/);
+  assert.match(approval,/Stage exact approved operational state candidate/);
+  assert.match(approval,/CAS verify and atomically persist approved state/);
+  assert.match(approval,/git -C state add github-pages\/public\/data state-plane\/runtime-manifest\.json/);
+  assert.match(approval,/git -C state push origin HEAD:ops-state/);
+  assert.match(approval,/concurrency:[\s\S]*?group: daily-signal-pages/);
 });
 
 test("Production approval remains fresh-lifecycle, formal-stage, eligible-version and exact-confirmation gated",()=>{
