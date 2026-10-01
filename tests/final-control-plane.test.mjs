@@ -40,8 +40,10 @@ test("Human Approval cannot rely on suppressed GITHUB_TOKEN push recursion",()=>
   assert.match(approval,/uses: \.\/\.github\/workflows\/state-plane-deploy\.yml/);
   assert.match(approval,/state_sha: \$\{\{ needs\.persist\.outputs\.state_sha \}\}/);
   assert.match(approval,/source_main_sha: \$\{\{ needs\.generate\.outputs\.source_main_sha \}\}/);
-  assert.match(stateDeploy,/ref: \$\{\{ inputs\.state_sha \}\}/);
-  assert.match(stateDeploy,/ref: \$\{\{ inputs\.source_main_sha \}\}/);
+  assert.match(stateDeploy,/ref: ops-state/);
+  assert.match(stateDeploy,/ref: main/);
+  assert.match(stateDeploy,/git -C source rev-parse HEAD\)" = "\$EXPECTED_MAIN_SHA"/);
+  assert.match(stateDeploy,/git -C state rev-parse HEAD\)" = "\$EXPECTED_STATE_SHA"/);
   assert.doesNotMatch(approval,/git[^\n]*push[^\n]*HEAD:main/);
 });
 
