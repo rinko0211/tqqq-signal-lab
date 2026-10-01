@@ -23,17 +23,17 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout exact validated main code without credentials
+      - name: Checkout current main head without credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ inputs.source_main_sha }}
+          ref: main
           path: source
           fetch-depth: 1
           persist-credentials: false
-      - name: Checkout exact authoritative ops-state without credentials
+      - name: Checkout current authoritative ops-state head without credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ inputs.state_sha }}
+          ref: ops-state
           path: state
           fetch-depth: 1
           persist-credentials: false
