@@ -1,0 +1,58 @@
+name: P1c Main Protection
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  main-protection:
+    name: P1c Main Protection
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout candidate without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reject runtime-state changes on main
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tee /tmp/p1c-changed-files
+          forbidden="$(grep -E '^github-pages/public/data/' /tmp/p1c-changed-files || true)"
+          if [ -n "$forbidden" ]; then
+            echo "::error::Runtime state belongs on ops-state, not main:"
+            echo "$forbidden"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Verify P1c security contract
+        run: node --test tests/p1c-main-protection.test.mjs
+
+      - name: Full core regression
+        run: npm run test:core
+
+      - name: Integrated Pages build
+        run: npm run build:pages
+
+      - name: Verify candidate did not mutate tracked state during validation
+        run: git diff --exit-code
