@@ -37,7 +37,8 @@ test("P1b operational writers read code from main and persist state only to ops-
     assert.match(text, /"authoritative":True/);
     assert.match(text, /baseOpsStateSha/);
     assert.match(text, /EXPECTED_BASE_STATE_SHA/);
-    assert.match(text, /git -C state fetch origin ops-state/);
+    assert.match(text, /ops-state:refs\/remotes\/origin\/ops-state/);
+    assert.match(text, /git -C state rev-parse origin\/main/);
     assert.match(text, /git -C state push origin HEAD:ops-state/);
     assert.doesNotMatch(text, /git[^\n]*push[^\n]*HEAD:main/);
   }
@@ -62,8 +63,10 @@ test("Pages deployment overlays an exact validated main/state pair", async () =>
   assert.match(text, /source_main_sha:/);
   assert.match(text, /state_sha:/);
   assert.match(text, /expected_data_sha256:/);
-  assert.match(text, /ref:\s*\$\{\{ inputs\.source_main_sha \}\}/);
-  assert.match(text, /ref:\s*\$\{\{ inputs\.state_sha \}\}/);
+  assert.match(text, /ref:\s*main/);
+  assert.match(text, /ref:\s*ops-state/);
+  assert.match(text, /git -C source rev-parse HEAD\)" = "\$EXPECTED_MAIN_SHA"/);
+  assert.match(text, /git -C state rev-parse HEAD\)" = "\$EXPECTED_STATE_SHA"/);
   assert.match(text, /persist-credentials:\s*false/g);
   assert.match(text, /runtime-manifest\.json/);
   assert.match(text, /OPS_STATE_AUTHORITATIVE/);
