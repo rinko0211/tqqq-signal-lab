@@ -11,7 +11,8 @@ function bindActualWorkflowContracts(){
     const s=files[name];
     must(s,/source_main_sha=\$\(git -C source rev-parse HEAD\)/,`${name} capture exact main`);
     must(s,/base_state_sha=\$\(git -C state rev-parse HEAD\)/,`${name} capture exact state`);
-    must(s,/git -C state fetch origin ops-state/,`${name} refresh ops-state`);
+    must(s,/main:refs\/remotes\/origin\/main ops-state:refs\/remotes\/origin\/ops-state/,`${name} refresh main+ops-state heads`);
+    must(s,/git -C state rev-parse origin\/main[^\n]*EXPECTED_MAIN_SHA|EXPECTED_MAIN_SHA[^\n]*git -C state rev-parse origin\/main/s,`${name} stale-main CAS`);
     must(s,/git -C state rev-parse origin\/ops-state[^\n]*EXPECTED_BASE_STATE_SHA|EXPECTED_BASE_STATE_SHA[^\n]*git -C state rev-parse origin\/ops-state/s,`${name} stale-state CAS`);
     must(s,/git -C state push origin HEAD:ops-state/,`${name} state-only push`);
     assert.doesNotMatch(s,/git[^\n]*push[^\n]*HEAD:main/,`${name} must not push main`);
