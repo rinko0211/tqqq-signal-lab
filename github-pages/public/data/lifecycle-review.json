@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-10-08T07:27:40.525Z",
+  "updatedAt": "2026-10-09T07:26:06.355Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -10,7 +10,7 @@
   },
   "events": [],
   "current": {
-    "asOf": "2026-10-08",
+    "asOf": "2026-10-09",
     "stage": "ACCUMULATING",
     "systemDecision": "ACCUMULATING",
     "userAction": "NONE",
@@ -24,21 +24,21 @@
         "promotionSelectable": false,
         "promotionMerit": "INCUMBENT",
         "reasons": [
-          "Missing/invalid ratio 3.03% > 1%"
+          "Missing/invalid ratio 2.94% > 1%"
         ],
-        "observations": 32,
-        "liveObservations": 32,
-        "missingRatio": 0.030303030303030304,
+        "observations": 33,
+        "liveObservations": 33,
+        "missingRatio": 0.029411764705882353,
         "executions": 2,
-        "actionDaysPerYear": 15.75,
+        "actionDaysPerYear": 15.272727272727272,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.18195670854297186,
-        "sortino": 7.324269351417932,
-        "calmar": 35.68335004517801,
+        "totalReturn": 0.13403954468312174,
+        "sortino": 4.978670878444223,
+        "calmar": 21.268060498777974,
         "maxDd": -0.07242489908528327,
         "historicalDd": -0.3816,
         "adverseDdFloor": -0.48160000000000003,
@@ -54,27 +54,27 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Missing/invalid ratio 3.23% > 1%",
-          "Only 31 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
+          "Missing/invalid ratio 3.13% > 1%",
+          "Only 32 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 31,
-        "liveObservations": 30,
-        "missingRatio": 0.03225806451612903,
+        "observations": 32,
+        "liveObservations": 31,
+        "missingRatio": 0.03125,
         "executions": 1,
-        "actionDaysPerYear": 8.4,
+        "actionDaysPerYear": 8.129032258064516,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.03925373374446939,
-        "sortino": 2.784075237498703,
-        "calmar": 4.857888691628425,
+        "totalReturn": 0.025656897707467374,
+        "sortino": 1.8984381975755735,
+        "calmar": 2.9185135131846907,
         "maxDd": -0.07565211734859789,
         "historicalDd": -0.3457,
         "adverseDdFloor": -0.4457,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 31,
+        "paretoCommonDays": 32,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -85,27 +85,27 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Missing/invalid ratio 3.23% > 1%",
-          "Only 31 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
+          "Missing/invalid ratio 3.13% > 1%",
+          "Only 32 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 31,
-        "liveObservations": 30,
-        "missingRatio": 0.03225806451612903,
+        "observations": 32,
+        "liveObservations": 31,
+        "missingRatio": 0.03125,
         "executions": 1,
-        "actionDaysPerYear": 8.4,
+        "actionDaysPerYear": 8.129032258064516,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.027781235697940776,
-        "sortino": 2.8336628026165283,
-        "calmar": 4.946610568376433,
+        "totalReturn": 0.018778146453089395,
+        "sortino": 1.9463853108799967,
+        "calmar": 3.1280396580797363,
         "maxDd": -0.050441361916771954,
         "historicalDd": -0.2416,
         "adverseDdFloor": -0.3416,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 31,
+        "paretoCommonDays": 32,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -116,27 +116,27 @@
         "promotionSelectable": false,
         "promotionMerit": "NOT_EVALUATED",
         "reasons": [
-          "Missing/invalid ratio 3.23% > 1%",
-          "Only 31 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
+          "Missing/invalid ratio 3.13% > 1%",
+          "Only 32 consecutive clean common NYSE sessions since the latest missing session; Pareto merit requires 63"
         ],
-        "observations": 31,
-        "liveObservations": 30,
-        "missingRatio": 0.03225806451612903,
+        "observations": 32,
+        "liveObservations": 31,
+        "missingRatio": 0.03125,
         "executions": 2,
-        "actionDaysPerYear": 16.8,
+        "actionDaysPerYear": 16.258064516129032,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.12819513051137266,
-        "sortino": 8.059011455705535,
-        "calmar": 34.43978855646081,
+        "totalReturn": 0.0979163227584483,
+        "sortino": 5.576344644459531,
+        "calmar": 22.46892323732353,
         "maxDd": -0.048369446268330174,
         "historicalDd": -0.2705,
         "adverseDdFloor": -0.37050000000000005,
         "evidence": "INSUFFICIENT",
-        "paretoCommonDays": 31,
+        "paretoCommonDays": 32,
         "decision": "CONTINUE_FORWARD"
       }
     ],
