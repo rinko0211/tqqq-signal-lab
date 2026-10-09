@@ -1,42 +1,42 @@
 {
-  "generatedAt": "2026-10-08T02:10:36.806Z",
-  "dataDate": "2026-10-07",
+  "generatedAt": "2026-10-09T02:23:20.111Z",
+  "dataDate": "2026-10-08",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
   "assetTicker": "TQQQ",
-  "assetClose": 83.62,
-  "tqqqClose": 83.62,
+  "assetClose": 80.23,
+  "tqqqClose": 80.23,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
   "state": "latest",
   "signal": {
-    "date": "2026-10-07",
-    "score": 89,
+    "date": "2026-10-08",
+    "score": 88,
     "components": {
       "trend": 100,
-      "momentum": 59.04974560336245,
-      "volatility": 91.1481161694611,
-      "market": 92.71487674768196
+      "momentum": 65.77979628123666,
+      "volatility": 87.85392800913007,
+      "market": 92.0112590237764
     },
-    "regime": "強い上昇",
+    "regime": "弱い上昇",
     "target": 1,
     "previousTarget": 1,
-    "reason": "強い上昇・総合89点のため100%を維持",
+    "reason": "弱い上昇・総合88点のため100%を維持",
     "nextChange": "総合48点未満、危機判定、または13%トレーリングストップ",
     "indicators": {
-      "sma50": 721.4520000000001,
-      "sma200": 670.8656500000002,
-      "rsi": 77.82626483021959,
-      "momentum63": 0.04763024001769711,
-      "realizedVol": 14.728199681959609,
-      "atrPct": 1.294666449842372,
-      "vix": 15.08
+      "sma50": 723.1690000000001,
+      "sma200": 671.5183000000002,
+      "rsi": 66.54844838505385,
+      "momentum63": 0.030419980427561333,
+      "realizedVol": 15.806994042924504,
+      "atrPct": 1.324938450072846,
+      "vix": 15.41
     },
-    "executionDate": "2026-10-08"
+    "executionDate": "2026-10-09"
   },
   "suggestion": "100%を維持。売買なし。",
   "warnings": [
-    "VIX: 他銘柄と一致しない2241営業日を除外しました",
+    "VIX: 他銘柄と一致しない2242営業日を除外しました",
     "TQQQ・QQQ・SPYおよびPhase-1 cross-ticker候補はNasdaq HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
     "Phase 1ではQLD/SSO/ROM/USDを実ETF価格で追加し、Synthetic leveraged historyは使用しません。",
     "USDとSOXLは異なる半導体指数を追跡するため、純粋な2x対3x倍率比較として扱いません。",
