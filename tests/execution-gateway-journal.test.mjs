@@ -74,7 +74,11 @@ test('32 simultaneous in-process claims reserve only one session',async t=>{
   const x=await harness(t);
   const outcomes=await Promise.all(Array.from({length:32},()=>reserve(x)));
   assert.equal(outcomes.filter(z=>z.status==='PAPER_RESERVED').length,1);
-  assert.equal(outcomes.filter(z=>z.reason==='DUPLICATE_PAPER_SESSION').length,31);
+  assert.equal(outcomes.filter(z=>z.status==='REJECTED' &&
+    ['DUPLICATE_PAPER_SESSION','UNRESOLVED_JOURNAL_SLOT'].includes(z.reason)).length,31);
+  // Another process can observe an exclusive but not-yet-fsynced slot.
+  // Such a race must fail closed, then a subsequent attempt sees a duplicate.
+  assert.equal((await reserve(x)).reason,'DUPLICATE_PAPER_SESSION');
 });
 
 function childClaim(x) {
@@ -99,7 +103,9 @@ test('independent node processes cannot claim same local paper session twice',as
   const x=await harness(t);
   const outcomes=await Promise.all(Array.from({length:6},()=>childClaim(x)));
   assert.equal(outcomes.filter(z=>z.status==='PAPER_RESERVED').length,1);
-  assert.equal(outcomes.filter(z=>z.reason==='DUPLICATE_PAPER_SESSION').length,5);
+  assert.equal(outcomes.filter(z=>z.status==='REJECTED' &&
+    ['DUPLICATE_PAPER_SESSION','UNRESOLVED_JOURNAL_SLOT'].includes(z.reason)).length,5);
+  assert.equal((await reserve(x)).reason,'DUPLICATE_PAPER_SESSION');
 });
 test('corrupt persisted claim becomes permanent unresolved barrier',async t=>{
   const x=await harness(t);await reserve(x);
