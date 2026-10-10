@@ -159,8 +159,8 @@ test('offline signed proof can corroborate verified GitHub blobs but never autho
 });
 test('genuine signed proof bound to a different state cannot corroborate GitHub observation',async()=>{
  const m=mockGitHub(),inspection=await inspect(m),proofArgs=offlineProof(inspection);
- inspection.snapshot.stateSha=H('c'); // test mutates newly allocated snapshot without private authority
- assert.equal(corroborateReadOnlySourceWithOfflineProof({inspection,proofArgs}).reason,'SIGNED_GITHUB_CONTENT_MISMATCH');
+ const changed={...inspection,snapshot:{...inspection.snapshot,stateSha:H('c')}};
+ assert.equal(corroborateReadOnlySourceWithOfflineProof({inspection:changed,proofArgs}).reason,'SIGNED_GITHUB_CONTENT_MISMATCH');
 });
 test('injected changed input with detached proof cannot corroborate',async()=>{
  const m=mockGitHub(),inspection=await inspect(m),proofArgs=offlineProof(inspection);
