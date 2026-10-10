@@ -40,7 +40,8 @@ function fixture(){
   const origin={repository:'rinko0211/tqqq-signal-lab',
     branch:'ops-state',stateSha:'a'.repeat(40),codeSha:'b'.repeat(40)};
   const sourcePayload={schemaVersion:2,mode:'PAPER_ONLY',origin,
-    signal:input.signal,status:input.status,session:input.session,
+    signal:structuredClone(input.signal),status:structuredClone(input.status),
+    session:structuredClone(input.session),
     expiresAt:'2026-10-11T09:00:00.000Z'};
   const calendarPayload={schemaVersion:2,mode:'PAPER_ONLY',
     exchange:'XNYS',sourceLabel:'OFFLINE_CALENDAR_FIXTURE',
