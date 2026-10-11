@@ -1,6 +1,10 @@
 name: Daily TQQQ Signal
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/daily-signal.yml'
   schedule:
     - cron: "30 22 * * 1-5"
     - cron: "30 1 * * 2-6"
@@ -241,3 +245,68 @@ jobs:
           test "$PERSIST_RESULT" = "success"
           test "$DEPLOY_RESULT" = "success"
           test "$DATA_FAILURE" != "true"
+
+
+  # This UI-only path is separate from the scheduled research writer. The
+  # locked-down state-plane reusable workflow remains the only Pages authority.
+  ui_prepare:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      source_sha: ${{ steps.pins.outputs.source_sha }}
+      state_sha: ${{ steps.pins.outputs.state_sha }}
+      data_sha: ${{ steps.pins.outputs.data_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          path: source
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ops-state
+          path: state
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify existing operational state remains immutable
+        id: pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "$GITHUB_SHA"
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          m=json.loads(Path('state/state-plane/runtime-manifest.json').read_text())
+          p=json.loads(Path('state/github-pages/public/data/production-config.json').read_text())
+          q=json.loads(Path('state/github-pages/public/data/status.json').read_text())
+          signal=json.loads(Path('state/github-pages/public/data/signal.json').read_text())
+          assert m['mode']=='OPS_STATE_AUTHORITATIVE' and m['authoritative'] is True
+          assert p['mode']=='RESEARCH' and p['approvedByHuman'] is False
+          assert q['actionStatus']=='success' and q['marketDataDate']==signal['dataDate']
+          assert signal['platformMode']=='RESEARCH'
+          PY
+          data_hash="$(cd state && find github-pages/public/data -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
+          expected="$(python -c 'import json;print(json.load(open("state/state-plane/runtime-manifest.json"))["dataTreeSha256"])')"
+          test "$data_hash" = "$expected"
+          echo "source_sha=$(git -C source rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "state_sha=$(git -C state rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "data_sha=$data_hash" >> "$GITHUB_OUTPUT"
+
+  ui_deploy:
+    needs: [ui_prepare]
+    if: github.event_name == 'push' && needs.ui_prepare.result == 'success'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/state-plane-deploy.yml
+    with:
+      source_main_sha: ${{ needs.ui_prepare.outputs.source_sha }}
+      state_sha: ${{ needs.ui_prepare.outputs.state_sha }}
+      expected_data_sha256: ${{ needs.ui_prepare.outputs.data_sha }}
+      ui_only: true
