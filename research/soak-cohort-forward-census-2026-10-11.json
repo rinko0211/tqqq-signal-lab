@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "documentType": "AUDITED_SOAK_COHORT_CENSUS_SNAPSHOT",
+  "auditedOnJst": "2026-10-11",
+  "scope": "ONLY_VERSIONS_WITH_IMMUTABLE_RECORDS_IN_TQQQ_DAILY_OR_PHASE5_OR_GOLD50_PHASEC_SOAK",
+  "finalUserProduct": "AUTOMATED_RESEARCH_SIGNALS_WITH_MANUAL_USER_BROKER_ORDERS_ONLY",
+  "liveBrokerOrderAllowed": false,
+  "brokerApiIntegrationApproved": false,
+  "autoTradingRoadmapApproved": false,
+  "manualOrderCountTargetPerYear": {
+    "preferredMaximum": 40,
+    "interpretation": "actual user-entered brokerage order legs; distinct from Action Days",
+    "notYetValidatedForAllCandidates": true
+  },
+  "counts": {
+    "tqqqStrategyCandidates": 6,
+    "tqqqBenchmarks": 2,
+    "goldStrategyCandidates": 1,
+    "totalCandidateStrategies": 7,
+    "totalObservedSeriesIncludingBenchmarks": 9,
+    "excludedStaleLegacyTracks": 2
+  },
+  "evaluationPolicy": {
+    "incumbent": "VS13-v1.0",
+    "selection": "NONE_UNTIL_SUFFICIENT_COMPARABLE_FORWARD_EVIDENCE",
+    "preserveRecordedVersions": true,
+    "allowSilentRetuning": false,
+    "allowBackdating": false,
+    "allowAutoPromotion": false,
+    "allowBrokerOrderSubmission": false,
+    "laterStartsDoNotInheritEarlierObservations": true,
+    "doNotEquateOperationalSoakWithStrategyEligibility": true
+  },
+  "evidence": {
+    "tqqqRepository": "rinko0211/tqqq-signal-lab",
+    "tqqqMainCommitAtAudit": "71d87e6a821615ffd551fca2deb8044931be7f0d",
+    "tqqqOpsStateCommitAtAudit": "2953d550c4c92668cdbda5610f35144c85662df4",
+    "goldRepository": "rinko0211/gold50-shadow-monitor",
+    "goldMainCommitAtAudit": "51ab2f3524cbd0ec29e4ab1050172bce34f0ca42",
+    "tqqqMainForwardLedger": "github-pages/public/data/forward-ledger.json",
+    "tqqqPhase5ForwardLedger": "github-pages/public/data/phase-5-forward-ledger.json",
+    "tqqqForwardSummary": "github-pages/public/data/forward-summary.json",
+    "tqqqPhase5Status": "github-pages/public/data/phase-5-forward-status.json",
+    "tqqqSoakCharter": "research/unattended-soak-charter-2026-08-29.md",
+    "tqqqPhase5Charter": "research/phase-5-forward-gate-2026-08-26.md",
+    "goldPhaseCStatus": "phase-c/status.json",
+    "goldPhaseCObservations": "phase-c/observations.jsonl"
+  },
+  "entries": [
+    {
+      "strategyId": "VS13",
+      "version": "VS13-v1.0",
+      "asset": "TQQQ",
+      "role": "INCUMBENT_CHAMPION",
+      "forwardTrack": "DAILY_MAIN",
+      "forwardStarted": "2026-08-21",
+      "lastObserved": "2026-10-09",
+      "records": 35,
+      "validLive": 34,
+      "nonSignalObservationOnly": 1,
+      "accounting": "FORWARD_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "STRATEGY"
+    },
+    {
+      "strategyId": "VS12",
+      "version": "VS12-v1.0",
+      "asset": "TQQQ",
+      "role": "CHALLENGER",
+      "forwardTrack": "DAILY_MAIN",
+      "forwardStarted": "2026-08-21",
+      "lastObserved": "2026-10-09",
+      "records": 35,
+      "validLive": 34,
+      "nonSignalObservationOnly": 1,
+      "accounting": "FORWARD_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "STRATEGY"
+    },
+    {
+      "strategyId": "VT30",
+      "version": "VT30-v1.0",
+      "asset": "TQQQ",
+      "role": "RISK_CONTROL",
+      "forwardTrack": "DAILY_MAIN",
+      "forwardStarted": "2026-08-21",
+      "lastObserved": "2026-10-09",
+      "records": 35,
+      "validLive": 34,
+      "nonSignalObservationOnly": 1,
+      "accounting": "FORWARD_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "STRATEGY"
+    },
+    {
+      "strategyId": "TQQQ_BH",
+      "version": "TQQQ-BH-v1.0",
+      "asset": "TQQQ",
+      "role": "BENCHMARK",
+      "forwardTrack": "DAILY_MAIN",
+      "forwardStarted": "2026-08-21",
+      "lastObserved": "2026-10-09",
+      "records": 35,
+      "validLive": 34,
+      "nonSignalObservationOnly": 1,
+      "accounting": "BENCHMARK_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "BENCHMARK"
+    },
+    {
+      "strategyId": "QQQ_BH",
+      "version": "QQQ-BH-v1.0",
+      "asset": "QQQ",
+      "role": "BENCHMARK",
+      "forwardTrack": "DAILY_MAIN",
+      "forwardStarted": "2026-08-21",
+      "lastObserved": "2026-10-09",
+      "records": 35,
+      "validLive": 34,
+      "nonSignalObservationOnly": 1,
+      "accounting": "BENCHMARK_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "BENCHMARK"
+    },
+    {
+      "strategyId": "UPRO_SPBT",
+      "version": "UPRO-SPBT-v1.0",
+      "asset": "UPRO",
+      "role": "PRIMARY_CHALLENGER",
+      "forwardTrack": "PHASE5",
+      "forwardStarted": "2026-08-25",
+      "lastObserved": "2026-10-09",
+      "records": 33,
+      "validLive": 32,
+      "nonSignalObservationOnly": 1,
+      "accounting": "FORWARD_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "STRATEGY"
+    },
+    {
+      "strategyId": "SSO_SPBT_SCALED",
+      "version": "SSO-SPBT-Scaled-v1.0",
+      "asset": "SSO",
+      "role": "S&P_LEVERAGE_CONTROL",
+      "forwardTrack": "PHASE5",
+      "forwardStarted": "2026-08-25",
+      "lastObserved": "2026-10-09",
+      "records": 33,
+      "validLive": 32,
+      "nonSignalObservationOnly": 1,
+      "accounting": "FORWARD_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "STRATEGY"
+    },
+    {
+      "strategyId": "QLD_VS13_SCALED",
+      "version": "QLD-VS13-Scaled-v1.0",
+      "asset": "QLD",
+      "role": "NASDAQ_BALANCED_CONTROL",
+      "forwardTrack": "PHASE5",
+      "forwardStarted": "2026-08-25",
+      "lastObserved": "2026-10-09",
+      "records": 33,
+      "validLive": 32,
+      "nonSignalObservationOnly": 1,
+      "accounting": "FORWARD_CURRENT_AT_SNAPSHOT",
+      "strategyVsBenchmark": "STRATEGY"
+    },
+    {
+      "strategyId": "TQQQ-Gold50-Research-v0.1",
+      "version": "gold-overlay-shadow-0.1.0",
+      "asset": "TQQQ+GLD+CASH",
+      "role": "GOLD_SHADOW_CHALLENGER",
+      "forwardTrack": "GOLD_PHASE_C",
+      "forwardStarted": "2026-09-08",
+      "lastObserved": "2026-09-21",
+      "records": 10,
+      "validLive": 10,
+      "nonSignalObservationOnly": 0,
+      "accounting": "SOAK_C10_COMPLETE_STOP_GATE_LONG_FORWARD_NOT_ACTIVE",
+      "strategyVsBenchmark": "STRATEGY"
+    }
+  ],
+  "exclusions": [
+    {
+      "versions": [
+        "UPRO-VS13-v1.0",
+        "UPRO-Native-v1.0"
+      ],
+      "reason": "Track B legacy archived 3-record ledger stale since 2026-08-24; not a cohort of the observed Daily/Phase5 C4 soak"
+    },
+    {
+      "versions": [
+        "PHASE_4A_COMMON",
+        "PHASE_4B_NATIVE_ENHANCED"
+      ],
+      "reason": "Rejected by frozen 2026-08-25 Phase4 historical research; not entered into Phase5 Forward"
+    },
+    {
+      "versions": [
+        "research-only parameter grids or other tickers"
+      ],
+      "reason": "Not enrolled into the original observed soak cohort"
+    }
+  ],
+  "findings": [
+    "The TQQQ Daily main ledger has five prospective series, 35 records each (34 valid LIVE plus 1 observation-only non-signal record), market data through 2026-10-09.",
+    "The separate Phase5 ledger has three prospective versions, 33 records each (32 valid LIVE plus 1 observation-only non-signal record), market data through 2026-10-09.",
+    "Gold50 Phase C had 61 attempts; only 10 distinct sessions counted successful, 27 duplicate pass attempts not counted, and 24 blocked attempts, ending 2026-09-21. Gold50 shadow is stopped at C10/10; not automatically continuing Forward.",
+    "The operational C4 soak tracks Daily, Phase5, Lifecycle workflow consistency; it is not 10-session per-strategy performance sufficiency.",
+    "The previously discussed full multi-dozen universe is OUTSIDE this user-narrowed cohort."
+  ],
+  "nextActions": [
+    "Continue existing TQQQ 8 series without re-enrollment or rewriting history; monitor missing observations and risk regimes.",
+    "Design a separately versioned Gold50 long-horizon prospective comparison using ONLY the existing frozen Gold50 mapper, subject to explicit run-scope review and reliable GLD bars.",
+    "Compare all seven strategy candidates and two benchmarks only across eligible common Forward periods and varied regimes; report actual manual order counts as separate metric.",
+    "Human manually places any brokerage order; never infer authorization from a research result."
+  ]
+}
