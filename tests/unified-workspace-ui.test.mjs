@@ -53,7 +53,7 @@ test("long-form assets and Native/Gold50 remain independently inspectable behind
  assert.match(page,/Gold50詳細/);
  assert.match(page,/<ForwardView ledger=\{forwardLedger\}/);
  assert.match(page,/<Phase5ForwardPanel productionForward=\{forwardLedger\}/);
- assert.match(page,/<GoldIntegratedForward compact/);
+ assert.match(page,/<GoldIntegratedForward tqqqSignalDate/);
  assert.match(gold,/非観測期間/);
  assert.match(p5,/FORWARD/);
 });
