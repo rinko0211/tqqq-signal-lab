@@ -51,10 +51,12 @@ test("Phase C C10/10 never contributes a Gold Forward strategy row",()=>{
  assert.equal(e.phaseC?.successfulSessions,10);
 });
 test("explicit missing Forward sessions create visible split segments, not made-up signals",()=>{
- const r1=row("2026-10-12"),r2=row("2026-10-15");
+ const r1=row("2026-10-12"),r2={...row("2026-10-15"),
+  continuity:{kind:"UNOBSERVED_GAP" as const,expectedDate:"2026-10-13",actualDate:"2026-10-15"},
+  execution:{...row("2026-10-15").execution,estimatedManualOrderLegs:null,actionDay:null,manualLegEstimateReliable:false}};
  const e=parseGoldForwardEvidence(ready([r1,r2]),phase,[r1,r2].map(JSON.stringify).join("\n"));
  assert.equal(e.ok,true);assert.equal(e.segments.length,2);
- assert.deepEqual(e.gaps,[{after:"2026-10-12",before:"2026-10-15"}]);
+ assert.deepEqual(e.gaps,[{after:"2026-10-13",before:"2026-10-15"}]);
  assert.equal(e.rows.length,2);
 });
 test("duplicate and reversed records fail closed",()=>{
@@ -104,4 +106,26 @@ test("manual order projection never invokes brokerage and floors whole shares",(
 test("unreadable or oversized external file must not silently trust cached prices",()=>{
  assert.equal(parseGoldForwardEvidence(empty(),phase,"x".repeat(500001)).ok,false);
  assert.equal(parseGoldForwardEvidence(empty(),phase,"{not-json}").ok,false);
+});
+
+test("Gold50 may begin after the original first eligible day ONLY with a disclosed missed-start period",()=>{
+ const r={...row("2026-10-13"),
+  continuity:{kind:"UNOBSERVED_GAP" as const,expectedDate:"2026-10-12",actualDate:"2026-10-13"},
+  execution:{...row("2026-10-13").execution,estimatedManualOrderLegs:null,actionDay:null,manualLegEstimateReliable:false}};
+ const e=parseGoldForwardEvidence(ready([r]),phase,JSON.stringify(r));
+ assert.equal(e.ok,true);
+ assert.deepEqual(e.gaps,[{after:"2026-10-12",before:"2026-10-13"}]);
+ assert.equal(e.segments[0].from,"2026-10-13");
+});
+test("Gold50 never accepts unmarked or falsely marked discontinuities",()=>{
+ const r=row("2026-10-13");
+ assert.equal(parseGoldForwardEvidence(ready([r]),phase,JSON.stringify(r)).ok,false);
+ const bad={...row("2026-10-12"),
+  continuity:{kind:"UNOBSERVED_GAP" as const,expectedDate:"2026-10-12",actualDate:"2026-10-12"}};
+ assert.equal(parseGoldForwardEvidence(ready([bad]),phase,JSON.stringify(bad)).ok,false);
+});
+test("misleading zero-order assertion across missing market sessions is rejected",()=>{
+ const r={...row("2026-10-13"),
+  continuity:{kind:"UNOBSERVED_GAP" as const,expectedDate:"2026-10-12",actualDate:"2026-10-13"}};
+ assert.equal(parseGoldForwardEvidence(ready([r]),phase,JSON.stringify(r)).ok,false);
 });
