@@ -28,6 +28,7 @@ import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
 import {GoldIntegratedForward} from "./gold-forward-ui";
+import {UnifiedForwardBoard} from "./unified-forward-board";
 import {derivePrimaryAction} from "../lib/primary-action";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"provider_pending"|"failed";message?:string;errors?:string[];catchup?:{priorDataDate?:string|null;processedDates?:string[];observationOnlyDates?:string[];displayedSignalDate?:string|null}};
@@ -47,6 +48,8 @@ const TABS = [
   ["lifecycle", "Review / 次のAction"],
   ["forward", "Forward Test"],
   ["gold", "Gold50 / Forward"],
+  ["researchhub", "研究・戦略詳細"],
+  ["managehub", "運用・設定"],
   ["compare", "戦略比較"],
   ["walk", "Walk-Forward"],
   ["year", "年別成績"],
@@ -66,6 +69,19 @@ const TABS = [
   ["spec", "計算・戦略仕様"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
+const MAIN_NAV = [
+ ["signal","今日の判断"],
+ ["dashboard","総合ダッシュボード"],
+ ["forward","9系列 Forward"],
+ ["researchhub","研究・戦略詳細"],
+ ["managehub","運用・設定"],
+] as const;
+const RESEARCH_MENU:Tab[]=["compare","walk","year","trades","robust","research","deep","universe","native"];
+const MANAGEMENT_MENU:Tab[]=["lifecycle","production","paper","status","data","guide","roadmap","glossary","spec"];
+const NAV_LABEL=new Map<string,string>(TABS.map(([id,label])=>[id,label]));
+const currentGroup=(tab:Tab):Tab=>
+ RESEARCH_MENU.includes(tab)?"researchhub":MANAGEMENT_MENU.includes(tab)?"managehub":tab==="gold"?"forward":tab;
+
 const RESEARCH_TABS=new Set<Tab>(["compare","walk","year","trades","robust","research","data"]);
 type Holdings = {
   ratio: string;
@@ -411,6 +427,8 @@ export default function Home() {
     authorityUnsafe=primaryAction.authorityUnsafe,
     signalUnsafe=primaryAction.signalUnsafe,
     action = primaryAction.message;
+  const activeGroup=currentGroup(tab);
+  const activeMenu=activeGroup==="researchhub"?RESEARCH_MENU:activeGroup==="managehub"?MANAGEMENT_MENU:null;
   const sourceLabel =
     dataset?.source === "auto"
       ? "実データ・自動取得"
@@ -436,15 +454,10 @@ export default function Home() {
             <small>MANUAL-ORDER RESEARCH · NO AUTO TRADING</small>
           </div>
         </div>
-        <nav>
-          {TABS.map(([id, label]) => (
-            <button
-              key={id}
-              className={tab === id ? "active" : ""}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
+        <nav className="mainNav" aria-label="主要メニュー">
+          {MAIN_NAV.map(([id,label]) => (
+            <button key={id} type="button" className={activeGroup===id?"active":""}
+             aria-current={activeGroup===id?"page":undefined} onClick={()=>setTab(id)}>{label}</button>
           ))}
         </nav>
         <div className="tools">
@@ -467,6 +480,7 @@ export default function Home() {
         </div>
       </header>
       <section className="workspace">
+        {activeMenu&&<div className="researchSelector"><label htmlFor="detailScreenSelector">{activeGroup==="researchhub"?"研究方法・戦略":"運用・参照項目"}</label><select id="detailScreenSelector" value={tab} onChange={e=>setTab(e.target.value as Tab)}><option value={activeGroup}>{activeGroup==="researchhub"?"詳細研究の入口":"運用・設定の入口"}</option>{activeMenu.map(id=><option key={id} value={id}>{NAV_LABEL.get(id)}</option>)}</select></div>}
         <section className={`freshnessBar ${statusKind}`} aria-label="データ鮮度">
           <div><span>最終データ日</span><strong>{runtimeStatus?.marketDataDate||latestDate||"未取得"}</strong></div>
           <div><span>最終計算日時（日本時間）</span><strong>{generatedLabel}</strong></div>
@@ -566,10 +580,32 @@ export default function Home() {
             ticker={dailySignal?.assetTicker||"TQQQ"}
           />
         </>)}
-        {tab==="dashboard" && <IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status} platformMode={productionConfig?.mode} humanApproved={productionConfig?.approvedByHuman} productionTicker={productionConfig?.selectedTicker||undefined} productionVersion={productionConfig?.strategyVersion||undefined}/>}
+        {tab==="dashboard" && <><UnifiedForwardBoard tqqq={forwardLedger} phase5={phase5Ledger}/><details className="detailPanel"><summary>従来の運用ダッシュボード・Phase5運用詳細を表示</summary><IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status} platformMode={productionConfig?.mode} humanApproved={productionConfig?.approvedByHuman} productionTicker={productionConfig?.selectedTicker||undefined} productionVersion={productionConfig?.strategyVersion||undefined}/></details></>}
         {tab==="lifecycle" && <LifecycleActionCenter/>}
+        {tab==="researchhub" && <section className="hubLayout">
+          <article className="guideHero"><em>STRATEGY LAB · DETAIL ON DEMAND</em><h2>戦略研究をひとつの入口に整理</h2><p>日々の実測比較は「9系列 Forward」に集約。こちらはHistorical検証・Native設計根拠・ETF横断研究などの詳細資料です。追加の独立Forward系列ではありません。</p></article>
+          {([["compare","過去成績・条件比較","戦略比較、Walk-Forward、年別成績"],["universe","ETF別・Native研究","UPRO・SSO・QLDと各Ticker固有ルールの根拠"],["deep","監査・頑健性","過剰適合・崩れ・週次調査と再現性確認"]] as const).map(([id,title,desc])=>
+            <button key={id} className="hubCard" type="button" onClick={()=>setTab(id)}><strong>{title} →</strong><span>{desc}</span></button>)}
+        </section>}
+        {tab==="managehub" && <section className="hubLayout">
+          <article className="guideHero"><em>OPERATIONS · HUMAN APPROVAL ONLY</em><h2>運用状況・設定・説明を整理</h2><p>実行判断、システム状態、Paper Trading、使い方を一箇所にまとめました。研究候補は自動昇格せず、証券会社への注文も行いません。</p></article>
+          {([["lifecycle","次のアクション","人間承認と正式レビューの要否"],["status","更新・障害確認","市場データ、Forwardの健全性"],["paper","Paper Trading","模擬運用の詳細。実口座とは非連携"],["guide","使い方・資料","データ管理、仕様、用語集"]] as const).map(([id,title,desc])=>
+            <button key={id} className="hubCard" type="button" onClick={()=>setTab(id)}><strong>{title} →</strong><span>{desc}</span></button>)}
+        </section>}
         {tab==="gold" && <GoldIntegratedForward tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/> }
-        {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status} productionVersion={productionConfig?.strategyVersion||undefined}/><GoldIntegratedForward compact tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/></>}
+        {tab==="forward" && <><UnifiedForwardBoard tqqq={forwardLedger} phase5={phase5Ledger}/>
+          <div className="forwardDetails">
+            <details className="detailPanel"><summary><strong>TQQQ・比較指標</strong><span>VS13 / VS12 / VT30 / BH · 資産曲線・DD・研究凍結条件</span></summary>
+              {forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}
+            </details>
+            <details className="detailPanel"><summary><strong>他ETF・Native Forward</strong><span>UPRO / SSO / QLD · コスト・資産曲線・Evidence</span></summary>
+              <Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status} productionVersion={productionConfig?.strategyVersion||undefined}/>
+            </details>
+            <details className="detailPanel"><summary><strong>Gold50詳細</strong><span>TQQQ / GLD / 現金 · 観測・不連続区間・手動売買試算</span></summary>
+              <GoldIntegratedForward tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/>
+            </details>
+          </div>
+        </>}
         {compareAnalysis && tab === "compare" && (
           <CompareView
             analysis={compareAnalysis}

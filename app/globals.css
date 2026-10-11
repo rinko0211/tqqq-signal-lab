@@ -33,3 +33,52 @@
 .goldIntegrated button{padding:9px 13px;cursor:pointer}
 @media(max-width:850px){.goldKpis{grid-template-columns:repeat(2,minmax(0,1fr))}.goldTimeline{grid-template-columns:1fr}.goldInputs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.goldAllocation,.goldInputs{grid-template-columns:1fr}.goldKpis strong{font-size:18px}}
+
+
+/* COHORT_FIRST_UNIFIED_NAV — main five sections, one scorecard, existing detail available on demand */
+.top .mainNav{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:5px 0}
+.top .mainNav button{font-size:12px;line-height:1.35;white-space:nowrap;padding:10px 14px;border-radius:10px}
+.researchSelector{display:flex;align-items:center;gap:13px;max-width:100%;margin:0 0 18px;padding:12px 16px;border:1px solid var(--line);border-radius:10px;background:#111817}
+.researchSelector label{font-size:12px;color:var(--muted);white-space:nowrap}
+.researchSelector select{min-width:0;max-width:420px;flex:1;padding:11px 13px;border-radius:8px;border:1px solid var(--line);background:#0c1213;color:var(--text);font-size:14px}
+.hubLayout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:12px 0 22px}
+.hubLayout>.guideHero{grid-column:1/-1}
+.hubCard{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:9px;border:1px solid var(--line);border-radius:10px;background:#131a1a;color:var(--text);padding:19px;cursor:pointer;min-height:92px}
+.hubCard:hover,.hubCard:focus-visible{border-color:var(--cyan);outline-offset:3px}
+.hubCard strong{font-size:16px}
+.hubCard span{font-size:12px;color:var(--muted);line-height:1.7}
+.unifiedForward{margin:10px 0 22px;border:1px solid var(--line);border-radius:12px;background:#0e1414;padding:clamp(12px,2.3vw,24px)}
+.unifiedHeading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.unifiedHeading>div{min-width:0;flex:1}
+.unifiedHeading em{display:block;color:var(--cyan);font-size:10px;font-style:normal;letter-spacing:.1em;margin:0 0 8px}
+.unifiedHeading h2{font-size:clamp(19px,2.8vw,27px);margin:0 0 10px}
+.unifiedHeading p{margin:0 0 12px;max-width:740px;color:var(--muted);line-height:1.65;font-size:12px}
+.unifiedKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 18px}
+.unifiedKpis>div{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);background:#111b1b;border-radius:8px;padding:13px;min-width:0}
+.unifiedKpis small{font-size:10px;color:var(--muted)}
+.unifiedKpis strong{font-size:21px;overflow-wrap:anywhere}
+.unifiedKpis span{font-size:10px;color:var(--muted);line-height:1.4}
+.unifiedFilter{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.unifiedFilter button{padding:8px 12px;border-radius:18px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;cursor:pointer}
+.unifiedFilter button.selected{background:#143032;color:var(--cyan);border-color:var(--cyan)}
+.unifiedTable{max-width:100%;overflow-x:auto;border-radius:8px;border:1px solid var(--line)}
+.unifiedTable table{min-width:890px;width:100%}
+.unifiedTable th{white-space:nowrap;font-size:10px}
+.unifiedTable td{font-size:11px;vertical-align:middle}
+.unifiedTable td:first-child strong{display:block;white-space:nowrap}
+.unifiedTable td small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
+.unifiedTable .versionCell{font-size:10px;overflow-wrap:anywhere;min-width:135px}
+.unifiedTable .allocationCell{min-width:125px}
+.unifiedTable .goldUnifiedRow{border-left:3px solid var(--amber)}
+.unifiedForward>.note{font-size:11px;line-height:1.65;margin-top:13px}
+.forwardDetails{display:grid;gap:12px;margin:12px 0 20px}
+.detailPanel{border:1px solid var(--line);border-radius:10px;background:#101818;min-width:0}
+.detailPanel>summary{cursor:pointer;display:flex;align-items:center;flex-wrap:wrap;gap:8px 15px;padding:16px 20px;list-style-position:inside}
+.detailPanel>summary strong{font-size:15px}
+.detailPanel>summary span{font-size:11px;color:var(--muted);flex:1}
+.detailPanel[open]>summary{border-bottom:1px solid var(--line)}
+.detailPanel>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+.detailPanel>.unifiedForward,.detailPanel>.goldIntegrated,.detailPanel>.panel,.detailPanel>.guideHero{margin:16px}
+.detailPanel>.split,.detailPanel>.metrics,.detailPanel>.glossaryGrid,.detailPanel>.candidateCards{margin:16px}
+@media(max-width:1100px){.unifiedKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:750px){.top .mainNav{overflow-x:auto;flex-wrap:nowrap;max-width:100%;scrollbar-width:thin}.top .mainNav button{flex:0 0 auto;padding:9px 12px;font-size:11px}.hubLayout{grid-template-columns:1fr}.unifiedHeading{flex-direction:column}.unifiedKpis{gap:7px}.unifiedKpis strong{font-size:18px}.detailPanel>summary{padding:13px}.researchSelector{flex-wrap:wrap;padding:10px}.researchSelector select{max-width:100%}}
