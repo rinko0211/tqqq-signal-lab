@@ -3,8 +3,8 @@
   "mode": "OPS_STATE_AUTHORITATIVE",
   "authoritative": true,
   "writer": "daily-signal",
-  "sourceMainSha": "79bf5d89af270535101fcccc4b54ffc6290d263a",
-  "baseOpsStateSha": "efa8d6309bcccc0c929cb8fb17d2e618012d4e79",
-  "dataTreeSha256": "87721dccd6d4648dd9e1cb1e4d4bca2ceabfc2a70ea723f503eea7fb1af523ab",
-  "generatedAt": "2026-10-11T12:39:53.210258Z"
+  "sourceMainSha": "e2fd126a35a186b50b35cc687d99ef501103c8e2",
+  "baseOpsStateSha": "b7ce5cf4f0e4173a55f106c2f5155acf68ba3de0",
+  "dataTreeSha256": "5692cb36b0584c0f8251308c7dc9823f7c5f89e32de1b7f45bb3dc20f814a97e",
+  "generatedAt": "2026-10-11T13:17:13.111736Z"
 }
