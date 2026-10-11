@@ -91,7 +91,7 @@ test("Phase C and new Forward must not have a synthesized contiguous return",()=
 test("same existing TQQQ PWA displays Gold50 in the Forward tab and an internal Gold tab",()=>{
  const app=readFileSync("app/page.tsx","utf8");
  assert.match(app,/\["gold", "Gold50 \/ Forward"\]/);
- assert.match(app,/tab==="forward"[\s\S]*GoldIntegratedForward compact/);
+ assert.match(app,/tab==="forward"[\s\S]*GoldIntegratedForward tqqqSignalDate/);
  assert.match(app,/tab==="gold".*GoldIntegratedForward/);
  assert.doesNotMatch(app,/autoBrokerOrder\(/);
 });
