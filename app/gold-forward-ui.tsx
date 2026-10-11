@@ -34,7 +34,8 @@ export function GoldIntegratedForward({tqqqSignalDate,tqqqStatusDate,compact=fal
  const mismatch=Boolean(last&&(tqqqSignalDate!==last.marketDataDate||tqqqStatusDate!==last.marketDataDate));
  const age=status?.evaluatedAt?Date.now()-Date.parse(status.evaluatedAt):Infinity;
  const stale=!Number.isFinite(age)||age< -60000||age>96*3600*1000;
- const safe=ev.ok&&status?.state==="ACCUMULATING"&&Boolean(last)&&!mismatch&&!stale&&gaps.length===0;
+ const safe=ev.ok&&status?.state==="ACCUMULATING"&&Boolean(last)&&!mismatch&&!stale&&
+  (gaps.length===0||(segments.at(-1)?.count??0)>=2);
  const preview=useMemo(()=>{
   if(!safe||!last||Object.values(inputs).some(x=>x.trim()===""))return null;
   return manualGoldResearchProjection({weights:last.target,cashUsd:Number(inputs.cash),
@@ -84,10 +85,10 @@ export function GoldIntegratedForward({tqqqSignalDate,tqqqStatusDate,compact=fal
    </tr></thead><tbody>
     {rows.length?rows.slice().reverse().map(r=><tr key={r.marketDataDate}>
      <td>{r.marketDataDate}</td><td>{pct(r.target.TQQQ)}</td><td>{pct(r.target.GLD)}</td><td>{pct(r.target.CASH)}</td>
-     <td>{r.execution.actionDay?"あり":"なし"}</td><td>{r.execution.estimatedManualOrderLegs}</td>
+     <td>{r.execution.actionDay===null?"不明":r.execution.actionDay?"あり":"なし"}</td><td>{r.execution.estimatedManualOrderLegs===null?"不明":r.execution.estimatedManualOrderLegs}</td>
     </tr>):<tr><td colSpan={6}>新しい有効NYSE観測がありません。</td></tr>}
    </tbody></table></div>}
-   <p className="note">一覧はGold50の実際に保存されたシグナルのみ。自動発注記録や仮想口座損益ではありません。</p>
+   <p className="note">一覧はGold50の実際に保存されたシグナルのみ。欠測後の最初の行はAction Dayと推定注文数を「不明」と表示します。自動発注記録や仮想口座損益ではありません。</p>
   </article>
   {!compact&&<article className="panel"><em>MANUAL-ORDER PLANNING · RESEARCH ONLY</em><h2>本人用の参考株数計算</h2>
    <p>米ドル現金、現保有株数、証券会社で確認した現在価格を入力します。発注も入力内容の保存・外部送信も行いません。</p>

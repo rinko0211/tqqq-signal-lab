@@ -10,13 +10,15 @@ export type GoldForwardRow={
   strategyVersion:string;strategyId:string;mode:string;
   sourceTarget:number;signalSha256:string;statusSha256:string;gldDataSha256:string;
   target:GoldAllocation;status:string;brokerOrderAllowed:boolean;replayVerified:boolean;
-  execution:{earliestLegalDate:string;estimatedManualOrderLegs:number;actionDay:boolean;brokerOrderAllowed:boolean};
+  continuity?:{kind:"INITIAL"|"CONTIGUOUS"|"UNOBSERVED_GAP";expectedDate:string;actualDate:string};
+  execution:{earliestLegalDate:string;estimatedManualOrderLegs:number|null;manualLegEstimateReliable?:boolean;actionDay:boolean|null;brokerOrderAllowed:boolean};
 };
 export type GoldResearchStatus={
   baseline:string;startDate:string;state:string;validObservations:number;
   lastRecordedSession:string|null;nextExpectedSession:string;lastAllocation:GoldAllocation|null;
   attempt:string;reasonCode:string|null;evaluatedAt:string;mode:string;authority:string;
   brokerOrderAllowed:boolean;manualUserOrdersOnly:boolean;performanceCertification:string;
+  observedSegments?:number;unobservedGapCount?:number;
 };
 export type GoldPhaseCStatus={counter:string;phaseCState:string;successfulSessions:number;successfulDates:string[];updatedAt:string};
 export type GoldContinuitySegment={from:string;to:string;count:number;startIndex:number;endIndex:number};
@@ -69,25 +71,37 @@ export function parseGoldForwardEvidence(statusValue:unknown,phaseCValue:unknown
      !unit(r.sourceTarget)||!goldWeightsValid(r.target)||
      r.sourceTarget!==r.target.TQQQ||
      !r.execution||r.execution.brokerOrderAllowed!==false||
-     !Number.isSafeInteger(r.execution.estimatedManualOrderLegs)||
-     r.execution.estimatedManualOrderLegs<0||r.execution.estimatedManualOrderLegs>2||
      !isoDate(r.execution.earliestLegalDate)||r.execution.earliestLegalDate!==nextExecutionDate(r.marketDataDate))
     return fail("Gold50観測履歴の整合性を検証できません");
-   if(i===0){
-    if(r.marketDataDate!==GOLD_FORWARD_FIRST_SESSION)return fail("開始日より後からの暗黙のForward開始を拒否しました");
-    segments.push({from:r.marketDataDate,to:r.marketDataDate,count:1,startIndex:0,endIndex:0});
+   const expected=i===0?GOLD_FORWARD_FIRST_SESSION:nextExecutionDate(rows[i-1].marketDataDate);
+   if(r.marketDataDate<expected)return fail("Gold50履歴に重複・逆行・開始日以前の行があります");
+   const isGap=r.marketDataDate>expected;
+   if(isGap&&(r.continuity?.kind!=="UNOBSERVED_GAP"||r.continuity.expectedDate!==expected||
+     r.continuity.actualDate!==r.marketDataDate))
+    return fail("Gold50の欠測区間に署名された開始理由がありません");
+   if(!isGap&&r.continuity?.kind==="UNOBSERVED_GAP")
+    return fail("欠測のない区間に欠測マーカーがあります");
+   if(r.continuity&&r.continuity.kind!=="UNOBSERVED_GAP"&&r.continuity.kind!==(i===0?"INITIAL":"CONTIGUOUS"))
+    return fail("Gold50区間種別に矛盾があります");
+   if(isGap){
+    if(r.execution.estimatedManualOrderLegs!==null||r.execution.actionDay!==null||
+      r.execution.manualLegEstimateReliable!==false)
+     return fail("欠測後の売買脚数は不明として記録してください");
+    gaps.push({after:expected,before:r.marketDataDate});
+   }else if(!Number.isSafeInteger(r.execution.estimatedManualOrderLegs)||
+    r.execution.estimatedManualOrderLegs===null||r.execution.estimatedManualOrderLegs<0||
+    r.execution.estimatedManualOrderLegs>2||typeof r.execution.actionDay!=="boolean")
+    return fail("連続観測の注文回数形式が不正です");
+   if(i===0||isGap){
+    segments.push({from:r.marketDataDate,to:r.marketDataDate,count:1,startIndex:i,endIndex:i});
    }else{
-    const last=rows[i-1];
-    if(r.marketDataDate<=last.marketDataDate)return fail("Gold50履歴に重複または逆行があります");
-    if(nextExecutionDate(last.marketDataDate)!==r.marketDataDate){
-     gaps.push({after:last.marketDataDate,before:r.marketDataDate});
-     segments.push({from:r.marketDataDate,to:r.marketDataDate,count:1,startIndex:i,endIndex:i});
-    }else{
-     const seg=segments[segments.length-1];
-     seg.to=r.marketDataDate;seg.count++;seg.endIndex=i;
-    }
+    const seg=segments[segments.length-1];seg.to=r.marketDataDate;seg.count++;seg.endIndex=i;
    }
   }
+  if(s.observedSegments!==undefined&&s.observedSegments!==segments.length)
+   return fail("Gold50の区間数が台帳と不一致です");
+  if(s.unobservedGapCount!==undefined&&s.unobservedGapCount!==gaps.length)
+   return fail("Gold50の欠測数が台帳と不一致です");
   if(rows.length){
    if(s.lastRecordedSession!==rows.at(-1)!.marketDataDate||s.nextExpectedSession!==nextExecutionDate(rows.at(-1)!.marketDataDate)||
       !goldWeightsValid(s.lastAllocation)||rows.at(-1)!.target.TQQQ!==s.lastAllocation.TQQQ)
