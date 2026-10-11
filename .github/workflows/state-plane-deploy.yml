@@ -79,8 +79,6 @@ jobs:
               exit 1
             fi
           fi
-          : <<'PY'
-          PY
       - name: Overlay authoritative state onto validated code
         shell: bash
         run: |
