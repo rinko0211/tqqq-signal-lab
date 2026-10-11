@@ -15,11 +15,6 @@ on:
         description: "Expected operational data-tree SHA-256"
         required: true
         type: string
-      ui_only:
-        description: "Permit audited UI-only main change with unchanged ops-state"
-        required: false
-        default: false
-        type: boolean
 
 jobs:
   build:
@@ -33,7 +28,7 @@ jobs:
         with:
           ref: main
           path: source
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
       - name: Checkout current authoritative ops-state head without credentials
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -47,7 +42,6 @@ jobs:
           EXPECTED_MAIN_SHA: ${{ inputs.source_main_sha }}
           EXPECTED_STATE_SHA: ${{ inputs.state_sha }}
           EXPECTED_DATA_SHA: ${{ inputs.expected_data_sha256 }}
-          UI_ONLY: ${{ inputs.ui_only }}
         shell: bash
         run: |
           set -euo pipefail
@@ -65,20 +59,9 @@ jobs:
           assert m["schemaVersion"] == 1
           assert m["mode"] == "OPS_STATE_AUTHORITATIVE"
           assert m["authoritative"] is True
+          assert m["sourceMainSha"] == os.environ["EXPECTED_MAIN_SHA"]
           assert m["dataTreeSha256"] == os.environ["EXPECTED_DATA_SHA"]
-          assert m["sourceMainSha"] == os.environ["EXPECTED_MAIN_SHA"] or os.environ["UI_ONLY"] == "true"
           PY
-          if [ "$UI_ONLY" = "true" ]; then
-            source_base="$(python -c 'import json;print(json.load(open("state/state-plane/runtime-manifest.json"))["sourceMainSha"])')"
-            test "$(git -C source cat-file -t "$source_base")" = "commit"
-            # Only observed application shell, presentation and tests changed after
-            # the state-generation main. Never relax this for strategy/writer code.
-            git -C source diff --name-only "$source_base" "$EXPECTED_MAIN_SHA" | tee /tmp/validated-ui-paths
-            if grep -Ev '^(app/(page\.tsx|gold-forward-ui\.tsx|globals\.css)$|lib/gold-forward-evidence\.ts$|github-pages/public/sw\.js$|package\.json$|tests/gold-forward-evidence\.test\.ts$|research/[^/]+$|\.github/workflows/(daily-signal|state-plane-deploy)\.yml$)' /tmp/validated-ui-paths; then
-              echo "::error::Non-UI runtime changes since state generation"
-              exit 1
-            fi
-          fi
       - name: Overlay authoritative state onto validated code
         shell: bash
         run: |
