@@ -27,6 +27,7 @@ import {HEALTH_POLICY,DEGRADATION_RULES,PRODUCTION_SYSTEMS,productionConfigIsVal
 import type {Phase5Ledger} from "../lib/phase5-forward";
 import {IntegratedDashboard,Phase5ForwardPanel,Phase5PaperPanel,Phase5SystemStatus,type Phase5StatusFile} from "./phase5-ui";
 import {LifecycleActionCenter,LifecycleGlobalBanner} from "./lifecycle-ui";
+import {GoldIntegratedForward} from "./gold-forward-ui";
 import {derivePrimaryAction} from "../lib/primary-action";
 
 type RuntimeStatus={generatedAt?:string;actionRunId?:string;actionStatus?:"success"|"failed";marketDataDate?:string;signalDate?:string;lastForwardRecord?:string;forwardRecords?:number;forwardPersistent?:boolean;buildVersion?:string;dataSource?:string;jsonValid?:boolean;pwaExpected?:boolean;paperHistoryValid?:boolean;state?:"latest"|"market_closed"|"market_pending"|"not_updated"|"provider_pending"|"failed";message?:string;errors?:string[];catchup?:{priorDataDate?:string|null;processedDates?:string[];observationOnlyDates?:string[];displayedSignalDate?:string|null}};
@@ -45,6 +46,7 @@ const TABS = [
   ["dashboard", "運用ダッシュボード"],
   ["lifecycle", "Review / 次のAction"],
   ["forward", "Forward Test"],
+  ["gold", "Gold50 / Forward"],
   ["compare", "戦略比較"],
   ["walk", "Walk-Forward"],
   ["year", "年別成績"],
@@ -431,7 +433,7 @@ export default function Home() {
           <i>TQ</i>
           <div>
             <b>TQQQ Signal Lab</b>
-            <small>EXECUTION-AWARE RESEARCH SYSTEM</small>
+            <small>MANUAL-ORDER RESEARCH · NO AUTO TRADING</small>
           </div>
         </div>
         <nav>
@@ -566,7 +568,8 @@ export default function Home() {
         </>)}
         {tab==="dashboard" && <IntegratedDashboard production={signal?{ticker:dailySignal?.assetTicker||"TQQQ",strategy:dailySignal?.strategy||"Volatility Shield",version:dailySignal?.strategyVersion,date:signal.date,target:signal.target,previousTarget:signal.previousTarget,executionDate:signal.executionDate||nextExecutionDate(signal.date),regime:signal.regime,score:signal.score,state:dailySignal?.state}:null} productionForward={forwardLedger} phase5={phase5Ledger} phase5Status={phase5Status} platformMode={productionConfig?.mode} humanApproved={productionConfig?.approvedByHuman} productionTicker={productionConfig?.selectedTicker||undefined} productionVersion={productionConfig?.strategyVersion||undefined}/>}
         {tab==="lifecycle" && <LifecycleActionCenter/>}
-        {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status} productionVersion={productionConfig?.strategyVersion||undefined}/></>}
+        {tab==="gold" && <GoldIntegratedForward tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/> }
+        {tab==="forward" && <>{forwardLedger?<ForwardView ledger={forwardLedger}/>:<section className="emptyState"><span>FORWARD RECORD</span><h2>Production Forward台帳を確認できません</h2><p>System StatusでFORWARD-001を確認してください。</p></section>}<Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status} productionVersion={productionConfig?.strategyVersion||undefined}/><GoldIntegratedForward compact tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/></>}
         {compareAnalysis && tab === "compare" && (
           <CompareView
             analysis={compareAnalysis}
