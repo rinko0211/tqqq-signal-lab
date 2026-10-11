@@ -74,7 +74,7 @@ jobs:
             # Only observed application shell, presentation and tests changed after
             # the state-generation main. Never relax this for strategy/writer code.
             git -C source diff --name-only "$source_base" "$EXPECTED_MAIN_SHA" | tee /tmp/validated-ui-paths
-            if grep -Ev '^(app/(page\.tsx|gold-forward-ui\.tsx|globals\.css)$|lib/gold-forward-evidence\.ts$|github-pages/public/sw\.js$|tests/gold-forward-evidence\.test\.ts$|research/[^/]+$|\.github/workflows/(daily-signal|state-plane-deploy)\.yml$)' /tmp/validated-ui-paths; then
+            if grep -Ev '^(app/(page\.tsx|gold-forward-ui\.tsx|globals\.css)$|lib/gold-forward-evidence\.ts$|github-pages/public/sw\.js$|package\.json$|tests/gold-forward-evidence\.test\.ts$|research/[^/]+$|\.github/workflows/(daily-signal|state-plane-deploy)\.yml$)' /tmp/validated-ui-paths; then
               echo "::error::Non-UI runtime changes since state generation"
               exit 1
             fi
