@@ -1,26 +1,24 @@
 {
-  "generatedAt": "2026-10-10T01:51:14.625Z",
-  "actionRunId": "38014741926",
+  "generatedAt": "2026-10-11T12:38:59.850Z",
+  "actionRunId": "38140035954",
   "actionStatus": "success",
   "marketDataDate": "2026-10-09",
   "signalDate": "2026-10-09",
   "lastForwardRecord": "2026-10-09",
   "forwardRecords": 175,
   "forwardPersistent": true,
-  "buildVersion": "7d61b075c96a",
+  "buildVersion": "79bf5d89af27",
   "dataSource": "Nasdaq Historical + Cboe VIX History",
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
-  "state": "latest",
+  "state": "market_closed",
   "catchup": {
-    "priorDataDate": "2026-10-08",
-    "processedDates": [
-      "2026-10-09"
-    ],
+    "priorDataDate": "2026-10-09",
+    "processedDates": [],
     "observationOnlyDates": [],
     "displayedSignalDate": "2026-10-09"
   },
-  "message": "最新データでSignal・Forward台帳を生成済み",
+  "message": "米国市場休場・新規判定なし",
   "errors": []
 }
