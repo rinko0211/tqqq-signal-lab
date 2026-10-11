@@ -9,3 +9,27 @@
 
 /* PHASE5_INTEGRATED_UI */
 .opsDashboard{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-bottom:16px}.productionCard{border-left:5px solid var(--acid)}.challengerCard{border-left:5px solid var(--amber)}.opsHeadline{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.opsHeadline span,.opsNext span,.opsMiniGrid span,.candidateMetrics span,.paperAccount span{display:block;color:var(--muted);font-size:9px;letter-spacing:.08em}.opsHeadline strong{font-size:42px;color:var(--acid)}.opsHeadline b{font-size:20px}.opsNext{background:#0b1010;border-left:2px solid var(--cyan);padding:12px 14px;margin-top:12px}.opsNext strong{display:block;margin-top:4px;font-size:12px}.opsMiniGrid,.candidateMetrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.opsMiniGrid>div,.candidateMetrics>div{background:#0c1111;border:1px solid var(--line);padding:10px;border-radius:5px}.opsMiniGrid b,.candidateMetrics b{display:block;margin-top:4px}.researchLineage{border-left:4px solid var(--cyan)}.phase5Hero{border-left-color:var(--amber)}.candidateCards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.candidateAccount{margin-top:0}.candidateAccount p{color:var(--muted);font-size:11px;line-height:1.55}.versionLabel{font-size:11px;color:var(--cyan)}.candidateMetrics{grid-template-columns:repeat(4,1fr)}.phase5Paper{border-left:4px solid var(--amber)}.paperAccountGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}.paperAccount{background:#0c1111;border:1px solid var(--line);padding:14px;border-radius:6px}.paperAccount strong{display:block;font-size:19px;margin:6px 0}.paperAccount small{color:var(--muted);font-size:9px}@media(max-width:900px){.opsDashboard,.candidateCards,.paperAccountGrid{grid-template-columns:1fr}.opsHeadline{grid-template-columns:1fr}.candidateMetrics{grid-template-columns:repeat(2,1fr)}}
+
+
+/* GOLD50_INTEGRATED_FORWARD — one TQQQ PWA, research/manual-order only */
+.goldIntegrated{display:grid;gap:14px;margin:12px 0 22px}
+.goldHero{border-left:4px solid var(--cyan)}
+.goldKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:16px 0}
+.goldKpis>div,.goldAllocation>div{display:flex;flex-direction:column;gap:7px;min-width:0;border:1px solid var(--line);background:#0c1111;border-radius:6px;padding:13px}
+.goldKpis small,.goldAllocation small,.goldTimeline small{font-size:11px;color:var(--muted)}
+.goldKpis strong,.goldAllocation strong{font-size:21px;overflow-wrap:anywhere}
+.goldKpis span,.goldTimeline span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.goldTimeline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.goldTimeline>div{display:flex;flex-direction:column;gap:9px;border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:5px;padding:13px}
+.goldTimeline>div.goldGap{border-left-color:var(--amber);background:#17130e}
+.goldTimeline b{font-size:13px}
+.goldAllocation{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0}
+.goldInputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.goldInputs label{display:flex;flex-direction:column;gap:7px;font-size:11px;color:var(--muted)}
+.goldInputs input{min-width:0;width:100%;padding:12px;color:var(--text);background:#111818;border:1px solid var(--line);border-radius:5px;font-size:16px}
+.goldInputs input:disabled{opacity:.4}
+.goldEstimation{border-left:3px solid var(--cyan);background:#0d1516;padding:12px 16px;margin:12px 0}
+.goldTable{max-height:550px;overflow:auto;margin:16px 0}
+.goldIntegrated button{padding:9px 13px;cursor:pointer}
+@media(max-width:850px){.goldKpis{grid-template-columns:repeat(2,minmax(0,1fr))}.goldTimeline{grid-template-columns:1fr}.goldInputs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.goldAllocation,.goldInputs{grid-template-columns:1fr}.goldKpis strong{font-size:18px}}
