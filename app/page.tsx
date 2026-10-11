@@ -602,7 +602,7 @@ export default function Home() {
               <Phase5ForwardPanel productionForward={forwardLedger} ledger={phase5Ledger} status={phase5Status} productionVersion={productionConfig?.strategyVersion||undefined}/>
             </details>
             <details className="detailPanel"><summary><strong>Gold50詳細</strong><span>TQQQ / GLD / 現金 · 観測・不連続区間・手動売買試算</span></summary>
-              <GoldIntegratedForward compact tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/>
+              <GoldIntegratedForward tqqqSignalDate={dailySignal?.dataDate} tqqqStatusDate={runtimeStatus?.marketDataDate}/>
             </details>
           </div>
         </>}
