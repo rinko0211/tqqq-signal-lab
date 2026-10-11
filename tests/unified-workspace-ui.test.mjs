@@ -19,7 +19,7 @@ test("top navigation has exactly five coherent user-entry sections, not the prev
 test("Native, ETF research and robustness remain accessible through ONE detail menu",()=>{
  assert.match(page,/RESEARCH_MENU:Tab\[\]=\["compare","walk","year","trades","robust","research","deep","universe","native"\]/);
  assert.match(page,/<select id="detailScreenSelector"/);
- assert.match(page,/tab==="native"/);
+ assert.match(page,/tab\s*===\s*"native"/);
  assert.match(page,/tab === "universe"/);
  assert.match(page,/tab === "deep"/);
 });
