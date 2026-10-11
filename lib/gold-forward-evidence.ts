@@ -1,4 +1,4 @@
-import {nextExecutionDate} from "./engine";
+import {nextNyseSession as nextExecutionDate} from "./market-calendar.ts";
 
 export const GOLD_FORWARD_FIRST_SESSION="2026-10-12";
 export const GOLD_FORWARD_BASELINE="gold50-prospective-forward-v1-20261012";
