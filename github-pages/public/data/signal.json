@@ -1,42 +1,42 @@
 {
-  "generatedAt": "2026-10-11T13:16:17.847Z",
-  "dataDate": "2026-10-09",
+  "generatedAt": "2026-10-13T03:06:26.488Z",
+  "dataDate": "2026-10-12",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
   "assetTicker": "TQQQ",
-  "assetClose": 81.28,
-  "tqqqClose": 81.28,
+  "assetClose": 79.61,
+  "tqqqClose": 79.61,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
-  "state": "market_closed",
+  "state": "latest",
   "signal": {
-    "date": "2026-10-09",
+    "date": "2026-10-12",
     "score": 90,
     "components": {
       "trend": 100,
-      "momentum": 70.55258942872396,
-      "volatility": 90.06871999430933,
-      "market": 93.1394743516158
+      "momentum": 66.9564673678945,
+      "volatility": 89.95313465575593,
+      "market": 92.7953127701741
     },
-    "regime": "強い上昇",
+    "regime": "弱い上昇",
     "target": 1,
     "previousTarget": 1,
-    "reason": "強い上昇・総合90点のため100%を維持",
+    "reason": "弱い上昇・総合90点のため100%を維持",
     "nextChange": "総合48点未満、危機判定、または13%トレーリングストップ",
     "indicators": {
-      "sma50": 724.5234000000002,
-      "sma200": 672.1786000000002,
-      "rsi": 57.824976045991676,
-      "momentum63": 0.05553994436170506,
-      "realizedVol": 15.311954656301097,
-      "atrPct": 1.2976175227458355,
-      "vix": 14.84
+      "sma50": 725.6844,
+      "sma200": 672.7982500000002,
+      "rsi": 48.85224700937595,
+      "momentum63": 0.03661298614681319,
+      "realizedVol": 15.349524419722519,
+      "atrPct": 1.2550864062826776,
+      "vix": 15.21
     },
-    "executionDate": "2026-10-12"
+    "executionDate": "2026-10-13"
   },
   "suggestion": "100%を維持。売買なし。",
   "warnings": [
-    "VIX: 他銘柄と一致しない2242営業日を除外しました",
+    "VIX: 他銘柄と一致しない2244営業日を除外しました",
     "TQQQ・QQQ・SPYおよびPhase-1 cross-ticker候補はNasdaq HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
     "Phase 1ではQLD/SSO/ROM/USDを実ETF価格で追加し、Synthetic leveraged historyは使用しません。",
     "USDとSOXLは異なる半導体指数を追跡するため、純粋な2x対3x倍率比較として扱いません。",
