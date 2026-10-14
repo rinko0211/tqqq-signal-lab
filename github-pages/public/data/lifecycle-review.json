@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-10-13T07:45:41.217Z",
+  "updatedAt": "2026-10-14T06:11:04.527Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -10,7 +10,7 @@
   },
   "events": [],
   "current": {
-    "asOf": "2026-10-13",
+    "asOf": "2026-10-14",
     "stage": "ACCUMULATING",
     "systemDecision": "ACCUMULATING",
     "userAction": "NONE",
@@ -24,21 +24,21 @@
         "promotionSelectable": false,
         "promotionMerit": "INCUMBENT",
         "reasons": [
-          "Missing/invalid ratio 2.78% > 1%"
+          "Missing/invalid ratio 2.70% > 1%"
         ],
-        "observations": 35,
-        "liveObservations": 35,
-        "missingRatio": 0.027777777777777776,
+        "observations": 36,
+        "liveObservations": 36,
+        "missingRatio": 0.02702702702702703,
         "executions": 2,
-        "actionDaysPerYear": 14.399999999999999,
+        "actionDaysPerYear": 14,
         "regimes": 2,
         "regimeFamilies": [
           "RISK_ON"
         ],
         "regimeCoverageOk": false,
-        "totalReturn": 0.12527593359370948,
-        "sortino": 4.488984803886893,
-        "calmar": 17.7372149586187,
+        "totalReturn": 0.11396804831704888,
+        "sortino": 4.085291357925025,
+        "calmar": 14.990003594389695,
         "maxDd": -0.07242489908528327,
         "historicalDd": -0.3816,
         "adverseDdFloor": -0.48160000000000003,
