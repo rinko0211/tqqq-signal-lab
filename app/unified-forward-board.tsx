@@ -35,7 +35,7 @@ export function UnifiedForwardBoard({tqqq,phase5,compact=false}:Props){
   let active=true;
   const refresh=async()=>{
    try{
-    const names=["forward/status.json","phase-c/status.json","forward/ledger.jsonl","forward/performance-status.json","forward/performance-ledger.jsonl"];
+    const names=["forward/status.json","phase-c/status.json","forward/ledger.jsonl"];
     const texts=await Promise.all(names.map(async name=>{
      const url=GOLD_DATA_BASE+name;
      const response=await fetch(url,{cache:"no-store",redirect:"error"});
@@ -44,8 +44,23 @@ export function UnifiedForwardBoard({tqqq,phase5,compact=false}:Props){
      if(body.length>600000)throw Error("Gold50公開記録が大きすぎます");
      return body;
     }));
-    if(active){const ev=parseGoldForwardEvidence(JSON.parse(texts[0]),JSON.parse(texts[1]),texts[2]);
-     setGold(ev);setGoldRisk(parseGoldModelEvidence(JSON.parse(texts[3]),texts[4],ev));}
+    const ev=parseGoldForwardEvidence(JSON.parse(texts[0]),JSON.parse(texts[1]),texts[2]);
+    if(active)setGold(ev);
+    // A valuation-provider failure must not hide the independently verified
+    // frozen Gold50 signal/Forward observations.
+    try{
+     const riskNames=["forward/performance-status.json","forward/performance-ledger.jsonl"];
+     const riskFiles=await Promise.all(riskNames.map(async name=>{
+      const url=GOLD_DATA_BASE+name;
+      const response=await fetch(url,{cache:"no-store",redirect:"error"});
+      if(!response.ok||response.redirected||response.url.split("?")[0]!==url)throw Error("Risk data unavailable");
+      const body=await response.text();
+      if(body.length>600000)throw Error("Risk data too large");
+      return body;
+     }));
+     if(active)setGoldRisk(parseGoldModelEvidence(JSON.parse(riskFiles[0]),riskFiles[1],ev));
+    }catch{if(active)setGoldRisk({...riskFallback,reason:"Gold50 DDモデルの取得を確認してください"});}
+
    }catch{
     if(active){setGold({...fallback,reason:"Gold50データ取得失敗"});setGoldRisk({...riskFallback,reason:"Gold50 DDデータ取得失敗"});}
    }finally{if(active)setGoldLoading(false)}
