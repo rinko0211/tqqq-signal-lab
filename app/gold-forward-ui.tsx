@@ -1,11 +1,13 @@
 "use client";
 import {useCallback,useEffect,useMemo,useState} from "react";
 import {GOLD_DATA_BASE,GOLD_FORWARD_FIRST_SESSION,parseGoldForwardEvidence,manualGoldResearchProjection,type GoldEvidence} from "../lib/gold-forward-evidence";
+import {parseGoldModelEvidence,type GoldModelEvidence} from "../lib/gold-performance-evidence";
 
 type Props={tqqqSignalDate?:string|null;tqqqStatusDate?:string|null;compact?:boolean};
 const pct=(n:number)=>(n*100).toFixed(1)+"%";
 const fmt=(n:number)=>n.toLocaleString("ja-JP",{maximumFractionDigits:2});
 const blank:GoldEvidence={ok:false,reason:null,status:null,phaseC:null,rows:[],segments:[],gaps:[]};
+const blankRisk:GoldModelEvidence={ok:false,reason:null,status:null,rows:[]};
 async function readGold(path:string){
  const url=GOLD_DATA_BASE+path;
  const response=await fetch(url,{cache:"no-store",redirect:"error"});
@@ -16,6 +18,7 @@ async function readGold(path:string){
 }
 export function GoldIntegratedForward({tqqqSignalDate,tqqqStatusDate,compact=false}:Props){
  const [ev,setEv]=useState<GoldEvidence>(blank);
+ const [risk,setRisk]=useState<GoldModelEvidence>(blankRisk);
  const [error,setError]=useState<string|null>(null);
  const [busy,setBusy]=useState(true);
  const [history,setHistory]=useState(false);
@@ -26,11 +29,16 @@ export function GoldIntegratedForward({tqqqSignalDate,tqqqStatusDate,compact=fal
    const [a,b,c]=await Promise.all([readGold("forward/status.json"),readGold("phase-c/status.json"),readGold("forward/ledger.jsonl")]);
    const parsed=parseGoldForwardEvidence(JSON.parse(a),JSON.parse(b),c);
    setEv(parsed);setError(parsed.ok?null:parsed.reason);
-  }catch(e){setEv(blank);setError(e instanceof Error?e.message:"読み込み失敗")}
+   try{const [x,y]=await Promise.all([readGold("forward/performance-status.json"),readGold("forward/performance-ledger.jsonl")]);
+    setRisk(parseGoldModelEvidence(JSON.parse(x),y,parsed));
+   }catch{setRisk({...blankRisk,reason:"仮想損益・DD台帳の読み込み待ち"});}
+  }catch(e){setEv(blank);setRisk(blankRisk);setError(e instanceof Error?e.message:"読み込み失敗")}
   finally{setBusy(false)}
  },[]);
  useEffect(()=>{void refresh();const id=setInterval(()=>void refresh(),300000);return()=>clearInterval(id)},[refresh]);
  const {status,phaseC,rows,segments,gaps}=ev,last=rows.at(-1);
+ const riskLast=risk.rows.at(-1);
+ const riskReady=risk.ok&&risk.status?.state==="ACCUMULATING"&&Boolean(riskLast);
  const mismatch=Boolean(last&&(tqqqSignalDate!==last.marketDataDate||tqqqStatusDate!==last.marketDataDate));
  const age=status?.evaluatedAt?Date.now()-Date.parse(status.evaluatedAt):Infinity;
  const stale=!Number.isFinite(age)||age< -60000||age>96*3600*1000;
@@ -65,6 +73,18 @@ export function GoldIntegratedForward({tqqqSignalDate,tqqqStatusDate,compact=fal
    {busy?<p className="note">検証済みデータを読み込み中…</p>:null}
    <button type="button" onClick={()=>void refresh()}>最新状態を再取得</button>
    <p className="note">Gold50の公開研究台帳を読み取り専用で参照します。TQQQ側のソーク記録は変更しません。</p>
+  </article>
+  <article className="panel"><div className="panelHead"><div><em>PROSPECTIVE MODEL EQUITY · UNCERTIFIED</em><h2>Gold50の仮想損益・DD</h2></div>
+   <span className={"status "+(risk.status?.state==="CHECK_DATA"?"bad":riskReady?"warn":"neutral")}>{riskReady?"モデルForward観測中":risk.status?.state==="CHECK_DATA"?"価格検証停止":"最初の評価待ち"}</span></div>
+   <div className="goldKpis">
+    <div><small>モデル指数（開始100）</small><strong>{riskReady&&riskLast?riskLast.index.toFixed(2):"—"}</strong><span>{riskLast?.marketDataDate??"開始 2026-10-14〜"}</span></div>
+    <div><small>現在DD</small><strong>{riskReady&&riskLast?pct(riskLast.dd):"—"}</strong><span>有効なモデル観測のみ</span></div>
+    <div><small>最大DD</small><strong>{riskReady&&riskLast?pct(riskLast.maxDd):"—"}</strong><span>連続した観測区間内</span></div>
+    <div><small>評価記録</small><strong>{risk.ok?risk.rows.length+"件":"—"}</strong><span>配分シグナルとは独立</span></div>
+   </div>
+   {risk.status?.state==="CHECK_DATA"?<p className="warningNote">DD更新停止：{risk.status.reasonCode}。不明な価格の補間や仮の損益は作成しません。</p>:null}
+   {!risk.ok&&risk.reason?<p className="note">価格評価は未確認です：{risk.reason}</p>:null}
+   <p className="warningNote">このDDは<strong>証券会社の実損益ではない参考モデル</strong>です。2026-10-14以降の米国市場で、前営業日のGold50配分を翌営業日寄付で反映し、売買コスト8bpsを仮定します。10月12～13日のシグナルに遡及して損益を捏造しません。TQQQ系とは観測開始日が異なり、まだ直接比較できません。</p>
   </article>
   <article className="panel"><em>DISCONTINUITY-SAFE TIMELINE</em><h2>ソーク終了・空白・Forward開始</h2>
    <div className="goldTimeline">
