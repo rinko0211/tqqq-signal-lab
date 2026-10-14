@@ -62,7 +62,7 @@ export function parseGoldModelEvidence(statusValue:unknown,ledgerText:string,sig
     r.mode!=="SHADOW_RESEARCH"||r.brokerOrderAllowed!==false||
     r.rawTiingoOhlcPersisted!==false||
     r.performanceCertification!=="INDICATIVE_NOT_COMPARABLE"||
-    !r.appliedTarget||!["TQQQ","GLD","CASH"].every(x=>close(r.appliedTarget[x],signalOnPreviousClose.target[x])))
+    !r.appliedTarget||!(["TQQQ","GLD","CASH"] as const).every(x=>close(r.appliedTarget[x],signalOnPreviousClose.target[x])))
     return failed("Gold50 DDとForwardシグナルの整合性を検証できません");
    if(kind==="CONTIGUOUS"&&(r.maxDd>prior.maxDd+1e-10||r.costs+1e-9<prior.costs))
     return failed("Gold50 DDの連続期間が不正です");
