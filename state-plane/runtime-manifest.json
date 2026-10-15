@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "mode": "OPS_STATE_AUTHORITATIVE",
   "authoritative": true,
-  "writer": "lifecycle-review",
+  "writer": "daily-signal",
   "sourceMainSha": "5cffc11cf6efe28621fcdb9d2885b45460425699",
-  "baseOpsStateSha": "e127159fb1c9928e38cca74bed550db9b7bc1366",
-  "dataTreeSha256": "75489c65197c8d44e8d94d6ba689091449956ba6d040e8cd442b5069ba71b1c3",
-  "generatedAt": "2026-10-15T05:55:37.119294Z"
+  "baseOpsStateSha": "666745f3fd485578466933f5602369d7ef684b4a",
+  "dataTreeSha256": "476f5cead67274ea764f0adf81db92e266542dc38b13f03062f7245eb53e1d16",
+  "generatedAt": "2026-10-15T06:13:13.845518Z"
 }
