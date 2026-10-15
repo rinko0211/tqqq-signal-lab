@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "mode": "OPS_STATE_AUTHORITATIVE",
   "authoritative": true,
-  "writer": "daily-signal",
+  "writer": "phase5-forward",
   "sourceMainSha": "5cffc11cf6efe28621fcdb9d2885b45460425699",
-  "baseOpsStateSha": "666745f3fd485578466933f5602369d7ef684b4a",
-  "dataTreeSha256": "476f5cead67274ea764f0adf81db92e266542dc38b13f03062f7245eb53e1d16",
-  "generatedAt": "2026-10-15T06:13:13.845518Z"
+  "baseOpsStateSha": "9896d277db0fd7ab915995d17d027a3ddc337741",
+  "dataTreeSha256": "ea88dcba6c8f11cdf1b829de3b9c3e01bfe2d4b9a92cfd604a7c1ebfcb921320",
+  "generatedAt": "2026-10-15T17:45:43.133337Z"
 }
