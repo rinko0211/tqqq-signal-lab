@@ -8,7 +8,7 @@ import {parseGoldModelEvidence,type GoldModelEvidence} from "../lib/gold-perform
 type Source="VS13系"|"Native/比較"|"Gold50";
 type UnifiedRow={
  version:string;asset:string;source:Source;role:string;start:string;latest:string|null;
- observations:number;modelReturn:number|null;maxDd:number|null;
+ observations:number;modelObservations:number|null;modelReturn:number|null;maxDd:number|null;
  modelOrders:number|null;allocation:string;evidence:string;dataState:string;
 };
 type Props={tqqq:ForwardLedger|null;phase5:Phase5Ledger|null;compact?:boolean};
@@ -19,8 +19,7 @@ const riskFallback:GoldModelEvidence={ok:false,reason:null,status:null,rows:[]};
 function statusLabel(row:UnifiedRow){
  if(row.dataState==="要確認")return "データ確認";
  if(row.observations===0)return "初回待ち";
- if(row.source==="Gold50")return "配分観測中";
- return "暫定・検証中";
+ return "Forward検証中";
 }
 function stateTone(row:UnifiedRow){
  if(row.dataState==="要確認")return "bad";
@@ -78,7 +77,7 @@ export function UnifiedForwardBoard({tqqq,phase5,compact=false}:Props){
    all.push({version:s.version,asset:freeze?.asset??"TQQQ",source:"VS13系",
     role:s.role==="champion"?"基準":s.role==="benchmark"?"比較指標":"対抗",
     start:freeze?.startDate??"—",latest:safeDate(last?.marketDataDate),
-    observations:s.observations,modelReturn:records.length?s.totalReturn:null,
+    observations:s.observations,modelObservations:records.length?s.observations:null,modelReturn:records.length?s.totalReturn:null,
     maxDd:records.length?s.metrics.maxDd:null,modelOrders:s.orders,
     allocation:last?fmtPct(last.targetExposure):"—",
     evidence:s.evidence,dataState:s.missing>0?"欠測あり":"記録正常"});
@@ -90,7 +89,7 @@ export function UnifiedForwardBoard({tqqq,phase5,compact=false}:Props){
    all.push({version:s.version,asset:s.ticker,source:"Native/比較",
     role:s.role==="PRIMARY_CHALLENGER"?"対抗":"比較",
     start:freeze?.startDate??"—",latest:safeDate(last?.marketDataDate),
-    observations:s.liveObservations,modelReturn:records.length?s.totalReturn:null,
+    observations:s.liveObservations,modelObservations:records.length?s.liveObservations:null,modelReturn:records.length?s.totalReturn:null,
     maxDd:records.length?s.metrics.maxDd:null,modelOrders:s.executions,
     allocation:last?fmtPct(last.targetExposure):"—",
     evidence:s.evidence,dataState:s.status==="DATA_REVIEW_REQUIRED"?"要確認":s.missing>0?"欠測あり":"記録正常"});
@@ -103,7 +102,7 @@ export function UnifiedForwardBoard({tqqq,phase5,compact=false}:Props){
    {modelReturn:null,maxDd:null,modelOrders:null};
   all.push({version:"TQQQ-Gold50-Research-v0.1",asset:"TQQQ / GLD / 現金",source:"Gold50",
    role:"金・現金分散",start:"2026-10-12",latest:safeDate(last?.marketDataDate),
-   observations:gold.ok?gold.rows.length:0,...riskFields,
+   observations:gold.ok?gold.rows.length:0,modelObservations:goldRisk.ok?goldRisk.rows.length:null,...riskFields,
    allocation:gold.ok&&last?("T "+fmtPct(last.target.TQQQ)+" / G "+fmtPct(last.target.GLD)+" / 現金 "+fmtPct(last.target.CASH)):"—",
    evidence:gold.ok?(last?"観測中":"初回待ち"):"未確認",
    dataState:goldLoading?"読込中":gold.ok?(gold.status?.state==="CHECK_DATA"?"要確認":"記録正常"):"要確認"});
@@ -112,39 +111,41 @@ export function UnifiedForwardBoard({tqqq,phase5,compact=false}:Props){
  const [selection,setSelection]=useState<"全系列"|"TQQQ系"|"他ETF・Native"|"金分散">("全系列");
  const filtered=rows.filter(r=>selection==="全系列"||(selection==="TQQQ系"&&r.source==="VS13系")||(selection==="他ETF・Native"&&r.source==="Native/比較")||(selection==="金分散"&&r.source==="Gold50"));
  const ready=rows.length===9&&tqqq?.freezes.length===5&&phase5?.freezes.length===3;
+ const active=rows.filter(r=>r.observations>0&&r.dataState!=="要確認").length;
+ const hasModelDd=rows.filter(r=>r.maxDd!==null&&r.modelReturn!==null).length;
  const goldUnavailable=!gold.ok||gold.status?.state==="CHECK_DATA";
  return <section className="unifiedForward">
   <div className="unifiedHeading">
    <div><em>ONE COHORT · FROZEN STRATEGY FORWARD</em><h2>9系列を同じ物差しで監視</h2>
-    <p>基準3本・比較指標2本・他ETF/Native 3本・Gold50 1本。全シリーズの凍結条件と独立台帳を維持したまま、表示と検証状況を一本化しています。</p>
+    <p>VS13系・比較指標・他ETF/Native・Gold50の全9系列を共通のForwardステータスと評価列で表示。台帳と検証開始日はそれぞれ独立して管理しています。</p>
    </div>
    <span className={"status "+(ready?"ok":"bad")}>{ready?"9系列 / 一覧統合":"台帳取得を確認"}</span>
   </div>
   <div className="unifiedKpis">
-   <div><small>研究対象</small><strong>{ready?"9 / 9":rows.length+" / 9"}</strong><span>検証済みの定義済み系列</span></div>
-   <div><small>TQQQ系列</small><strong>{tqqq?.freezes.length??0} / 5</strong><span>3候補＋2比較指標</span></div>
-   <div><small>他ETF・Native</small><strong>{phase5?.freezes.length??0} / 3</strong><span>UPRO / SSO / QLD</span></div>
-   <div><small>Gold50</small><strong>{goldLoading?"確認中":gold.ok?gold.rows.length+"件":"要確認"}</strong><span>新Forward 2026-10-12〜</span></div>
+   <div><small>登録されたForward系列</small><strong>{ready?"9 / 9":rows.length+" / 9"}</strong><span>同じ一覧で追跡</span></div>
+   <div><small>観測あり</small><strong>{active} / 9</strong><span>配分・シグナルの実測</span></div>
+   <div><small>損益・DDの記録あり</small><strong>{hasModelDd} / 9</strong><span>参考モデルを含む</span></div>
+   <div><small>正式な横断ランキング</small><strong>未実施</strong><span>開始日・評価法を調整前</span></div>
   </div>
   <div className="unifiedFilter" role="group" aria-label="表示する研究グループ">
    {(["全系列","TQQQ系","他ETF・Native","金分散"] as const).map(x=><button key={x} type="button"
     className={selection===x?"selected":""} aria-pressed={selection===x} onClick={()=>setSelection(x)}>{x}</button>)}
   </div>
   <div className="table unifiedTable"><table><thead><tr>
-   <th>系列 / 役割</th><th>Version</th><th>最新NYSE</th><th>有効観測</th>
+   <th>系列 / 役割</th><th>Version</th><th>最新NYSE</th><th>有効観測</th><th>損益評価</th>
    <th>Model損益</th><th>Max DD</th><th>モデル約定</th><th>目標配分</th><th>状態</th>
   </tr></thead><tbody>
-   {filtered.map(r=><tr key={r.version} className={r.source==="Gold50"?"goldUnifiedRow":""}>
+   {filtered.map(r=><tr key={r.version}>
     <td><strong>{r.asset}</strong><small>{r.source} · {r.role}</small></td>
     <td className="versionCell">{r.version}</td><td>{r.latest??"—"}</td>
-    <td>{r.observations}</td><td>{fmtPct(r.modelReturn)}</td>
+    <td>{r.observations}</td><td>{r.modelObservations===null?"—":r.modelObservations+"日"}</td><td>{fmtPct(r.modelReturn)}</td>
     <td>{fmtPct(r.maxDd)}</td><td>{r.modelOrders??"—"}</td>
     <td className="allocationCell">{r.allocation}</td>
-    <td><span className={"status "+stateTone(r)}>{statusLabel(r)}</span>{r.dataState==="欠測あり"?<small>欠測の監査要</small>:null}</td>
+    <td><span className={"status "+stateTone(r)}>{statusLabel(r)}</span>{r.dataState==="欠測あり"?<small>欠測の監査要</small>:null}{r.source==="Gold50"&&goldRisk.status?.state==="CHECK_DATA"?<small>DD価格確認要</small>:null}</td>
    </tr>)}
   </tbody></table></div>
   {goldUnavailable&&!goldLoading?<p className="warningNote">Gold50公開台帳は現在「確認要」です。古い金配分を新規の売買判断に使わないでください。{gold.reason??gold.status?.reasonCode}</p>:null}
-  {goldRisk.ok&&goldRisk.status?.state==="ACCUMULATING"&&goldRisk.rows.length>0?<p className="note">Gold50のモデル損益・DDは{goldRisk.status.startDate}以降の<strong>参考値</strong>（最終{goldRisk.status.lastMarketDate}）。予測シグナルの記録2日分を後付け計算していません。TQQQ既存Forwardとは計測開始日が異なり、直接ランキングには使用できません。</p>:<p className="note">Gold50の損益・DDは2026-10-14以降の独立モデルForward初回評価待ちです（現状「—」）。{goldRisk.status?.state==="CHECK_DATA"?"価格検証が停止中："+goldRisk.status.reasonCode:""}。不明な期間を補完してゼロDDにはしません。</p>}
+  {goldRisk.ok&&goldRisk.status?.state==="ACCUMULATING"&&goldRisk.rows.length>0?<p className="note">Gold50のモデル損益・DDは{goldRisk.status.startDate}以降の<strong>参考値</strong>（評価{goldRisk.rows.length}日・最新{goldRisk.status.lastMarketDate}）。開始前の10月12〜13日の配分記録には後付けで価格成績を計算していません。TQQQ既存Forwardとは計測開始日が異なり、直接ランキングには使用できません。</p>:<p className="note">Gold50の損益・DDは2026-10-14開始の参考モデルの有効評価待ちです（未確認なら「—」）。{goldRisk.status?.state==="CHECK_DATA"?"価格検証が停止中："+goldRisk.status.reasonCode:""}。不明な期間を補完してゼロDDにはしません。</p>}
   <p className="note">**統一表示 ≠ 同条件の収益順位**。TQQQ/他ETFは為替・税・実口座費用を含まない仮想モデル。Gold50の今後の値は翌営業日寄付時点で凍結配分を研究上執行した分割可能株数・想定費用8bpの補助モデルで、実約定ではありません。実際の手動発注30〜40回/年の達成可否は、モデル約定数だけでは確定しません。</p>
   {!compact?<p className="note">同じ期間・同じ損益計算条件・欠測を揃えた比較評価は後続の検証で行います。過去ソークC10/10は長期Forwardに算入しません。Native研究の追加パラメータ探索は既存の研究詳細に保存されており、新規Forward系列として数えません。</p>:null}
  </section>;
