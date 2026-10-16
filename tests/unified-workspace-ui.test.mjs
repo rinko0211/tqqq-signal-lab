@@ -71,3 +71,30 @@ test("compact five-section nav and matrix remain responsive",()=>{
  assert.match(style,/\.unifiedTable/);
  assert.match(style,/@media\(max-width:750px\)/);
 });
+
+test("Gold50 uses the same Forward lifecycle status as all eight other strategies",()=>{
+ assert.match(summary,/return "Forward検証中";/);
+ assert.doesNotMatch(summary,/配分観測中|if\(row\.source==="Gold50"\)return/);
+ assert.match(gold,/status\?\.state==="ACCUMULATING"\?"Forward検証中"/);
+ assert.doesNotMatch(style,/\.goldUnifiedRow/);
+ assert.doesNotMatch(summary,/className=\{r\.source==="Gold50"\?"goldUnifiedRow"/);
+});
+test("all nine Forward scorecard rows show signal observations independently from priced DD model dates",()=>{
+ assert.match(summary,/modelObservations:number\|null/);
+ assert.match(summary,/modelObservations:records\.length\?s\.observations:null/);
+ assert.match(summary,/modelObservations:records\.length\?s\.liveObservations:null/);
+ assert.match(summary,/modelObservations:goldRisk\.ok\?goldRisk\.rows\.length:null/);
+ assert.match(summary,/<th>損益評価<\/th>/);
+ assert.match(summary,/r\.modelObservations===null\?"—"/);
+ assert.match(summary,/const hasModelDd=rows\.filter/);
+ assert.match(summary,/<small>損益・DDの記録あり<\/small>/);
+ assert.doesNotMatch(summary,/<small>Gold50<\/small>/);
+});
+test("common risk status does not certify Gold50's distinct or shorter indicative DD period",()=>{
+ assert.match(summary,/goldRisk\.status\?\.state==="CHECK_DATA"/);
+ assert.match(summary,/DD価格確認要/);
+ assert.match(summary,/開始前の10月12〜13日の配分記録/);
+ assert.match(summary,/直接ランキングには使用できません/);
+ assert.match(summary,/正式な横断ランキング/);
+ assert.match(summary,/未実施/);
+});
