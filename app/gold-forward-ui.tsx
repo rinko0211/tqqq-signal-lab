@@ -51,7 +51,7 @@ export function GoldIntegratedForward({tqqqSignalDate,tqqqStatusDate,compact=fal
    tqqqUsd:Number(inputs.tPrice),gldUsd:Number(inputs.gPrice)});
  },[safe,last,inputs]);
  const stateLabel=!ev.ok?"検証不能":status?.state==="CHECK_DATA"?"確認要":
-  status?.state==="ACCUMULATING"?"Forward観測中":"初回観測待ち";
+  status?.state==="ACCUMULATING"?"Forward検証中":"初回観測待ち";
  return <div className="goldIntegrated">
   <article className="guideHero goldHero"><em>GOLD50 × TQQQ · INTEGRATED RESEARCH</em>
    <h2>Gold50 — 同じ画面でForward検証</h2>
