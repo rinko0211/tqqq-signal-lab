@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T03:33:49.415Z",
+  "generatedAt": "2026-11-04T02:31:39.102Z",
   "dataDate": "2026-11-02",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
@@ -8,7 +8,7 @@
   "tqqqClose": 59.46,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
-  "state": "latest",
+  "state": "provider_pending",
   "signal": {
     "date": "2026-11-02",
     "score": 66,
@@ -32,11 +32,14 @@
       "atrPct": 1.822399588235839,
       "vix": 21.15
     },
-    "executionDate": "2026-11-03"
+    "executionDate": "2026-11-04"
   },
-  "suggestion": "100%から0%へ変更。実行可能な最初の米国市場始値（2026-11-03）で100%分を縮小。",
+  "suggestion": "100%から0%へ変更。実行可能な最初の米国市場始値（2026-11-04）で100%分を縮小。",
   "warnings": [
-    "VIX: 他銘柄と一致しない2259営業日を除外しました",
+    "TQQQ: 他銘柄と一致しない1営業日を除外しました",
+    "QQQ: 他銘柄と一致しない1営業日を除外しました",
+    "SPY: 他銘柄と一致しない1営業日を除外しました",
+    "VIX: 他銘柄と一致しない2260営業日を除外しました",
     "TQQQ・QQQ・SPYおよびPhase-1 cross-ticker候補はNasdaq HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
     "Phase 1ではQLD/SSO/ROM/USDを実ETF価格で追加し、Synthetic leveraged historyは使用しません。",
     "USDとSOXLは異なる半導体指数を追跡するため、純粋な2x対3x倍率比較として扱いません。",

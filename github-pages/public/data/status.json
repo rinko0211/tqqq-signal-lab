@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-03T03:33:49.415Z",
-  "actionRunId": "41572912455",
+  "generatedAt": "2026-11-04T02:31:39.102Z",
+  "actionRunId": "41761284382",
   "actionStatus": "success",
   "marketDataDate": "2026-11-02",
   "signalDate": "2026-11-02",
@@ -12,15 +12,13 @@
   "jsonValid": true,
   "pwaExpected": true,
   "paperHistoryValid": true,
-  "state": "latest",
+  "state": "provider_pending",
   "catchup": {
-    "priorDataDate": "2026-10-30",
-    "processedDates": [
-      "2026-11-02"
-    ],
+    "priorDataDate": "2026-11-02",
+    "processedDates": [],
     "observationOnlyDates": [],
     "displayedSignalDate": "2026-11-02"
   },
-  "message": "最新データでSignal・Forward台帳を生成済み",
+  "message": "EXTERNAL DATA PENDING：公式データ提供元の共通日足は2026-11-02までです。再取得を継続し、現在シグナルは使用しないでください。",
   "errors": []
 }
