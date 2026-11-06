@@ -1,21 +1,21 @@
 {
-  "attemptedAt": "2026-11-05T02:39:23.389Z",
+  "attemptedAt": "2026-11-06T02:41:45.847Z",
   "state": "CURRENT",
   "source": "Nasdaq Historical + Cboe VIX History",
-  "priorDataDate": "2026-11-03",
-  "commonDataDate": "2026-11-04",
+  "priorDataDate": "2026-11-04",
+  "commonDataDate": "2026-11-05",
   "latestDates": {
-    "TQQQ": "2026-11-04",
-    "QQQ": "2026-11-04",
-    "SPY": "2026-11-04",
-    "VIX": "2026-11-04"
+    "TQQQ": "2026-11-05",
+    "QQQ": "2026-11-05",
+    "SPY": "2026-11-05",
+    "VIX": "2026-11-05"
   },
   "missingCompletedSessions": 0,
   "catchupDates": [
-    "2026-11-04"
+    "2026-11-05"
   ],
   "observationOnlyDates": [],
-  "displayedSignalDate": "2026-11-04",
-  "message": "公式データは2026-11-04まで揃っています。",
+  "displayedSignalDate": "2026-11-05",
+  "message": "公式データは2026-11-05まで揃っています。",
   "errors": []
 }
