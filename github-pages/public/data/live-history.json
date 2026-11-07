@@ -791,5 +791,20 @@
     "regime": "高ボラ",
     "reason": "高ボラ・総合42点のため0%を維持",
     "crisis": false
+  },
+  {
+    "date": "2026-11-06",
+    "assetTicker": "TQQQ",
+    "strategyVersion": "VS13-v1.0",
+    "tqqqOpen": 52.72,
+    "tqqqClose": 52.25,
+    "qqqOpen": 658.35,
+    "qqqClose": 656.1,
+    "target": 0,
+    "previousTarget": 0,
+    "score": 43,
+    "regime": "レンジ",
+    "reason": "レンジ・総合43点のため0%を維持",
+    "crisis": false
   }
 ]
