@@ -4,7 +4,7 @@
   "authoritative": true,
   "writer": "lifecycle-review",
   "sourceMainSha": "e435227bf2e65f1254bedea4efbf486374e7d6b9",
-  "baseOpsStateSha": "b94057ce9136f5f502bc58c1ad6dc8727cd6b270",
-  "dataTreeSha256": "ec0456e426bffb21fafe14206a7918c0c1b94949c66bc1d2b46d5b4ffaeb604b",
-  "generatedAt": "2026-11-08T07:25:18.921294Z"
+  "baseOpsStateSha": "c4d1e9c9e9b644b1c5857d5a4619b2bf1a8a4868",
+  "dataTreeSha256": "413d73e32c59d6ebd285d49b653a02a2698dd59e9479cde07cea85cc1cda413a",
+  "generatedAt": "2026-11-09T08:00:17.572065Z"
 }
