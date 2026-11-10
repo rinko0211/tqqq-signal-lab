@@ -806,5 +806,20 @@
     "regime": "レンジ",
     "reason": "レンジ・総合43点のため0%を維持",
     "crisis": false
+  },
+  {
+    "date": "2026-11-09",
+    "assetTicker": "TQQQ",
+    "strategyVersion": "VS13-v1.0",
+    "tqqqOpen": 53.76,
+    "tqqqClose": 57.58,
+    "qqqOpen": 662.64,
+    "qqqClose": 679.35,
+    "target": 0,
+    "previousTarget": 0,
+    "score": 47,
+    "regime": "レンジ",
+    "reason": "レンジ・総合47点のため0%を維持",
+    "crisis": false
   }
 ]
