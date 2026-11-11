@@ -1,21 +1,19 @@
 {
-  "attemptedAt": "2026-11-10T04:14:29.652Z",
-  "state": "CURRENT",
+  "attemptedAt": "2026-11-11T02:03:43.441Z",
+  "state": "PROVIDER_PENDING",
   "source": "Nasdaq Historical + Cboe VIX History",
-  "priorDataDate": "2026-11-06",
+  "priorDataDate": "2026-11-09",
   "commonDataDate": "2026-11-09",
   "latestDates": {
-    "TQQQ": "2026-11-09",
-    "QQQ": "2026-11-09",
-    "SPY": "2026-11-09",
+    "TQQQ": "2026-11-10",
+    "QQQ": "2026-11-10",
+    "SPY": "2026-11-10",
     "VIX": "2026-11-09"
   },
-  "missingCompletedSessions": 0,
-  "catchupDates": [
-    "2026-11-09"
-  ],
+  "missingCompletedSessions": 1,
+  "catchupDates": [],
   "observationOnlyDates": [],
   "displayedSignalDate": "2026-11-09",
-  "message": "公式データは2026-11-09まで揃っています。",
+  "message": "EXTERNAL DATA PENDING：公式データ提供元の共通日足は2026-11-09までです。再取得を継続し、現在シグナルは使用しないでください。",
   "errors": []
 }
