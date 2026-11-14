@@ -1,38 +1,38 @@
 {
-  "generatedAt": "2026-11-13T02:45:28.140Z",
-  "dataDate": "2026-11-12",
+  "generatedAt": "2026-11-14T02:35:09.868Z",
+  "dataDate": "2026-11-13",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
   "assetTicker": "TQQQ",
-  "assetClose": 59.88,
-  "tqqqClose": 59.88,
+  "assetClose": 57.68,
+  "tqqqClose": 57.68,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
   "state": "latest",
   "signal": {
-    "date": "2026-11-12",
-    "score": 56,
+    "date": "2026-11-13",
+    "score": 47,
     "components": {
-      "trend": 100,
-      "momentum": 38.85058886289957,
-      "volatility": 26.17000696810308,
-      "market": 65.01942447896539
+      "trend": 70,
+      "momentum": 36.98918985572773,
+      "volatility": 25.4555147902841,
+      "market": 65.10527133187519
     },
-    "regime": "弱い上昇",
+    "regime": "レンジ",
     "target": 0,
     "previousTarget": 0,
-    "reason": "弱い上昇・総合56点のため0%を維持",
+    "reason": "レンジ・総合47点のため0%を維持",
     "nextChange": "総合70点以上が2日中1日かつ上昇レジーム",
     "indicators": {
-      "sma50": 718.6228000000001,
-      "sma200": 681.9866000000005,
-      "rsi": 45.39469950627093,
-      "momentum63": -0.05868111124789699,
-      "realizedVol": 36.15733232815963,
-      "atrPct": 2.4959595142761684,
-      "vix": 18.7
+      "sma50": 717.8672000000001,
+      "sma200": 682.2389000000004,
+      "rsi": 40.85686796083535,
+      "momentum63": -0.06847794812774877,
+      "realizedVol": 35.967953177119846,
+      "atrPct": 2.475178353776423,
+      "vix": 19.3
     },
-    "executionDate": "2026-11-13"
+    "executionDate": "2026-11-16"
   },
   "suggestion": "0%を維持。売買なし。",
   "warnings": [
