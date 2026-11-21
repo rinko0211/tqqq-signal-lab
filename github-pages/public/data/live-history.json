@@ -941,5 +941,20 @@
     "regime": "高ボラ",
     "reason": "高ボラ・総合30点のため0%を維持",
     "crisis": false
+  },
+  {
+    "date": "2026-11-20",
+    "assetTicker": "TQQQ",
+    "strategyVersion": "VS13-v1.0",
+    "tqqqOpen": 47.53,
+    "tqqqClose": 41.2,
+    "qqqOpen": 638.84,
+    "qqqClose": 608.45,
+    "target": 0,
+    "previousTarget": 0,
+    "score": 26,
+    "regime": "急落・危機",
+    "reason": "危機レジームまたはトレーリングストップ",
+    "crisis": true
   }
 ]
