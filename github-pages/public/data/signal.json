@@ -1,42 +1,42 @@
 {
-  "generatedAt": "2026-11-21T03:20:30.191Z",
-  "dataDate": "2026-11-20",
+  "generatedAt": "2026-11-24T06:14:47.928Z",
+  "dataDate": "2026-11-23",
   "source": "Nasdaq Historical + Cboe VIX History",
   "platformMode": "RESEARCH",
   "assetTicker": "TQQQ",
-  "assetClose": 41.2,
-  "tqqqClose": 41.2,
+  "assetClose": 49.1,
+  "tqqqClose": 49.1,
   "strategy": "Volatility Shield 13%",
   "strategyVersion": "VS13-v1.0",
   "state": "latest",
   "signal": {
-    "date": "2026-11-20",
-    "score": 26,
+    "date": "2026-11-23",
+    "score": 29,
     "components": {
       "trend": 70,
-      "momentum": 15.672981085060606,
+      "momentum": 34.04280166591624,
       "volatility": 0,
-      "market": 22.281556577206693
+      "market": 25.443851105221242
     },
-    "regime": "急落・危機",
+    "regime": "レンジ",
     "target": 0,
     "previousTarget": 0,
-    "reason": "危機レジームまたはトレーリングストップ",
+    "reason": "レンジ・総合29点のため0%を維持",
     "nextChange": "総合70点以上が2日中1日かつ上昇レジーム",
     "indicators": {
-      "sma50": 710.9572000000001,
-      "sma200": 683.0608500000006,
-      "rsi": 31.404874052836377,
-      "momentum63": -0.13856325744704945,
-      "realizedVol": 40.30273547610574,
-      "atrPct": 2.908076761514749,
-      "vix": 35.89
+      "sma50": 709.7941999999999,
+      "sma200": 683.2677500000005,
+      "rsi": 42.67254289504086,
+      "momentum63": -0.08398525438991455,
+      "realizedVol": 48.892845456522736,
+      "atrPct": 3.2088454928236905,
+      "vix": 26.62
     },
-    "executionDate": "2026-11-23"
+    "executionDate": "2026-11-24"
   },
   "suggestion": "0%を維持。売買なし。",
   "warnings": [
-    "VIX: 他銘柄と一致しない2272営業日を除外しました",
+    "VIX: 他銘柄と一致しない2274営業日を除外しました",
     "TQQQ・QQQ・SPYおよびPhase-1 cross-ticker候補はNasdaq HistoricalのClose/Lastを使用しています。配当再投資込みAdj Closeではないため、Buy & Hold比較は価格リターンです。",
     "Phase 1ではQLD/SSO/ROM/USDを実ETF価格で追加し、Synthetic leveraged historyは使用しません。",
     "USDとSOXLは異なる半導体指数を追跡するため、純粋な2x対3x倍率比較として扱いません。",
