@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "createdAt": "2026-08-26T01:46:51.369Z",
-  "updatedAt": "2026-11-24T10:59:03.512Z",
+  "updatedAt": "2026-11-25T09:53:15.609Z",
   "appendOnly": true,
   "schedule": {
     "interim": "2027-02-25",
@@ -10,7 +10,7 @@
   },
   "events": [],
   "current": {
-    "asOf": "2026-11-24",
+    "asOf": "2026-11-25",
     "stage": "ACCUMULATING",
     "systemDecision": "ACCUMULATING",
     "userAction": "NONE",
@@ -24,13 +24,13 @@
         "promotionSelectable": false,
         "promotionMerit": "INCUMBENT",
         "reasons": [
-          "Missing/invalid ratio 1.52% > 1%"
+          "Missing/invalid ratio 1.49% > 1%"
         ],
-        "observations": 65,
-        "liveObservations": 65,
-        "missingRatio": 0.015151515151515152,
+        "observations": 66,
+        "liveObservations": 66,
+        "missingRatio": 0.014925373134328358,
         "executions": 5,
-        "actionDaysPerYear": 19.384615384615383,
+        "actionDaysPerYear": 19.09090909090909,
         "regimes": 5,
         "regimeFamilies": [
           "NEUTRAL",
@@ -39,8 +39,8 @@
         ],
         "regimeCoverageOk": true,
         "totalReturn": -0.13297068661894507,
-        "sortino": -1.4540426729591958,
-        "calmar": -1.4937206739487765,
+        "sortino": -1.4410683803778908,
+        "calmar": -1.4768821174018352,
         "maxDd": -0.2812005685115596,
         "historicalDd": -0.3816,
         "adverseDdFloor": -0.48160000000000003,
@@ -56,14 +56,14 @@
         "promotionSelectable": false,
         "promotionMerit": "MIXED",
         "reasons": [
-          "Missing/invalid ratio 1.56% > 1%",
+          "Missing/invalid ratio 1.54% > 1%",
           "Candidate and incumbent trade off at least one clean common-period Pareto dimension; human judgment is required"
         ],
-        "observations": 64,
-        "liveObservations": 63,
-        "missingRatio": 0.015625,
+        "observations": 65,
+        "liveObservations": 64,
+        "missingRatio": 0.015384615384615385,
         "executions": 4,
-        "actionDaysPerYear": 16,
+        "actionDaysPerYear": 15.75,
         "regimes": 4,
         "regimeFamilies": [
           "NEUTRAL",
@@ -72,13 +72,13 @@
         ],
         "regimeCoverageOk": true,
         "totalReturn": -0.1478269545287566,
-        "sortino": -1.789661131450348,
-        "calmar": -2.1796271368380955,
+        "sortino": -1.7727517001381874,
+        "calmar": -2.155436579683553,
         "maxDd": -0.21441107461558173,
         "historicalDd": -0.3457,
         "adverseDdFloor": -0.4457,
         "evidence": "LOW",
-        "paretoCommonDays": 64,
+        "paretoCommonDays": 65,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -89,14 +89,14 @@
         "promotionSelectable": false,
         "promotionMerit": "MIXED",
         "reasons": [
-          "Missing/invalid ratio 1.56% > 1%",
+          "Missing/invalid ratio 1.54% > 1%",
           "Candidate and incumbent trade off at least one clean common-period Pareto dimension; human judgment is required"
         ],
-        "observations": 64,
-        "liveObservations": 63,
-        "missingRatio": 0.015625,
+        "observations": 65,
+        "liveObservations": 64,
+        "missingRatio": 0.015384615384615385,
         "executions": 4,
-        "actionDaysPerYear": 16,
+        "actionDaysPerYear": 15.75,
         "regimes": 4,
         "regimeFamilies": [
           "NEUTRAL",
@@ -105,13 +105,13 @@
         ],
         "regimeCoverageOk": true,
         "totalReturn": -0.0950223664699753,
-        "sortino": -1.7525321204449893,
-        "calmar": -2.24721174550391,
+        "sortino": -1.7359836677473175,
+        "calmar": -2.218905505219658,
         "maxDd": -0.1446528891723715,
         "historicalDd": -0.2416,
         "adverseDdFloor": -0.3416,
         "evidence": "LOW",
-        "paretoCommonDays": 64,
+        "paretoCommonDays": 65,
         "decision": "CONTINUE_FORWARD"
       },
       {
@@ -122,14 +122,14 @@
         "promotionSelectable": false,
         "promotionMerit": "MIXED",
         "reasons": [
-          "Missing/invalid ratio 1.56% > 1%",
+          "Missing/invalid ratio 1.54% > 1%",
           "Candidate and incumbent trade off at least one clean common-period Pareto dimension; human judgment is required"
         ],
-        "observations": 64,
-        "liveObservations": 63,
-        "missingRatio": 0.015625,
+        "observations": 65,
+        "liveObservations": 64,
+        "missingRatio": 0.015384615384615385,
         "executions": 5,
-        "actionDaysPerYear": 20,
+        "actionDaysPerYear": 19.6875,
         "regimes": 5,
         "regimeFamilies": [
           "NEUTRAL",
@@ -138,13 +138,13 @@
         ],
         "regimeCoverageOk": true,
         "totalReturn": -0.026816506969562504,
-        "sortino": -0.43473741660578663,
-        "calmar": -0.6804310192468637,
+        "sortino": -0.4306456988498904,
+        "calmar": -0.670504900582142,
         "maxDd": -0.14917415768825437,
         "historicalDd": -0.2705,
         "adverseDdFloor": -0.37050000000000005,
         "evidence": "LOW",
-        "paretoCommonDays": 64,
+        "paretoCommonDays": 65,
         "decision": "CONTINUE_FORWARD"
       }
     ],

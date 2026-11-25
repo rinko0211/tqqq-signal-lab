@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "mode": "OPS_STATE_AUTHORITATIVE",
   "authoritative": true,
-  "writer": "phase5-forward",
+  "writer": "lifecycle-review",
   "sourceMainSha": "e435227bf2e65f1254bedea4efbf486374e7d6b9",
-  "baseOpsStateSha": "34ebb646c3a11ca438c9109e6a043637ac4ee87e",
-  "dataTreeSha256": "94287e19dcae67d2988218fbf7f19c50e2f59cc9b962e70874f5a4adf7468372",
-  "generatedAt": "2026-11-25T05:03:53.664605Z"
+  "baseOpsStateSha": "cf93425db2e9343a2ac7805475290a81a09d25f9",
+  "dataTreeSha256": "4ff7be65751e7658a5ff688b7c1dbae0c6a0881e5e17b43b7ecd49bdbf3445f7",
+  "generatedAt": "2026-11-25T09:53:15.871812Z"
 }
