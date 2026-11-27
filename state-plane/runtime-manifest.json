@@ -4,7 +4,7 @@
   "authoritative": true,
   "writer": "phase5-forward",
   "sourceMainSha": "e435227bf2e65f1254bedea4efbf486374e7d6b9",
-  "baseOpsStateSha": "e74bda288b8811f0d5b22b2132051ab7f611dd6f",
-  "dataTreeSha256": "45eb2e04a95c9ecfbf7ca5a0fa66b0b674cf5c89fbc5fab2d997ba2c12f2362f",
-  "generatedAt": "2026-11-26T22:17:24.403317Z"
+  "baseOpsStateSha": "b5de1fe85e734ff0752b098e81f5766e0850f6dc",
+  "dataTreeSha256": "d89fac6ca6fda8516eed347eee25b55b67cea306f7a39d16cfa49477b410116a",
+  "generatedAt": "2026-11-27T04:35:18.175231Z"
 }
