@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-27T21:56:43.530Z",
+  "generatedAt": "2026-11-28T04:17:53.877Z",
   "status": "success",
   "forwardStart": "2026-08-25",
   "latestDates": {
@@ -8,7 +8,7 @@
     "QLD": "2026-11-25",
     "SPY": "2026-11-25",
     "QQQ": "2026-11-25",
-    "VIX": "2026-11-25"
+    "VIX": "2026-11-27"
   },
   "systems": {
     "UPRO-SPBT-v1.0": {
