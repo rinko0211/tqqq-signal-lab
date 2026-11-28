@@ -4,7 +4,7 @@
   "authoritative": true,
   "writer": "daily-signal",
   "sourceMainSha": "e435227bf2e65f1254bedea4efbf486374e7d6b9",
-  "baseOpsStateSha": "40e64fad39fab7006335c6230d9436d6f62bf827",
-  "dataTreeSha256": "32bd86f84f8333efbc75d17c16340759c195d68a8245b22231df42e01fb0c2ff",
-  "generatedAt": "2026-11-28T09:10:55.258918Z"
+  "baseOpsStateSha": "049fd182ddd84fcf1d8451b783b34845acd3c9fd",
+  "dataTreeSha256": "3756685cd1cebb98dd16dcdc16012cdaad68b9420ec9767fe6604ef78d6a9da7",
+  "generatedAt": "2026-11-28T13:29:47.172977Z"
 }
